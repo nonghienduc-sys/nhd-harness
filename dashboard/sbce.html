@@ -1,13 +1,43 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NHD SBCE — Executor</title><style>
-:root{color-scheme:dark;font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;background:#111827;color:#f3f4f6}*{box-sizing:border-box}body{margin:0;padding:40px 18px}main{max-width:710px;margin:auto}h1{font-size:26px;margin:0 0 4px}.subtitle{color:#9ca3af;margin-bottom:28px}.panel{background:#1f2937;border:1px solid #374151;border-radius:15px;padding:24px;margin:16px 0}label{display:block;margin:20px 0 7px;color:#e5e7eb}input{width:100%;padding:13px;border-radius:9px;border:1px solid #6b7280;background:#111827;color:white;font:inherit}button{margin-top:14px;padding:11px 18px;border:0;border-radius:9px;background:#3b82f6;color:#fff;font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:default}.muted{font-size:14px;color:#9ca3af}.status{font-weight:600;color:#93c5fd}code{color:#93c5fd}a{color:#93c5fd}
-</style></head><body><main><h1>NHD Strong Brain – Cheap Executor</h1><p class="subtitle">Bộ điều phối mô hình giá rẻ · HHTECH Gateway · Hỗ trợ ChatGPT/Claude qua MCP</p>
-<section class="panel"><h2>Trạng thái Executor</h2><p id="status" class="status">Đang kiểm tra…</p><p class="muted">Chế độ mặc định <code>off</code> không phát sinh yêu cầu API. Chế độ <code>shadow</code> tạo bản nháp riêng và không áp dụng thay đổi lên production.</p><button id="refresh">Kiểm tra lại</button></section>
-<section class="panel"><h2>Kết nối HHTECH</h2><p class="muted">Nhập khóa chỉ tại trang localhost này. Khóa được bảo vệ bằng Windows DPAPI (CurrentUser) trong NHD Vault, không gửi vào hội thoại hay nhật ký.</p><form id="keyform"><label for="key">API key HHTECH</label><input id="key" type="password" autocomplete="off" minlength="12" maxlength="300" required placeholder="Nhập khóa của bạn"><button id="save" type="submit">Lưu khóa vào Vault</button></form><p id="feedback" role="status"></p></section>
-<p class="muted">Các thao tác áp dụng file và chuyển phiên bản vẫn phải qua cơ chế xác nhận của NHD. <a href="/">Về Dashboard</a></p></main>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NHD SBCE — Executor</title>
+  <script>(function(){var t=null;try{t=localStorage.getItem('nhdTheme')}catch(_){}if(t!=='light'&&t!=='dark')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-bs-theme',t)})();</script>
+  <link rel="stylesheet" href="/vendor/tabler/tabler.min.css?v=1.4.0">
+  <link rel="stylesheet" href="/nhd-tabler.css?v=20261113-tabler">
+</head>
+<body class="nhd-standalone">
+<div class="page"><div class="page-wrapper"><div class="page-body"><div class="container-narrow">
+  <div class="page-header mb-3 d-flex align-items-center gap-3"><span class="nhd-logo" aria-hidden="true">N</span><div><div class="page-pretitle">SBCE · Strong Brain – Cheap Executor</div><h2 class="page-title">NHD Strong Brain – Cheap Executor</h2><div class="text-secondary">Bộ điều phối mô hình giá rẻ · HHTECH Gateway · Hỗ trợ ChatGPT/Claude qua MCP</div></div></div>
+  <div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Trạng thái Executor</h3></div>
+    <div class="card-body">
+      <p id="status" class="status fw-bold fs-3 mb-2">Đang kiểm tra…</p>
+      <p class="text-secondary">Chế độ mặc định <code>off</code> không phát sinh yêu cầu API. Chế độ <code>shadow</code> tạo bản nháp riêng và không áp dụng thay đổi lên production.</p>
+      <button id="refresh" type="button" class="btn">Kiểm tra lại</button>
+    </div>
+  </div>
+  <div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Kết nối HHTECH</h3></div>
+    <div class="card-body">
+      <p class="text-secondary">Nhập khóa chỉ tại trang localhost này. Khóa được bảo vệ bằng Windows DPAPI (CurrentUser) trong NHD Vault, không gửi vào hội thoại hay nhật ký.</p>
+      <form id="keyform">
+        <label for="key" class="form-label">API key HHTECH</label>
+        <input id="key" class="form-control" type="password" autocomplete="off" minlength="12" maxlength="300" required placeholder="Nhập khóa của bạn">
+        <button id="save" type="submit" class="btn btn-primary mt-3">Lưu khóa vào Vault</button>
+      </form>
+      <p id="feedback" role="status" class="mt-3 mb-0"></p>
+    </div>
+  </div>
+  <p class="text-secondary small">Các thao tác áp dụng file và chuyển phiên bản vẫn phải qua cơ chế xác nhận của NHD. <a href="/">Về Dashboard</a></p>
+</div></div></div></div>
 <script type="module">
 const status=document.getElementById('status'),feedback=document.getElementById('feedback'),key=document.getElementById('key');
-async function refresh(){try{const r=await fetch('/api/sbce/status',{cache:'no-store'});const data=await r.json();status.textContent=data.mode==='off'?'Đã tắt (an toàn)':data.status==='online'?'Đang chạy — '+data.mode:'Chưa kết nối: '+(data.error||data.status);status.style.color=data.status==='online'?'#86efac':'#fcd34d';document.getElementById('save').disabled=data.mode==='off'}catch{status.textContent='Không truy cập được Executor';status.style.color='#fca5a5'}}
+async function refresh(){try{const r=await fetch('/api/sbce/status',{cache:'no-store'});const data=await r.json();status.textContent=data.mode==='off'?'Đã tắt (an toàn)':data.status==='online'?'Đang chạy — '+data.mode:'Chưa kết nối: '+(data.error||data.status);status.className='status fw-bold fs-3 mb-2 '+(data.status==='online'?'ok':'warn');document.getElementById('save').disabled=data.mode==='off'}catch{status.textContent='Không truy cập được Executor';status.className='status fw-bold fs-3 mb-2 bad'}}
 document.getElementById('refresh').addEventListener('click',refresh);
 document.getElementById('keyform').addEventListener('submit',async event=>{event.preventDefault();const value=key.value;key.value='';feedback.textContent='Đang lưu…';try{const r=await fetch('/api/sbce/secret',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:value})});const data=await r.json();feedback.textContent=r.ok?'Đã lưu an toàn. Khóa không được hiển thị lại.':(data.error||'Không lưu được khóa.')}catch{feedback.textContent='Lỗi kết nối'}});
 refresh();
-</script></body></html>
+</script></body>
+</html>
