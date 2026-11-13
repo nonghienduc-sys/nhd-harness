@@ -74,7 +74,8 @@ const config = existsSync(cfgPath) ? JSON.parse(readFileSync(cfgPath, 'utf8')) :
 const disabled = new Set([...(config.disabledSkills ?? []), 'skill-chinh-sua-format-van-ban']);
 const registered = new Map(catalog.map((s) => [s.id, s]));
 const dirs = readdirSync(skillRoot, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort();
-const recursivelyCountFiles = (dir) => readdirSync(dir, {withFileTypes:true}).reduce((n,e) => n + (e.isDirectory() ? recursivelyCountFiles(join(dir,e.name)) : e.isFile()?1:0),0);
+// Không đếm cache Python và thư mục có tệp đánh dấu .local-only (tài sản chỉ có trên máy, không phân phối công khai).
+const recursivelyCountFiles = (dir) => existsSync(join(dir,'.local-only')) ? 0 : readdirSync(dir, {withFileTypes:true}).reduce((n,e) => n + (e.isDirectory() ? (e.name==='__pycache__' ? 0 : recursivelyCountFiles(join(dir,e.name))) : (e.isFile() && !e.name.endsWith('.pyc'))?1:0),0);
 for(const id of dirs){
   const meta = registered.get(id);
   const skillPath = resolve(skillRoot,id,'SKILL.md');
