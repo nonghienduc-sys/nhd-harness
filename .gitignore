@@ -60,6 +60,7 @@ __pycache__/
 !/scripts/cutover-atomic-release.ps1
 !/scripts/generate-admin-docx-fixtures.mjs
 !/scripts/generate-architecture-docs.mjs
+!/scripts/install-companion-startup.ps1
 !/scripts/install-service-user.ps1
 !/scripts/install-service.cjs
 !/scripts/lite-package-audit.mjs

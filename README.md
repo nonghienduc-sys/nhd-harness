@@ -1,4 +1,35 @@
-# ChatGPT Workstation MCP Bridge
+# NHD Harness — ChatGPT Workstation MCP Bridge
+
+Cầu nối MCP cho Windows: cho ChatGPT / Claude làm việc có kiểm soát với tệp, PowerShell, Microsoft Office, màn hình và hồ sơ tài liệu trên máy của bạn. Mọi thao tác ghi đều phải xem trước rồi xác nhận; có công tắc dừng khẩn cấp.
+
+## Cài nhanh (người dùng)
+
+1. Tải bộ cài Lite mới nhất tại trang Releases của kho [nhd-harness-downloads](https://github.com/nonghienduc-sys/nhd-harness-downloads/releases/latest).
+2. Chạy bộ cài, mở Dashboard tại `http://127.0.0.1:39100/`.
+3. Trong ChatGPT/Claude, thêm MCP server `http://127.0.0.1:39100/mcp` (hoặc địa chỉ tunnel riêng của bạn) và ghép nối bằng mã hiện trên Dashboard.
+
+## Cài từ mã nguồn (nhà phát triển)
+
+Yêu cầu: Windows 10/11, Node.js 22+ (khuyên dùng 24), Git. Python 3.11+ chỉ cần cho các kỹ năng OCR/PDF/RAG.
+
+```powershell
+git clone https://github.com/nonghienduc-sys/nhd-harness.git
+cd nhd-harness
+npm ci
+npm run build
+npm test
+npm start
+```
+
+Ghi chú:
+
+- Thư mục `runtime/` (môi trường Python cho RAG, dữ liệu phát hành) không có trong kho; các test cần nó sẽ tự bỏ qua. Tạo venv RAG tại `runtime/semantic-memory-venv` nếu muốn dùng tìm kiếm ngữ nghĩa theo dự án.
+- Tên miền `mcp.nhdmcp.io.vn` trong tài liệu là tunnel của tác giả. Khi tự triển khai, hãy dùng Cloudflare Tunnel và tên miền của bạn.
+- Kỹ năng `scientific-research-slide-style` cần các template PPTX tham chiếu đặt trong `assets/`; chúng không được phân phối vì là template của bên thứ ba.
+
+---
+
+## English overview
 
 Windows MCP bridge for controlled access from ChatGPT Web to local files, PowerShell, Microsoft Office, the interactive desktop, approved document inboxes, and PDF intake workflows.
 
