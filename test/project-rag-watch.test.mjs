@@ -7,11 +7,13 @@ import { join, resolve } from "node:path";
 import { ProjectRagService } from "../dist/project-rag.js";
 import { ProjectRagWatcher } from "../dist/project-rag-watch.js";
 
+// Bản clone mới chưa có runtime/semantic-memory-venv: bỏ qua test cần Python thật.
+const RAG_PY_SKIP = existsSync(join(process.cwd(), "runtime", "semantic-memory-venv", "Scripts", "python.exe")) ? false : "chưa có runtime/semantic-memory-venv";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const mkStore = () => { const events = []; return { events, audit: (action, status, detail) => events.push({ action, status, detail }) }; };
 const realRag = dir => new ProjectRagService({ projectWorkspaceRoot: dir }, { resolvePath: p => resolve(p) }, { read: async () => { throw Error("no pdf"); } });
 
-test("auto-sync: enable indexes eligible files, skips excluded/secret/temp files, persists state", { timeout: 240000 }, async () => {
+test("auto-sync: enable indexes eligible files, skips excluded/secret/temp files, persists state", { timeout: 240000, skip: RAG_PY_SKIP }, async () => {
   const dir = mkdtempSync(join(tmpdir(), "nhd-rag-watch-"));
   const root = join(dir, "PROJ");
   mkdirSync(join(root, "docs"), { recursive: true }); mkdirSync(join(root, "SKIP"));

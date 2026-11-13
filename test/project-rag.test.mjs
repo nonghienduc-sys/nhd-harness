@@ -1,12 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, statSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, statSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { ProjectRagService } from "../dist/project-rag.js";
 import { capabilityPermission, capabilityRisk, capabilityIsMutation } from "../dist/capability-registry.js";
 
-test("project-isolated hybrid retrieval, provenance, token limits, stale detection and source guards", { timeout: 240000 }, async () => {
+// Bản clone mới chưa có runtime/semantic-memory-venv: bỏ qua test cần Python thật.
+const RAG_PY_SKIP = existsSync(join(process.cwd(), "runtime", "semantic-memory-venv", "Scripts", "python.exe")) ? false : "chưa có runtime/semantic-memory-venv";
+
+test("project-isolated hybrid retrieval, provenance, token limits, stale detection and source guards", { timeout: 240000, skip: RAG_PY_SKIP }, async () => {
   const dir = mkdtempSync(join(tmpdir(), "nhd-project-rag-"));
   const a = join(dir, "HTX"), b = join(dir, "TRADING");
   mkdirSync(a); mkdirSync(b);
@@ -53,7 +56,7 @@ test("project-isolated hybrid retrieval, provenance, token limits, stale detecti
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test("PDF page locators, safe scanned-PDF failure, and independent project index", { timeout: 240000 }, async () => {
+test("PDF page locators, safe scanned-PDF failure, and independent project index", { timeout: 240000, skip: RAG_PY_SKIP }, async () => {
   const dir = mkdtempSync(join(tmpdir(), "nhd-project-rag-pdf-"));
   const p = join(dir, "RESEARCH");
   mkdirSync(p);

@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
+// runtime/ kh\u00F4ng c\u00F3 trong b\u1EA3n m\u00E3 ngu\u1ED3n c\u00F4ng khai (clone m\u1EDBi): khi thi\u1EBFu th\u00EC d\u00F9ng gi\u00E1 tr\u1ECB m\u1EB7c \u0111\u1ECBnh.
+const readOptionalJson=(rel,fallback)=>{const u=new URL(rel,import.meta.url);return existsSync(u)?JSON.parse(readFileSync(u,'utf8').replace(/^\uFEFF/,'')):fallback;};
 const PACKAGE_VERSION=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8')).version;
-const DEPLOYMENT_MANIFEST=JSON.parse(readFileSync(new URL('../runtime/deployment-manifest.json',import.meta.url),'utf8').replace(/^\uFEFF/,''));
-const RELEASE_STATE=JSON.parse(readFileSync(new URL('../runtime/release-state.json',import.meta.url),'utf8').replace(/^\uFEFF/,''));
+const DEPLOYMENT_MANIFEST=readOptionalJson('../runtime/deployment-manifest.json',{});
+const RELEASE_STATE=readOptionalJson('../runtime/release-state.json',null);
 const EXPECTED_PRODUCTION_VERSION=process.env.WORKSTATION_MCP_VERSION?.trim()||PACKAGE_VERSION;
 const EXPECTED_SOURCE_VERSION=process.env.NHD_SOURCE_VERSION?.trim()||DEPLOYMENT_MANIFEST.sourceVersion||PACKAGE_VERSION;
 const EXPECTED_CANDIDATE_VERSION=RELEASE_STATE?.model==='atomic-json-pointer-v1'?(RELEASE_STATE.candidate?.version??null):(process.env.NHD_CANDIDATE_VERSION?.trim()||DEPLOYMENT_MANIFEST.candidateVersion||null);

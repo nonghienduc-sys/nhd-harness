@@ -1,0 +1,2 @@
+# Keep exact bytes on every OS: generated registries/docs carry SHA-256 of source files.
+* -text

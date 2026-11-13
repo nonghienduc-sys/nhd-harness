@@ -1,0 +1,766 @@
+{
+  "schemaVersion": 1,
+  "title": "SBCE Golden Set v1 — work orders sourced from NHD workflows",
+  "status": "contracts-only; no model performance baseline collected",
+  "dataPolicy": "sanitized, no user files, credentials or personal data",
+  "tasks": [
+    {
+      "id": "CODE-01",
+      "title": "NHD code regression 1",
+      "kind": "test_write",
+      "goal": "Add regression tests that verify MCP remote authentication still rejects unauthenticated tool calls.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-02",
+      "title": "NHD code regression 2",
+      "kind": "code_change",
+      "goal": "Implement a result shaping guard that drops redundant checkpoint history while keeping the latest item.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-03",
+      "title": "NHD code regression 3",
+      "kind": "code_change",
+      "goal": "Check startup lifecycle so the Cloudflare tunnel remains supervised across backend restarts.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-04",
+      "title": "NHD code regression 4",
+      "kind": "code_change",
+      "goal": "Add fail-closed behavior when the NHD Core returns a stale file write preview token.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-05",
+      "title": "NHD code regression 5",
+      "kind": "test_write",
+      "goal": "Detect forbidden marker strings before any generated content is written back to source files.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-06",
+      "title": "NHD code regression 6",
+      "kind": "code_change",
+      "goal": "Fix the Cốc Cốc Bridge distinction between all open tabs and currently connected DOM sessions.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-07",
+      "title": "NHD code regression 7",
+      "kind": "code_change",
+      "goal": "Ensure a newly connected agent receives a bounded project context via structuredContent.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-08",
+      "title": "NHD code regression 8",
+      "kind": "code_change",
+      "goal": "Add a safe lock acquisition check for concurrent Background and Isolated workers.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-09",
+      "title": "NHD code regression 9",
+      "kind": "test_write",
+      "goal": "Implement an idempotent task reservation release without loosening the original owner rules.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-10",
+      "title": "NHD code regression 10",
+      "kind": "code_change",
+      "goal": "Add failure recovery tests for interrupted task steps without automatic replay.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-11",
+      "title": "NHD code regression 11",
+      "kind": "code_change",
+      "goal": "Preserve Word document paragraph formatting when editing a selected section.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-12",
+      "title": "NHD code regression 12",
+      "kind": "code_change",
+      "goal": "Validate admin document QA flags for incorrect alignment and paragraph indents.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-13",
+      "title": "NHD code regression 13",
+      "kind": "test_write",
+      "goal": "Add an audit receipt to immutable release smoke verification without altering release identity.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-14",
+      "title": "NHD code regression 14",
+      "kind": "code_change",
+      "goal": "Refine file search results by recency while keeping project boundaries unchanged.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-15",
+      "title": "NHD code regression 15",
+      "kind": "code_change",
+      "goal": "Add an explicit model cost guard that rejects job requests over the configured VND limit.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-16",
+      "title": "NHD code regression 16",
+      "kind": "code_change",
+      "goal": "Implement a reliable fallback when an agent provider returns invalid structured JSON.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-17",
+      "title": "NHD code regression 17",
+      "kind": "test_write",
+      "goal": "Check that content from user-provided documents cannot be treated as executable instructions.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-18",
+      "title": "NHD code regression 18",
+      "kind": "code_change",
+      "goal": "Fix a test fixture that assumes exactly eight domain registries after additive delegation.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-19",
+      "title": "NHD code regression 19",
+      "kind": "code_change",
+      "goal": "Add a unit test to ensure legacy disabled skill cannot run administrative document formatting.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "CODE-20",
+      "title": "NHD code regression 20",
+      "kind": "code_change",
+      "goal": "Enforce a maximum error summary size when a model proposes repeated patches.",
+      "acceptance": [
+        {
+          "type": "command",
+          "run": "npm run build",
+          "expect": "exit0"
+        },
+        {
+          "type": "command",
+          "run": "npm test",
+          "expect": "exit0"
+        }
+      ],
+      "deliverables": [
+        "sandbox patch",
+        "test receipt"
+      ]
+    },
+    {
+      "id": "DOC-01",
+      "title": "NHD document task 1",
+      "kind": "doc_edit",
+      "goal": "Draft a short technical explanation of the NHD context handshake for connected clients.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Specific, concise, and accurate without invented facts"
+        }
+      ],
+      "deliverables": [
+        "draft.md"
+      ]
+    },
+    {
+      "id": "DOC-02",
+      "title": "NHD document task 2",
+      "kind": "doc_write",
+      "goal": "Summarize the benefits and limitations of a cheap executor compared with a strong single model.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Specific, concise, and accurate without invented facts"
+        }
+      ],
+      "deliverables": [
+        "draft.md"
+      ]
+    },
+    {
+      "id": "DOC-03",
+      "title": "NHD document task 3",
+      "kind": "doc_write",
+      "goal": "Rewrite a software operations memo with concise sections and unambiguous next actions.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Specific, concise, and accurate without invented facts"
+        }
+      ],
+      "deliverables": [
+        "draft.md"
+      ]
+    },
+    {
+      "id": "DOC-04",
+      "title": "NHD document task 4",
+      "kind": "doc_edit",
+      "goal": "Create a brief user guide to submit a sandbox-only work order in NHD.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Specific, concise, and accurate without invented facts"
+        }
+      ],
+      "deliverables": [
+        "draft.md"
+      ]
+    },
+    {
+      "id": "DOC-05",
+      "title": "NHD document task 5",
+      "kind": "doc_write",
+      "goal": "Draft a professional change note for a failed smoke test and restored candidate.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Specific, concise, and accurate without invented facts"
+        }
+      ],
+      "deliverables": [
+        "draft.md"
+      ]
+    },
+    {
+      "id": "DOC-06",
+      "title": "NHD document task 6",
+      "kind": "doc_write",
+      "goal": "Revise a technical requirement paragraph to distinguish MCP tools from LLM model APIs.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Specific, concise, and accurate without invented facts"
+        }
+      ],
+      "deliverables": [
+        "draft.md"
+      ]
+    },
+    {
+      "id": "DOC-07",
+      "title": "NHD document task 7",
+      "kind": "doc_edit",
+      "goal": "Create a checklist for a model router release gate with measurable acceptance criteria.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Specific, concise, and accurate without invented facts"
+        }
+      ],
+      "deliverables": [
+        "draft.md"
+      ]
+    },
+    {
+      "id": "DOC-08",
+      "title": "NHD document task 8",
+      "kind": "doc_write",
+      "goal": "Write a short guidance note on retaining source citations for document RAG.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Specific, concise, and accurate without invented facts"
+        }
+      ],
+      "deliverables": [
+        "draft.md"
+      ]
+    },
+    {
+      "id": "DATA-01",
+      "title": "NHD extraction 1",
+      "kind": "data_extract",
+      "goal": "Extract model identifiers and listed prices from a provided sanitized model catalog sample.",
+      "acceptance": [
+        {
+          "type": "schema"
+        },
+        {
+          "type": "rubric",
+          "text": "Return only sourced values from the provided fixture"
+        }
+      ],
+      "deliverables": [
+        "extracted.json"
+      ]
+    },
+    {
+      "id": "DATA-02",
+      "title": "NHD extraction 2",
+      "kind": "data_extract",
+      "goal": "Convert a synthetic CSV test fixture into validated counts and missing-value metrics.",
+      "acceptance": [
+        {
+          "type": "schema"
+        },
+        {
+          "type": "rubric",
+          "text": "Return only sourced values from the provided fixture"
+        }
+      ],
+      "deliverables": [
+        "extracted.json"
+      ]
+    },
+    {
+      "id": "DATA-03",
+      "title": "NHD extraction 3",
+      "kind": "data_extract",
+      "goal": "Compare before-and-after tool inventory snapshots and summarize additions only.",
+      "acceptance": [
+        {
+          "type": "schema"
+        },
+        {
+          "type": "rubric",
+          "text": "Return only sourced values from the provided fixture"
+        }
+      ],
+      "deliverables": [
+        "extracted.json"
+      ]
+    },
+    {
+      "id": "DATA-04",
+      "title": "NHD extraction 4",
+      "kind": "data_extract",
+      "goal": "Collect the error signatures from a bounded synthetic build log.",
+      "acceptance": [
+        {
+          "type": "schema"
+        },
+        {
+          "type": "rubric",
+          "text": "Return only sourced values from the provided fixture"
+        }
+      ],
+      "deliverables": [
+        "extracted.json"
+      ]
+    },
+    {
+      "id": "DATA-05",
+      "title": "NHD extraction 5",
+      "kind": "data_extract",
+      "goal": "Summarize no more than five verified project memory facts for an executor handoff.",
+      "acceptance": [
+        {
+          "type": "schema"
+        },
+        {
+          "type": "rubric",
+          "text": "Return only sourced values from the provided fixture"
+        }
+      ],
+      "deliverables": [
+        "extracted.json"
+      ]
+    },
+    {
+      "id": "DATA-06",
+      "title": "NHD extraction 6",
+      "kind": "data_extract",
+      "goal": "Identify conflicting field values in a synthetic deployment manifest sample.",
+      "acceptance": [
+        {
+          "type": "schema"
+        },
+        {
+          "type": "rubric",
+          "text": "Return only sourced values from the provided fixture"
+        }
+      ],
+      "deliverables": [
+        "extracted.json"
+      ]
+    },
+    {
+      "id": "RS-01",
+      "title": "NHD research 1",
+      "kind": "research",
+      "goal": "Compare deterministic routing and LLM-based routing for a small Windows workstation.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Every material claim requires an evidence locator"
+        }
+      ],
+      "deliverables": [
+        "research.md"
+      ]
+    },
+    {
+      "id": "RS-02",
+      "title": "NHD research 2",
+      "kind": "research",
+      "goal": "Assess whether a cache hit can reduce API cost without reducing accuracy.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Every material claim requires an evidence locator"
+        }
+      ],
+      "deliverables": [
+        "research.md"
+      ]
+    },
+    {
+      "id": "RS-03",
+      "title": "NHD research 3",
+      "kind": "research",
+      "goal": "Research the benefits of cross-family judges for generated text quality.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Every material claim requires an evidence locator"
+        }
+      ],
+      "deliverables": [
+        "research.md"
+      ]
+    },
+    {
+      "id": "RS-04",
+      "title": "NHD research 4",
+      "kind": "research",
+      "goal": "Explain the limits of using token count alone as a savings metric.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Every material claim requires an evidence locator"
+        }
+      ],
+      "deliverables": [
+        "research.md"
+      ]
+    },
+    {
+      "id": "RS-05",
+      "title": "NHD research 5",
+      "kind": "research",
+      "goal": "Identify realistic failure modes of a third-party API gateway for agent execution.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Every material claim requires an evidence locator"
+        }
+      ],
+      "deliverables": [
+        "research.md"
+      ]
+    },
+    {
+      "id": "RS-06",
+      "title": "NHD research 6",
+      "kind": "research",
+      "goal": "Compare the use cases for MCP and A2A in multi-agent orchestration.",
+      "acceptance": [
+        {
+          "type": "rubric",
+          "text": "Every material claim requires an evidence locator"
+        }
+      ],
+      "deliverables": [
+        "research.md"
+      ]
+    }
+  ]
+}

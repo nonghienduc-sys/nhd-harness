@@ -2,6 +2,7 @@
 /*
 !/.github/
 !/.gitignore
+!/.gitattributes
 !/README.md
 !/CHANGELOG.md
 !/LICENSE
@@ -22,6 +23,15 @@
 !/skills/
 !/workers/
 !/distribution/
+# Test data needed by the test suite (synthetic only)
+!/benchmarks/
+/benchmarks/*
+!/benchmarks/sbce-golden-set-v1.json
+!/test-artifacts/
+/test-artifacts/*
+!/test-artifacts/admin-regression/
+/test-artifacts/admin-regression/*
+!/test-artifacts/admin-regression/*.docx
 
 # Never commit inside allowed folders
 node_modules/
