@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>NHD Harness – Kết nối ChatGPT</title><link rel="stylesheet" href="./setup.css"/></head>
+<body><main class="wrap"><header><div class="logo">NHD</div><div><p class="eyebrow">NHD HARNESS · FIRST-RUN SETUP</p><h1>Cài đặt &amp; kết nối ChatGPT</h1><p class="muted">Không cần chỉnh sửa file YAML, mở cổng router hay sao chép API key vào hội thoại.</p></div></header>
+<section class="card"><h2>1. Chọn phương thức kết nối</h2><div class="tabs"><button id="cloudflareTab" class="active">Tôi có tên miền Cloudflare</button><button id="openaiTab">OpenAI Secure Tunnel</button></div>
+<div id="cloudflareMode"><p class="muted">Tên miền phải nằm trong tài khoản Cloudflare của bạn. NHD chỉ tạo subdomain mới; không tự đổi nameserver và không ghi đè DNS đã tồn tại.</p>
+<div class="fields"><label>Tên miền<input id="domain" placeholder="example.com" autocomplete="off" spellcheck="false"/></label><label>Subdomain MCP<input id="subdomain" value="mcp" spellcheck="false"/></label></div>
+<p class="preview">URL MCP: <strong id="previewUrl">https://mcp.example.com/mcp</strong></p>
+<div class="steps"><div><b>1</b><span>Đăng nhập Cloudflare và chọn domain</span><button id="login">Đăng nhập</button></div>
+<div><b>2</b><span>Kiểm tra quyền quản lý domain</span><button id="check">Kiểm tra</button></div>
+<div><b>3</b><span>Tạo tunnel và DNS tự động</span><button id="provision">Tạo kết nối</button></div>
+<div><b>4</b><span>NHD tự bật tunnel sau khi tạo (nút dùng để thử lại)</span><button id="start">Bật lại tunnel</button></div>
+<div><b>5</b><span>Kiểm tra OAuth qua HTTPS</span><button id="verify">Kiểm tra kết nối</button></div></div>
+<label class="consent"><input type="checkbox" id="confirmed"/> Tôi đồng ý tạo Cloudflare Tunnel mới và bản ghi DNS <span id="confirmHostname">mcp.example.com</span>; không thay đổi các bản ghi đang tồn tại.</label></div>
+<div id="openaiMode" hidden><p>Không cần tên miền. Tạo <code>Tunnel ID</code> trong OpenAI Platform, cài <code>tunnel-client</code> và cung cấp quyền Tunnels Read + Use. NHD không nhận hoặc lưu API key qua giao diện này.</p><p><a href="https://developers.openai.com/api/docs/guides/secure-mcp-tunnels" target="_blank" rel="noopener noreferrer">Hướng dẫn chính thức về OpenAI Secure MCP Tunnel</a></p>
+<div class="steps"><div><b>1</b><span>Kiểm tra tunnel-client trên máy</span><button id="openaiStatus">Trạng thái</button></div><div><b>2</b><span>Chạy tunnel-client doctor</span><button id="openaiDoctor">Kiểm tra</button></div><div><b>3</b><span>Kết nối sau khi có profile/key cục bộ</span><button id="openaiStart">Bật tunnel</button></div></div></div>
+<p role="status" aria-live="polite" id="status" class="status">Đang đọc trạng thái NHD...</p></section>
+<section class="card"><h2>2. Thêm NHD vào ChatGPT</h2><p>Trong ChatGPT Web: <strong>Plugins → + → Add custom MCP server</strong>. Chọn <strong>Server URL</strong> và nhập URL đã kiểm tra, hoặc chọn <strong>Tunnel</strong> nếu sử dụng OpenAI Secure MCP Tunnel. Xác thực và xác nhận quyền truy cập trong chính ChatGPT.</p>
+<div class="copy"><input id="finalUrl" readonly placeholder="URL sẽ xuất hiện sau khi cấu hình"/><button id="copy">Sao chép URL</button></div>
+<p class="muted">Chỉ báo “hoàn thành” sau khi bạn đã kết nối và gọi thử một công cụ đọc trong ChatGPT. NHD không tự cấp quyền hoặc tự tạo plugin thay người dùng.</p>
+<button id="finish">Tôi đã kết nối thử trong ChatGPT — hoàn tất</button> <a href="/" class="secondary-link">Quay về bảng điều khiển NHD</a></section></main><script src="./setup.js"></script></body></html>

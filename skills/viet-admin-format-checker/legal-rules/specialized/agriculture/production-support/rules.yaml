@@ -1,0 +1,55 @@
+version: 1
+pack_id: agriculture_production_support
+domain: agriculture
+verified_at: "2026-09-19"
+
+sources:
+  primary_when_mtqg_2026_2030:
+    - mtqg_decree_358_2025
+    - mtqg_circular_23_2026
+  cooperative_support_reference:
+    - coop_decree_113_2024
+
+classification:
+  family: specialized
+  signals:
+    - "hỗ trợ phát triển sản xuất"
+    - "liên kết chuỗi giá trị"
+    - "vùng nguyên liệu"
+    - "phương án sản xuất"
+    - "mô hình sinh kế"
+    - "OCOP"
+    - "truy xuất nguồn gốc"
+
+content_sensitive_rules:
+  - id: production_support_under_mtqg
+    condition: "task thuộc Chương trình MTQG 2026-2030"
+    route_to: "../mtqg/2026-2030/rules.yaml"
+  - id: cooperative_development
+    condition: "hỗ trợ củng cố/phát triển HTX"
+    source: coop_decree_113_2024
+  - id: local_technical_norms
+    condition: "hồ sơ có vật tư, máy móc, định mức kỹ thuật"
+    action: "resolve quy định kỹ thuật/định mức của cơ quan có thẩm quyền và địa phương trước khi khóa bảng dự toán"
+
+format_policy:
+  exact_form_if_prescribed: true
+  nd30: fallback_only
+  tables:
+    preserve_columns: true
+    do_not_shrink_below_readable_size_to_force_page_fit: true
+
+verified_tt23_context:
+  - "TT23/2026 có nội dung hỗ trợ vùng nguyên liệu, liên kết chuỗi giá trị, công nghệ số, truy xuất nguồn gốc và hỗ trợ phát triển sản xuất."
+  - "Nếu TT23/2026 hoặc phụ lục quy định mẫu báo cáo/hồ sơ cụ thể thì mẫu đó ưu tiên."
+
+critical_guards:
+  - id: distinguish_policy_period
+    severity: ERROR
+    rule: "Phân biệt hồ sơ 2021-2025 và 2026-2030 trước khi chọn căn cứ/mẫu."
+  - id: do_not_invent_budget_fields
+    severity: ERROR
+    rule: "Không tự thêm định mức, tỷ lệ hỗ trợ, đơn giá hoặc trường ngân sách nếu nguồn chuyên ngành/địa phương chưa quy định."
+  - id: preserve_evidence_tables
+    severity: ERROR
+    rule: "Bảng hộ tham gia, dự toán, đối tượng thụ hưởng, thiết bị và chỉ tiêu kết quả phải giữ cấu trúc của mẫu bắt buộc."

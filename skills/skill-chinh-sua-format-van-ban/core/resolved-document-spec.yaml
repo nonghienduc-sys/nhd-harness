@@ -1,0 +1,34 @@
+version: 1
+schema:
+  document:
+    path: ""
+    family: ""
+    document_type: ""
+    template_id: null
+    classification_confidence: 0.0
+  sources:
+    primary: []
+    template: []
+    fallback: []
+  components: {}
+  page: {}
+  typography: {}
+  tables: {}
+  signature: {}
+  pagination: {}
+  conflicts: []
+  unresolved: []
+  preservation:
+    content_change_allowed: false
+    preserve_tables: true
+    preserve_images: true
+    preserve_fields: true
+
+rule_record_example:
+  property: "page.margin_left_mm"
+  value: 30
+  source_id: "nd30_2020_appendix_I"
+  priority: P5
+  strength: mandatory
+  overridden: false
+  overridden_by: null

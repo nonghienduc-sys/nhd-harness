@@ -1,0 +1,194 @@
+version: 1
+verified_at: "2026-09-19"
+purpose: "Registry nguồn chính thức dùng để resolve format/mẫu chuyên ngành. Trạng thái hiệu lực phải được kiểm tra lại khi nguồn có dấu hiệu sửa đổi hoặc khi task diễn ra sau verified_at đáng kể."
+
+sources:
+  bacninh_startup_2026_launch:
+    title: "Bắc Ninh phát động Cuộc thi Khởi nghiệp đổi mới sáng tạo năm 2026"
+    issuer: "Cổng thông tin điện tử tỉnh Bắc Ninh"
+    date: "2026-07-10"
+    url: "https://bacninh.gov.vn/news/-/details/37632/bac-ninh-phat-ong-cuoc-thi-khoi-nghiep-oi-moi-sang-tao-nam-2026-134048432"
+    authority: official_local_portal
+    status: current
+    controls:
+      - contest_scope
+      - submission_bundle_summary
+      - submission_deadline
+    verified_facts:
+      - "Hồ sơ gồm Phiếu đăng ký, Thuyết minh dự án, bản sao Giấy chứng nhận đăng ký doanh nghiệp đối với doanh nghiệp và tài liệu minh chứng nếu có."
+      - "Không dùng nguồn này một mình để suy ra mã Mẫu 01/Mẫu 02 hoặc bố cục chi tiết của biểu mẫu nếu file Thể lệ/Phụ lục 2026 chưa được lấy."
+
+  bacninh_startup_2025_notice:
+    title: "Phát động Cuộc thi Khởi nghiệp đổi mới sáng tạo tỉnh Bắc Ninh năm 2025"
+    issuer: "Sở Khoa học và Công nghệ tỉnh Bắc Ninh"
+    date: "2025-08-07"
+    url: "https://skhcn.bacninh.gov.vn/en/news/-/details/206241/phat-ong-cuoc-thi-khoi-nghiep-oi-moi-sang-tao-tinh-bac-ninh-nam-2025-8574201"
+    authority: official_local_portal
+    status: historical
+    controls:
+      - contest_2025_only
+    verified_facts:
+      - "Hồ sơ 2025 có Mẫu 1a/1b và Mẫu 02."
+      - "Thông báo dẫn Quyết định 115/QĐ-BTC ngày 06/8/2025 ban hành thể lệ."
+    guard: "Không tự động tái sử dụng mẫu 2025 cho hồ sơ 2026."
+
+  coop_law_17_2023:
+    title: "Luật Hợp tác xã số 17/2023/QH15"
+    issuer: "Quốc hội"
+    date: "2023-06-20"
+    effective_from: "2024-07-01"
+    url: "https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=166269"
+    authority: national_legal_database
+    status: current
+    controls:
+      - cooperative_legal_framework
+
+  coop_decree_92_2024:
+    title: "Nghị định 92/2024/NĐ-CP về đăng ký tổ hợp tác, hợp tác xã, liên hiệp hợp tác xã"
+    issuer: "Chính phủ"
+    date: "2024-07-18"
+    effective_from: "2024-07-18"
+    url: "https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=169135"
+    authority: national_legal_database
+    status: current
+    controls:
+      - cooperative_registration
+      - authority_forms
+
+  coop_decree_113_2024:
+    title: "Nghị định 113/2024/NĐ-CP quy định chi tiết một số điều của Luật Hợp tác xã"
+    issuer: "Chính phủ"
+    date: "2024-09-12"
+    effective_from: "2024-11-01"
+    url: "https://vbpl.vn/botuphap/Pages/vbpq-toanvan.aspx?ItemID=170035"
+    authority: national_legal_database
+    status: current
+    controls:
+      - cooperative_substantive_detail
+
+  coop_circular_09_2024:
+    title: "Thông tư 09/2024/TT-BKHĐT về biểu mẫu đăng ký tổ hợp tác, hợp tác xã, liên hiệp hợp tác xã"
+    issuer: "Bộ Kế hoạch và Đầu tư"
+    date: "2024-05-16"
+    effective_from: "2024-07-01"
+    url: "https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=167212"
+    authority: national_legal_database
+    status: partially_effective
+    controls:
+      - cooperative_registration_forms
+    verified_facts:
+      - "Có hệ biểu mẫu II-1 đến II-12 cho đăng ký hợp tác xã/liên hiệp hợp tác xã."
+    amended_by:
+      - coop_circular_43_2025
+    guard: "Phải kiểm tra phần biểu mẫu cụ thể còn hiệu lực trước khi render."
+
+  coop_circular_43_2025:
+    title: "Thông tư 43/2025/TT-BTC ban hành biểu mẫu khi tổ chức chính quyền địa phương 02 cấp"
+    issuer: "Bộ Tài chính"
+    date: "2025-06-17"
+    effective_from: "2025-07-01"
+    url: "https://vbpl.vn/tw/Pages/vbpq-thuoctinh.aspx?ItemID=178496"
+    authority: national_legal_database
+    status: partially_effective
+    controls:
+      - cooperative_two_level_government_form_adjustments
+    modifies:
+      - coop_circular_09_2024
+    partially_repealed_by:
+      - business_circular_68_2025
+    guard: "Không hard-code tên cơ quan đăng ký kinh doanh cấp huyện từ mẫu cũ; resolve cơ quan nhận theo cấu trúc chính quyền hiện hành."
+
+  business_circular_68_2025:
+    title: "Thông tư 68/2025/TT-BTC ban hành biểu mẫu sử dụng trong đăng ký doanh nghiệp, đăng ký hộ kinh doanh"
+    issuer: "Bộ Tài chính"
+    date: "2025-07-01"
+    effective_from: "2025-07-01"
+    url: "https://vbpl.vn/botaichinh/Pages/vbpq-thuoctinh.aspx?ItemID=179097"
+    authority: national_legal_database
+    status: current
+    controls:
+      - enterprise_and_household_business_forms
+    note: "Không dùng làm nguồn chính cho mẫu đăng ký HTX; dùng để resolve phần bị bãi bỏ của TT43/2025."
+
+  mtqg_resolution_257_2025:
+    title: "Nghị quyết 257/2025/QH15 phê duyệt chủ trương đầu tư Chương trình MTQG giai đoạn 2026-2035"
+    issuer: "Quốc hội"
+    date: "2025-12-11"
+    authority: national_legal_database
+    status: current
+    controls:
+      - mtqg_program_2026_2035
+    evidence_url: "https://vbpl.vn/tw/Pages/vbpq-vanbanlienquan.aspx?ItemID=186295"
+    note: "Nội dung chi tiết trên CSDL có thể đang cập nhật; dùng cùng Nghị định 358/2025 và văn bản hướng dẫn 2026."
+
+  mtqg_decree_358_2025:
+    title: "Nghị định 358/2025/NĐ-CP quy định cơ chế quản lý, tổ chức thực hiện các chương trình mục tiêu quốc gia"
+    issuer: "Chính phủ"
+    date: "2025-12-31"
+    effective_from: "2025-12-31"
+    url: "https://chinhphu.vn/?classid=1&docid=216391&pageid=27160&typegroupid=4"
+    authority: government_portal
+    status: current
+    controls:
+      - mtqg_management_mechanism
+      - production_support_mechanism
+
+  mtqg_decision_16_2026:
+    title: "Quyết định 16/2026/QĐ-TTg về nguyên tắc, tiêu chí, định mức phân bổ ngân sách Chương trình MTQG giai đoạn 2026-2030"
+    issuer: "Thủ tướng Chính phủ"
+    date: "2026-04-15"
+    effective_from: "2026-04-15"
+    url: "https://chinhphu.vn/?classid=1&docid=217834&pageid=27160&typegroupid=5"
+    authority: government_portal
+    status: current
+    controls:
+      - mtqg_budget_allocation
+
+  mtqg_circular_23_2026:
+    title: "Thông tư 23/2026/TT-BNNMT hướng dẫn một số nội dung Chương trình MTQG giai đoạn 2026-2030"
+    issuer: "Bộ Nông nghiệp và Môi trường"
+    date: "2026-05-23"
+    effective_from: "2026-05-23"
+    url: "https://vanban.chinhphu.vn/?docid=218259&pageid=27160"
+    pdf: "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/23-bnnmt.pdf"
+    authority: government_portal
+    status: current
+    controls:
+      - agriculture_and_rural_mtqg_implementation
+      - mtqg_reporting_forms
+      - agriculture_production_support
+    verified_facts:
+      - "Báo cáo cấp xã định kỳ dùng Mẫu số 04 Phụ lục I."
+      - "Sở/ngành và UBND cấp tỉnh dùng Mẫu số 03 Phụ lục I."
+      - "Cơ quan trung ương chủ trì nội dung thành phần dùng Mẫu số 02 Phụ lục I."
+
+  mtqg_decision_51_2025:
+    title: "Quyết định 51/2025/QĐ-TTg ban hành Bộ tiêu chí quốc gia về nông thôn mới giai đoạn 2026-2030"
+    issuer: "Thủ tướng Chính phủ"
+    date: "2025-12-29"
+    effective_from: "2026-02-15"
+    url: "https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=186295"
+    authority: national_legal_database
+    status: current
+    controls:
+      - new_rural_criteria_2026_2030
+
+  investment_circular_03_2021:
+    title: "Thông tư 03/2021/TT-BKHĐT quy định mẫu văn bản, báo cáo liên quan đến hoạt động đầu tư"
+    issuer: "Bộ Kế hoạch và Đầu tư"
+    date: "2021-04-09"
+    effective_from: "2021-04-09"
+    url: "https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=147379"
+    authority: national_legal_database
+    status: current_as_verified
+    verified_at: "2026-09-19"
+    controls:
+      - investment_forms
+    verified_facts:
+      - "Mẫu A.I.1: Văn bản đề nghị thực hiện dự án đầu tư."
+      - "Mẫu A.I.2-A.I.4: các dạng Đề xuất dự án đầu tư theo trường hợp."
+
+freshness_rules:
+  - "Nguồn status=partially_effective phải kiểm tra lịch sử hiệu lực và văn bản sửa đổi trước khi áp mẫu cụ thể."
+  - "Nguồn địa phương/cuộc thi phải xác minh đúng năm và đúng phiên bản thể lệ."
+  - "Không suy ra biểu mẫu năm sau từ biểu mẫu năm trước."

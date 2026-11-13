@@ -1,0 +1,93 @@
+{
+  "name": "chatgpt-workstation-mcp-bridge",
+  "version": "0.24.33",
+  "private": true,
+  "type": "module",
+  "description": "Windows workstation MCP bridge for ChatGPT Web with controlled file, terminal, and Office access.",
+  "author": "NHD MCP",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "dashboard": "electron .",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "service:install": "node scripts/install-service.cjs",
+    "service:uninstall": "node scripts/uninstall-service.cjs",
+    "package:win": "npm run test && electron-builder --win nsis",
+    "docs:architecture": "node scripts/generate-architecture-docs.mjs",
+    "docs:architecture:check": "node scripts/generate-architecture-docs.mjs --check",
+    "test:architecture": "npm run build && npm run docs:architecture:check && node --test test/architecture-invariants.test.mjs",
+    "lite:python": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-lite-python.ps1",
+    "lite:audit": "node scripts/lite-package-audit.mjs",
+    "package:lite:build": "node scripts/lite-package-audit.mjs && electron-builder --config electron-builder.lite.cjs --win nsis && node scripts/lite-package-audit.mjs --verify",
+    "package:lite": "npm test && npm run lite:python && npm run lite:cloudflared && npm run package:lite:build && npm run lite:assets",
+    "lite:cloudflared": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-lite-cloudflared.ps1",
+    "lite:assets": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-lite-release.ps1"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "docx": "9.7.1",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.11.0",
+    "node-windows": "^1.0.0-beta.8",
+    "pdfjs-dist": "^6.2.108",
+    "pptxgenjs": "4.0.1",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@microsoft/winappcli": "^0.7.1",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  },
+  "overrides": {
+    "uuid": "^11.1.1",
+    "image-size": "2.0.4"
+  },
+  "build": {
+    "appId": "vn.io.nhdmcp.workstation",
+    "productName": "ChatGPT Workstation MCP",
+    "asar": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "dashboard/**/*",
+      "browser-extension/**/*",
+      "isolated-agent/**/*",
+      "office/**/*",
+      "workers/**/*",
+      "skills/**/*",
+      "runtime/**/*",
+      "package.json",
+      "!cloudflare/**/*",
+      "!output/**/*",
+      "!release/**/*",
+      "!src/**/*",
+      "!test/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "ChatGPT-Workstation-MCP-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "shortcutName": "ChatGPT Workstation MCP"
+    }
+  }
+}

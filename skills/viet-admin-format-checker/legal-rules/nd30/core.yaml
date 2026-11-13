@@ -1,0 +1,93 @@
+version: 2
+rule_pack: nd30_2020
+scope_note: "Chỉ áp khi tài liệu thuộc phạm vi văn bản hành chính hoặc được dùng làm fallback hợp lệ. Không dùng để ghi đè mẫu/quy định chuyên ngành cụ thể."
+
+page:
+  paper: A4
+  orientation_default: portrait
+  landscape_allowed_for_large_tables_or_charts: true
+  margins_mm:
+    top: {min: 20, max: 25, renderer_default: 20}
+    bottom: {min: 20, max: 25, renderer_default: 20}
+    left: {min: 30, max: 35, renderer_default: 30}
+    right: {min: 15, max: 20, renderer_default: 20}
+
+typography:
+  font_family: "Times New Roman"
+  encoding: "Unicode"
+  color: "black"
+  body_size_pt: {min: 13, max: 14}
+
+body:
+  alignment: justify_both_margins
+  body_font_pt: {min: 13, max: 14}
+  first_line_indent_cm: [1.0, 1.27]
+  paragraph_gap_min_pt: 6
+  line_spacing_multiple: {min: 1.0, max: 1.5}
+  exceptions: ["quoc_hieu", "tieu_ngu", "ten_co_quan", "ten_loai", "trich_yeu", "phan_muc_tieu_de", "chu_ky", "noi_nhan"]
+  checks:
+    - "Lời văn nội dung phải Justify hai lề; đoạn căn trái mặc định là ERROR."
+    - "Thụt đầu dòng 1 cm hoặc 1,27 cm cho đoạn lời văn, không áp nhầm cho các trường dữ liệu biểu mẫu."
+    - "Khoảng cách giữa đoạn >=6 pt, khoảng cách dòng từ single đến 1,5 lines."
+    - "Lấy dữ liệu paragraph thực tế trong DOCX, không chỉ style Normal."
+
+issuing_agency:
+  name_format: uppercase_bold_12_to_13pt
+  horizontal_rule:
+    required: true
+    min_width_ratio_to_visible_line: 0.3333
+    max_width_ratio_to_visible_line: 0.5
+    centered_below_visible_name: true
+
+pagination:
+  position: "top_margin_center"
+  size_pt: {min: 13, max: 14}
+  first_page_visible: false
+
+national_header:
+  text: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"
+  size_pt: {min: 12, max: 13}
+  bold: true
+  alignment: center
+
+motto:
+  text: "Độc lập - Tự do - Hạnh phúc"
+  size_pt: {min: 13, max: 14}
+  bold: true
+  alignment: center
+  horizontal_rule:
+    required: true
+    style: "solid"
+    legal_length_rule: "Độ dài đường kẻ ngang bằng đúng độ dài hiển thị của dòng chữ 'Độc lập - Tự do - Hạnh phúc'."
+    visual_bounds_rule: "Đầu trái của đường kẻ phải trùng mép trái hiển thị của chữ 'Đ' trong 'Độc'; đầu phải phải trùng mép phải hiển thị của chữ 'c' trong 'phúc'."
+    do_not_use:
+      - "chuỗi ký tự gạch dưới như ____________________"
+      - "underline của khoảng trắng hoặc tab"
+      - "ảnh PNG/JPEG hoặc InlineShape Picture dùng thay đường kẻ tiêu ngữ, tên cơ quan"
+    word_implementation:
+      preferred: "Word Shape Line / Straight Connector"
+      alignment: "center under motto"
+      position_rule: "Căn theo biên hiển thị thực tế của chính dòng tiêu ngữ trong Word, không suy ra từ mép paragraph/cell nếu paragraph căn giữa."
+      line_color: "black"
+      default_weight_pt: 0.75
+      default_weight_is_legal_requirement: false
+      note: "0,75 pt là mặc định thực hành để có nét mảnh, không phải trị số bắt buộc do Nghị định 30 quy định."
+      table_cell_warning: "Khi tiêu ngữ nằm trong table cell và paragraph căn giữa, Word COM Range.Information có thể trả tọa độ đầu paragraph/cell không phản ánh đúng mép glyph đầu tiên. Phải visual-QA trong Word Live; ưu tiên giữ nguyên mép đúng rồi hiệu chỉnh đầu còn lại hoặc đo glyph thực tế thay vì chỉ lấy Range.Start/End."
+    verification:
+      - "Word Live: kiểm tra đầu line đúng dưới chữ 'Đ', cuối line đúng dưới chữ 'c' của 'phúc'."
+      - "Không chấp nhận line ngắn hơn, dài hơn hoặc lệch trái/phải so với tiêu ngữ."
+
+components:
+  - national_header
+  - motto
+  - issuing_agency
+  - document_number
+  - place_and_date
+  - document_type
+  - subject
+  - body
+  - signer
+  - seal_or_digital_signature_when_applicable
+  - recipients
+
+validation_note: "Chi tiết kích thước/cỡ chữ/vị trí của từng thành phần phải được đối chiếu với nguồn pháp lý chính thức trước khi cập nhật rule pack; không suy diễn từ file mẫu không rõ nguồn. Quy tắc đường kẻ tiêu ngữ ở trên phải được kiểm tra bằng visual QA trong Word khi triển khai thực tế."

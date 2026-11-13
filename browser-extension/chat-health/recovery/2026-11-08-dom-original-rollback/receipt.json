@@ -1,0 +1,54 @@
+﻿{
+    "LocalTime":  "2026-11-08T03:27:08",
+    "Status":  "RESTORED_EXACT_PRE_OPTIMIZATION_BYTES",
+    "Scope":  "NHD extension DOM optimization only",
+    "Files":  [
+                  {
+                      "File":  "content.js",
+                      "BeforeSHA256":  "3FF5C8645BC971B1E6ECB0C82CCF75DB7B0F9A0A4D6E10FB3C59F479DE7CA41B",
+                      "BeforeBackup":  "D:\\ChatGPT-Workstation-MCP\\browser-extension\\chat-health\\recovery\\2026-11-08-dom-original-rollback\\content.js.before-rollback.bak",
+                      "RestoredFrom":  "content.js.pre-on-demand-dom-20261108.bak",
+                      "ExpectedSHA256":  "8FAA912234C323DDC54A879F13EB54F2CE6F1C4CBD6CF2E08A73D36CAE7F098D"
+                  },
+                  {
+                      "File":  "dom-bridge.js",
+                      "BeforeSHA256":  "3BBFC186623728C7ECB95187298864B7A29288A818348D1A8EFF2F06ACE44786",
+                      "BeforeBackup":  "D:\\ChatGPT-Workstation-MCP\\browser-extension\\chat-health\\recovery\\2026-11-08-dom-original-rollback\\dom-bridge.js.before-rollback.bak",
+                      "RestoredFrom":  "dom-bridge.js.pre-light-scan-20261108.bak",
+                      "ExpectedSHA256":  "566AA0B4BB9CA467E0C16A729FE4BE0880E26858829720B37EAB5BB082F3DC84"
+                  },
+                  {
+                      "File":  "background.js",
+                      "BeforeSHA256":  "9CB3B54BA82B469949313E870D8FA0C6C7F9F1E59DB297D4DAA87E22E7ADE664",
+                      "BeforeBackup":  "D:\\ChatGPT-Workstation-MCP\\browser-extension\\chat-health\\recovery\\2026-11-08-dom-original-rollback\\background.js.before-rollback.bak",
+                      "RestoredFrom":  "background.js.pre-cooperative-20261108.bak",
+                      "ExpectedSHA256":  "0A43266343180F5A3019A9486466196FF3015C2CD2B6C2262D61FB5732B288B2"
+                  }
+              ],
+    "ManifestUnchanged":  true,
+    "BrowserNotReloaded":  true,
+    "Pending":  "Coc Coc extension reload required to activate restored scripts",
+    "TestArchive":  [
+                        {
+                            "Test":  "on-demand-dom.test.cjs",
+                            "ArchivedAt":  "D:\\ChatGPT-Workstation-MCP\\browser-extension\\chat-health\\recovery\\2026-11-08-dom-original-rollback\\superseded-tests\\on-demand-dom.test.cjs",
+                            "SHA256":  "8BC44C092B0AF6EA3831A51509D24CC2C401E9FD8BD4847F0B11266FA9307515"
+                        },
+                        {
+                            "Test":  "dom-bridge-optimized.test.cjs",
+                            "ArchivedAt":  "D:\\ChatGPT-Workstation-MCP\\browser-extension\\chat-health\\recovery\\2026-11-08-dom-original-rollback\\superseded-tests\\dom-bridge-optimized.test.cjs",
+                            "SHA256":  "59BFD7B044AFD20F83925994D715117087FABE1927A2B9E1F5F7F05B699CD3FF"
+                        },
+                        {
+                            "Test":  "cooperative-dom.test.cjs",
+                            "ArchivedAt":  "D:\\ChatGPT-Workstation-MCP\\browser-extension\\chat-health\\recovery\\2026-11-08-dom-original-rollback\\superseded-tests\\cooperative-dom.test.cjs",
+                            "SHA256":  "FDB1E6E078D2A9973546B69BAFB344F992A1AC00F5550170F7961C1422C56781"
+                        },
+                        {
+                            "Test":  "extension-reload.test.cjs",
+                            "ArchivedAt":  "D:\\ChatGPT-Workstation-MCP\\browser-extension\\chat-health\\recovery\\2026-11-08-dom-original-rollback\\superseded-tests\\extension-reload.test.cjs",
+                            "SHA256":  "1E1ACF553526FCF3CECA01AFF844EFFAB242BCCCFE37B84BBD2FF8778FDF0AFC"
+                        }
+                    ],
+    "Verification":  "Original source SHA-256 PASS (3/3); JS syntax PASS (6/6); TradingView regression PASS (6/6); optimization-only tests archived"
+}

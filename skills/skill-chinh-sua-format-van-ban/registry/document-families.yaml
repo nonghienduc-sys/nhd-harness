@@ -1,0 +1,27 @@
+version: 1
+families:
+  administrative:
+    description: "Văn bản hành chính thông thường."
+    default_rule_pack: nd30
+  specialized:
+    description: "Văn bản chuyên môn/nghiệp vụ ngành, có thể có quy định riêng."
+    default_rule_pack: null
+  statutory_form:
+    description: "Biểu mẫu bắt buộc ban hành kèm văn bản/thủ tục/thể lệ."
+    preserve_template_structure: true
+  project_document:
+    description: "Thuyết minh, đề xuất, hồ sơ dự án/chương trình."
+    legal_lookup_default: true
+  internal_organization:
+    description: "Văn bản nội bộ doanh nghiệp, HTX, tổ chức."
+  party_document:
+    description: "Văn bản Đảng; route sang rule pack riêng."
+    nd30_default: not_applicable
+  legal_normative:
+    description: "Văn bản quy phạm pháp luật; route sang hệ quy tắc riêng."
+    nd30_default: not_primary
+  academic_or_business:
+    description: "Tài liệu học thuật/kinh doanh không phải văn bản hành chính nhà nước."
+    nd30_default: not_applicable
+  unknown:
+    description: "Chưa đủ dữ liệu để xác định."

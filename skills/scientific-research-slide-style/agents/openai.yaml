@@ -1,0 +1,5 @@
+interface:
+  display_name: "Scientific Research Slide Style"
+  short_description: "Design research slides from reference templates"
+  brand_color: "#00BBD6"
+  default_prompt: "Use $scientific-research-slide-style to create a scientific research presentation matching the downloaded template style."

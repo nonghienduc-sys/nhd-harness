@@ -1,0 +1,56 @@
+version: 1
+pack_id: cooperative_registration
+domain: cooperatives
+verified_at: "2026-09-19"
+
+sources:
+  framework:
+    - coop_law_17_2023
+    - coop_decree_92_2024
+    - coop_decree_113_2024
+  forms:
+    - coop_circular_09_2024
+    - coop_circular_43_2025
+  related_current_forms:
+    - business_circular_68_2025
+
+classification:
+  family: statutory_form
+  document_signals:
+    - "GIẤY ĐỀ NGHỊ ĐĂNG KÝ HỢP TÁC XÃ"
+    - "DANH SÁCH THÀNH VIÊN"
+    - "Mẫu II-"
+    - "đăng ký tổ hợp tác"
+    - "đăng ký liên hiệp hợp tác xã"
+
+form_policy:
+  exact_template_required: true
+  tt09_2024_forms:
+    range: "II-1 đến II-12"
+    status: "base forms, subject to amendments"
+  two_level_local_government_adjustment:
+    source: coop_circular_43_2025
+    required: true
+  nd30:
+    applicability: fallback_only
+    rule: "Không dùng NĐ30 để thay đổi trường dữ liệu, thứ tự mục hoặc bố cục biểu mẫu bắt buộc."
+
+critical_guards:
+  - id: check_partial_effect
+    severity: ERROR
+    rule: "TT09/2024 và TT43/2025 đều có trạng thái hết hiệu lực một phần; phải resolve đúng mẫu/phần còn hiệu lực trước khi render."
+  - id: no_old_district_hardcode
+    severity: ERROR
+    rule: "Không hard-code 'Cơ quan đăng ký kinh doanh cấp huyện' hoặc tên Phòng Tài chính - Kế hoạch từ mẫu cũ nếu quy định hiện hành sau mô hình chính quyền địa phương 02 cấp đã thay đổi."
+  - id: preserve_form_semantics
+    severity: ERROR
+    rule: "Không tự rút gọn bảng danh sách thành viên, vốn góp, đại diện theo pháp luật hoặc trường khai báo bắt buộc."
+  - id: internal_htx_documents_are_different
+    severity: WARNING
+    rule: "Điều lệ, nghị quyết Đại hội thành viên, nghị quyết HĐQT, phương án SXKD nội bộ không mặc nhiên dùng mẫu đăng ký HTX; classify riêng trước."
+
+common_forms:
+  - id: II-1
+    name: "Giấy đề nghị đăng ký hợp tác xã"
+  - id: II-2
+    name: "Danh sách thành viên chính thức, thành viên liên kết góp vốn"

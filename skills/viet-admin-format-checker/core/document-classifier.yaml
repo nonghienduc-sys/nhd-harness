@@ -1,0 +1,46 @@
+version: 1
+purpose: "Phân loại tài liệu trước khi áp format."
+
+signals:
+  high_weight:
+    - explicit_form_number
+    - "cụm 'ban hành kèm theo'"
+    - exact_document_type_heading
+    - document_number_symbol
+    - mandatory_table_structure
+  medium_weight:
+    - title_keywords
+    - signature_structure
+    - recipients_block
+    - legal_basis_block
+    - section_pattern
+  low_weight:
+    - filename
+    - visual_similarity
+
+families:
+  - administrative
+  - specialized
+  - statutory_form
+  - project_document
+  - internal_organization
+  - party_document
+  - legal_normative
+  - academic_or_business
+  - unknown
+
+output_schema:
+  family: string
+  document_type: string
+  detected_template: string_or_null
+  confidence: "0..1"
+  evidence: list
+  requires_legal_lookup: boolean
+
+rules:
+  - when: "explicit_form_number or ban_hanh_kem_theo"
+    then: "prefer statutory_form over generic administrative classification"
+  - when: "document title is KẾ HOẠCH but an attached/specified sector form exists"
+    then: "classify by the specialized form, not by title alone"
+  - when: "confidence < 0.75"
+    then: "do not perform destructive reformat based on guessed type; resolve sources first"

@@ -1,0 +1,65 @@
+version: 1
+purpose: "Route tài liệu đến rule pack chuyên ngành trước khi xét NĐ30."
+
+routes:
+  - id: startup_bac_ninh_2026
+    pack: "legal-rules/specialized/startup/bac-ninh/2026/rules.yaml"
+    match:
+      all_or_any:
+        - "khởi nghiệp đổi mới sáng tạo"
+        - "Techfest Bắc Ninh 2026"
+        - "Bắc Ninh"
+      document_types:
+        - thuyet_minh_y_tuong
+        - thuyet_minh_du_an
+        - don_dang_ky
+        - phieu_de_xuat
+    priority: P1_P3
+
+  - id: cooperative_registration
+    pack: "legal-rules/specialized/cooperatives/registration/rules.yaml"
+    match:
+      any:
+        - "hợp tác xã"
+        - "liên hiệp hợp tác xã"
+        - "tổ hợp tác"
+        - "đăng ký hợp tác xã"
+        - "Mẫu II-"
+    priority: P1_P2
+
+  - id: mtqg_2026_2030
+    pack: "legal-rules/specialized/mtqg/2026-2030/rules.yaml"
+    match:
+      any:
+        - "chương trình mục tiêu quốc gia"
+        - "2026-2030"
+        - "dân tộc thiểu số và miền núi"
+        - "giảm nghèo bền vững"
+        - "nông thôn mới"
+    priority: P1_P3
+
+  - id: agriculture_production_support
+    pack: "legal-rules/specialized/agriculture/production-support/rules.yaml"
+    match:
+      any:
+        - "hỗ trợ phát triển sản xuất"
+        - "liên kết chuỗi giá trị"
+        - "vùng nguyên liệu"
+        - "OCOP"
+        - "truy xuất nguồn gốc"
+        - "nông nghiệp thông minh"
+    priority: P1_P3
+
+  - id: investment_vietnam
+    pack: "legal-rules/specialized/investment/vietnam/rules.yaml"
+    match:
+      any:
+        - "Văn bản đề nghị thực hiện dự án đầu tư"
+        - "Đề xuất dự án đầu tư"
+        - "Mẫu A.I."
+        - "cơ quan đăng ký đầu tư"
+    priority: P1_P2
+
+fallback:
+  administrative_document: "legal-rules/nd30/core.yaml"
+  unknown: "resolve sources before editing"

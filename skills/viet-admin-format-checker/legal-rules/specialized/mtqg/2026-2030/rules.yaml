@@ -1,0 +1,53 @@
+version: 1
+pack_id: mtqg_2026_2030
+domain: national_target_program
+period: "2026-2030"
+verified_at: "2026-09-19"
+
+sources:
+  program:
+    - mtqg_resolution_257_2025
+  management:
+    - mtqg_decree_358_2025
+  allocation:
+    - mtqg_decision_16_2026
+  agriculture_environment_guidance:
+    - mtqg_circular_23_2026
+  new_rural_criteria:
+    - mtqg_decision_51_2025
+
+program_identity:
+  current_name: "Chương trình mục tiêu quốc gia xây dựng nông thôn mới, giảm nghèo bền vững và phát triển kinh tế - xã hội vùng đồng bào dân tộc thiểu số và miền núi"
+  investment_horizon: "2026-2035"
+  implementation_pack_scope: "2026-2030"
+
+format_policy:
+  specific_appendix_first: true
+  nd30: fallback_only
+  local_rules_may_override_when_authorized: true
+
+reporting_forms_from_tt23_2026:
+  central_component_lead:
+    form: "Mẫu số 02 - Phụ lục I"
+  provincial_or_department:
+    form: "Mẫu số 03 - Phụ lục I"
+  commune:
+    form: "Mẫu số 04 - Phụ lục I"
+
+critical_guards:
+  - id: no_phase1_carryover
+    severity: ERROR
+    rule: "Không dùng nguyên bộ biểu mẫu/căn cứ giai đoạn I 2021-2025 cho hồ sơ 2026-2030 nếu chưa có quy định chuyển tiếp hoặc dẫn chiếu."
+  - id: decision_1719_is_historical_context
+    severity: WARNING
+    rule: "Quyết định 1719/QĐ-TTg và các hướng dẫn 2021-2025 chỉ là nguồn lịch sử/đối chiếu đối với hồ sơ giai đoạn I; hồ sơ mới phải resolve hệ văn bản 2026."
+  - id: form_level_matters
+    severity: ERROR
+    rule: "Báo cáo phải chọn đúng mẫu theo cấp/cơ quan báo cáo; không lấy Mẫu 03 áp cho cấp xã."
+  - id: local_implementation_check
+    severity: WARNING
+    rule: "Hồ sơ dự án/hỗ trợ tại địa phương phải kiểm tra thêm nghị quyết/quyết định/hướng dẫn địa phương còn hiệu lực."
+
+historical_phase_2021_2025:
+  status: separate_route
+  do_not_mix_with_current_pack: true

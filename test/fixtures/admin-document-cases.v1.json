@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "simulationOnly": true,
+  "cases": [
+    {
+      "id": "cong_van",
+      "file": "01-cong-van.docx",
+      "heading": null,
+      "subject": "V/v phối hợp cung cấp số liệu kiểm thử",
+      "markers": [
+        "V/v",
+        "Kính gửi:",
+        "Nơi nhận:"
+      ],
+      "body": [
+        "Kính gửi: [CƠ QUAN NHẬN]",
+        "1. Nội dung đề nghị: [NỘI DUNG KIỂM THỬ].",
+        "2. Thời hạn tổng hợp: [THỜI HẠN CHƯA XÁC MINH]."
+      ]
+    },
+    {
+      "id": "bao_cao",
+      "file": "02-bao-cao.docx",
+      "heading": "BÁO CÁO",
+      "subject": "Về kết quả thực hiện nhiệm vụ kiểm thử",
+      "markers": [
+        "BÁO CÁO",
+        "Kết quả",
+        "Đánh giá",
+        "Kiến nghị"
+      ],
+      "body": [
+        "I. Kết quả: [DỮ LIỆU CẦN XÁC MINH].",
+        "II. Đánh giá: [NHẬN ĐỊNH CẦN KIỂM CHỨNG].",
+        "III. Kiến nghị: [ĐỀ XUẤT CẦN DUYỆT]."
+      ]
+    },
+    {
+      "id": "ke_hoach",
+      "file": "03-ke-hoach.docx",
+      "heading": "KẾ HOẠCH",
+      "subject": "Tổ chức hoạt động kiểm thử nội bộ",
+      "markers": [
+        "KẾ HOẠCH",
+        "Mục đích",
+        "Nội dung",
+        "Tổ chức thực hiện"
+      ],
+      "body": [
+        "I. Mục đích, yêu cầu: [MỤC ĐÍCH].",
+        "II. Nội dung thực hiện: [NỘI DUNG].",
+        "III. Tổ chức thực hiện: [PHÂN CÔNG]."
+      ]
+    },
+    {
+      "id": "to_trinh",
+      "file": "04-to-trinh.docx",
+      "heading": "TỜ TRÌNH",
+      "subject": "Về việc đề xuất phương án kiểm thử",
+      "markers": [
+        "TỜ TRÌNH",
+        "Kính gửi:",
+        "Cơ sở",
+        "Nội dung đề nghị"
+      ],
+      "body": [
+        "Kính gửi: [CƠ QUAN CÓ THẨM QUYỀN]",
+        "I. Cơ sở đề xuất: [CĂN CỨ CHƯA XÁC MINH].",
+        "II. Nội dung đề nghị: [NỘI DUNG CHỜ PHÊ DUYỆT]."
+      ]
+    },
+    {
+      "id": "quyet_dinh",
+      "file": "05-quyet-dinh.docx",
+      "heading": "QUYẾT ĐỊNH",
+      "subject": "Về việc tổ chức kiểm thử kỹ thuật",
+      "markers": [
+        "QUYẾT ĐỊNH",
+        "Căn cứ",
+        "Điều 1.",
+        "Điều 2.",
+        "Điều 3."
+      ],
+      "body": [
+        "Căn cứ [VĂN BẢN CÓ THẨM QUYỀN – CHƯA XÁC MINH].",
+        "Điều 1. [NỘI DUNG QUYẾT ĐỊNH DỰ THẢO].",
+        "Điều 2. [TRÁCH NHIỆM THỰC HIỆN].",
+        "Điều 3. [HIỆU LỰC VÀ THI HÀNH – CHƯA XÁC MINH]."
+      ]
+    },
+    {
+      "id": "thong_bao",
+      "file": "06-thong-bao.docx",
+      "heading": "THÔNG BÁO",
+      "subject": "Về việc triển khai kiểm thử văn bản",
+      "markers": [
+        "THÔNG BÁO",
+        "Nội dung thông báo",
+        "Nơi nhận:"
+      ],
+      "body": [
+        "Nội dung thông báo: [THÔNG TIN DỰ THẢO].",
+        "Đề nghị các đơn vị liên quan thực hiện theo hướng dẫn sau khi được phê duyệt."
+      ]
+    }
+  ]
+}

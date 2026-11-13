@@ -1,0 +1,43 @@
+version: 1
+pack_id: investment_vietnam_forms
+domain: investment
+verified_at: "2026-09-19"
+
+sources:
+  forms:
+    - investment_circular_03_2021
+
+classification:
+  family: statutory_form
+  signals:
+    - "VĂN BẢN ĐỀ NGHỊ THỰC HIỆN DỰ ÁN ĐẦU TƯ"
+    - "ĐỀ XUẤT DỰ ÁN ĐẦU TƯ"
+    - "Mẫu A.I."
+    - "cơ quan đăng ký đầu tư"
+
+known_forms:
+  A.I.1:
+    name: "Văn bản đề nghị thực hiện dự án đầu tư"
+  A.I.2:
+    name: "Đề xuất dự án đầu tư - dự án thuộc diện chấp thuận chủ trương đầu tư do cơ quan nhà nước có thẩm quyền lập"
+  A.I.3:
+    name: "Đề xuất dự án đầu tư - dự án thuộc diện chấp thuận chủ trương đầu tư do nhà đầu tư đề xuất"
+  A.I.4:
+    name: "Đề xuất dự án đầu tư - dự án không thuộc diện chấp thuận chủ trương đầu tư"
+
+format_policy:
+  exact_template_required: true
+  nd30: fallback_only
+  preserve_numbered_sections: true
+  preserve_instructions_and_footnotes_when_they_are_part_of_official_form: true
+
+critical_guards:
+  - id: choose_correct_ai_form
+    severity: ERROR
+    rule: "Không chọn mẫu chỉ dựa vào chữ 'đề xuất dự án'; phải xác định đúng trường hợp A.I.2/A.I.3/A.I.4."
+  - id: effect_check
+    severity: WARNING
+    rule: "TT03/2021 đang được CSDL VBPL hiển thị còn hiệu lực tại thời điểm xác minh 19/09/2026; vẫn phải kiểm tra lại khi task ở thời điểm sau hoặc có văn bản sửa đổi mới."
+  - id: preserve_statutory_fields
+    severity: ERROR
+    rule: "Không bỏ trường nhà đầu tư, mục tiêu/quy mô, vốn, địa điểm, thời hạn, tiến độ hoặc các trường bắt buộc khác của mẫu."

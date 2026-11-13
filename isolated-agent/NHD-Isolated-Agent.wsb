@@ -1,0 +1,15 @@
+<Configuration>
+  <MemoryInMB>3072</MemoryInMB>
+  <vGPU>Disable</vGPU>
+  <Networking>Enable</Networking>
+  <ClipboardRedirection>Disable</ClipboardRedirection>
+  <PrinterRedirection>Disable</PrinterRedirection>
+  <AudioInput>Disable</AudioInput>
+  <VideoInput>Disable</VideoInput>
+  <MappedFolders>
+    <MappedFolder><HostFolder>D:\ChatGPT-Workstation-MCP\isolated-agent</HostFolder><SandboxFolder>C:\NHD\Agent</SandboxFolder><ReadOnly>true</ReadOnly></MappedFolder>
+    <MappedFolder><HostFolder>C:\Program Files\nodejs</HostFolder><SandboxFolder>C:\NHD\Node</SandboxFolder><ReadOnly>true</ReadOnly></MappedFolder>
+    <MappedFolder><HostFolder>D:\NHD-Agent-Exchange</HostFolder><SandboxFolder>C:\NHD\Exchange</SandboxFolder><ReadOnly>false</ReadOnly></MappedFolder>
+  </MappedFolders>
+  <LogonCommand><Command>cmd /d /s /c &quot;set NHD_AGENT_EXCHANGE=C:\NHD\Exchange&amp;&amp; C:\NHD\Node\node.exe C:\NHD\Agent\agent.mjs --bootstrap&quot;</Command></LogonCommand>
+</Configuration>

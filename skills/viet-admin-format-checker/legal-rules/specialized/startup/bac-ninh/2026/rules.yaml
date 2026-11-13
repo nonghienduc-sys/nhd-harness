@@ -1,0 +1,52 @@
+version: 1
+pack_id: startup_bac_ninh_2026
+domain: startup_competition
+jurisdiction: "Bắc Ninh"
+period: "2026"
+verified_at: "2026-09-19"
+
+sources:
+  primary:
+    - bacninh_startup_2026_launch
+  historical_reference_only:
+    - bacninh_startup_2025_notice
+
+classification:
+  family: statutory_form
+  likely_document_types:
+    - don_dang_ky
+    - thuyet_minh_du_an
+    - thuyet_minh_y_tuong
+    - attachment_evidence
+
+known_2026_submission_bundle:
+  - "Phiếu đăng ký"
+  - "Thuyết minh dự án"
+  - "Bản sao Giấy chứng nhận đăng ký doanh nghiệp đối với doanh nghiệp"
+  - "Tài liệu minh chứng liên quan nếu có"
+
+format_resolution:
+  controlling_rule: "Biểu mẫu/Phụ lục chính thức của Thể lệ cuộc thi 2026 nếu có."
+  nd30: fallback_only
+  preserve_template_fields: true
+  preserve_template_order: true
+  no_marketing_cover_unless_template_allows: true
+
+critical_guards:
+  - id: no_2025_template_inheritance
+    severity: ERROR
+    rule: "Không được tự suy ra Mẫu 1a/1b hoặc Mẫu 02 của năm 2025 là mẫu bắt buộc của năm 2026."
+  - id: exact_year
+    severity: ERROR
+    rule: "Năm trên tiêu đề, thể lệ, phiếu đăng ký và thuyết minh phải khớp phiên bản cuộc thi đang nộp."
+  - id: attachment_required_for_strict_render
+    severity: WARNING
+    rule: "Nếu chưa có file Thể lệ/Phụ lục 2026 thì chỉ được chuẩn hóa layout chung; không tuyên bố khớp tuyệt đối biểu mẫu 2026."
+
+legacy_2025_mapping:
+  status: historical_only
+  forms:
+    - "Mẫu 1a: cá nhân/nhóm cá nhân"
+    - "Mẫu 1b: tổ chức/doanh nghiệp"
+    - "Mẫu 02: thuyết minh ý tưởng/dự án"
+  source: bacninh_startup_2025_notice

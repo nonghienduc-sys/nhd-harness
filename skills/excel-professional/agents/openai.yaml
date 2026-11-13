@@ -1,0 +1,6 @@
+interface:
+  display_name: "Excel Professional"
+  short_description: "Build, audit, and improve advanced workbooks"
+  default_prompt: "Use $excel-professional to analyze and improve this Excel workbook."
+policy:
+  allow_implicit_invocation: true

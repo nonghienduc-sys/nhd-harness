@@ -1,0 +1,4 @@
+interface:
+  display_name: "Slide Design"
+  short_description: "Polish presentation slide design."
+  default_prompt: "Redesign this slide deck so it is balanced, polished, readable, and presentation-ready."

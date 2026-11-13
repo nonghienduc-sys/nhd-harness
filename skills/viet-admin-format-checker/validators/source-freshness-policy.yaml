@@ -1,0 +1,28 @@
+version: 1
+purpose: "Ngăn skill dùng mẫu/pháp lý đã cũ hoặc sai giai đoạn."
+
+rules:
+  - id: partial_effect_requires_history_check
+    when: "source.status == partially_effective"
+    action: "check amendment/repeal history before applying exact template"
+    severity: ERROR
+
+  - id: local_competition_year_lock
+    when: "document belongs to annual contest/program"
+    action: "match source year to submission year; previous-year templates are historical only"
+    severity: ERROR
+
+  - id: phase_lock
+    when: "program has implementation phases"
+    action: "do not mix forms, legal basis or budget rules across phases without explicit transitional authority"
+    severity: ERROR
+
+  - id: stale_current_as_verified
+    when: "source.status == current_as_verified"
+    action: "refresh official status if verification date is materially old or task is high-stakes"
+    severity: WARNING
+
+  - id: exact_form_attachment
+    when: "strict_template_match == true"
+    action: "obtain the controlling annex/form itself, not only a news summary"
+    severity: ERROR

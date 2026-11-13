@@ -1,0 +1,46 @@
+version: 1
+purpose: "Xác định nguồn điều chỉnh và phạm vi áp dụng trước khi format."
+
+source_kinds:
+  - law
+  - decree
+  - circular
+  - decision
+  - regulation
+  - official_guidance
+  - procedure
+  - competition_rules
+  - mandatory_appendix
+  - mandatory_form
+  - local_rule
+  - organization_rule
+  - best_practice
+
+lookup_required_when:
+  - explicit_form_number
+  - "có cụm 'ban hành kèm theo'"
+  - specialized_procedure
+  - competition_or_application_file
+  - support_or_funding_file
+  - investment_file
+  - finance_file
+  - agriculture_file
+  - education_file
+  - national_target_program_file
+  - potentially_time_sensitive_rule
+  - unknown_or_conflicting_source
+
+resolution_output:
+  primary_authority: []
+  mandatory_templates: []
+  specialized_rules: []
+  local_rules: []
+  nd30:
+    applicability: "direct|fallback|not_applicable|unknown"
+    reason: ""
+  unresolved: []
+
+trust_policy:
+  official_source_first: true
+  secondary_source_use: "reference only when official source unavailable or for discovery"
+  never_treat_blog_as_controlling_rule: true

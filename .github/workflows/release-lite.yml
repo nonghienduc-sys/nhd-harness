@@ -1,0 +1,56 @@
+name: NHD Harness Lite Release
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'lite-v*'
+permissions:
+  contents: write
+jobs:
+  verify-build:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout private source
+        uses: actions/checkout@v4
+      - name: Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install verified dependencies
+        run: npm ci
+      - name: Test source and safety contracts
+        run: npm test
+      - name: Download and checksum official portable Python
+        shell: pwsh
+        run: ./scripts/prepare-lite-python.ps1
+      - name: Prepare verified Cloudflare client
+        shell: pwsh
+        run: ./scripts/prepare-lite-cloudflared.ps1
+      - name: Build NHD Lite Windows installer
+        run: npm run package:lite:build
+      - name: Packaged read-only smoke test
+        run: node scripts/smoke-lite.mjs
+      - name: Headless first-run wizard visual smoke
+        run: node scripts/smoke-lite-ui.mjs
+      - name: Create installer checksum
+        shell: pwsh
+        run: ./scripts/prepare-lite-release.ps1
+      - name: Upload verified build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nhd-harness-lite-windows
+          path: |
+            release-lite/NHD-Harness-Lite-Setup.exe
+            release-lite/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Publish only when owner pushes explicit lite version tag
+        if: startsWith(github.ref, 'refs/tags/lite-v')
+        env:
+          GH_TOKEN: ${{ secrets.NHD_DISTRIBUTION_TOKEN || github.token }}
+          NHD_DISTRIBUTION_REPO: ${{ vars.NHD_DISTRIBUTION_REPO || github.repository }}
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path "release-lite/NHD-Harness-Lite-Setup.exe").Path
+          gh release create "${{ github.ref_name }}" "$exe" "release-lite/SHA256SUMS.txt" --title "NHD Harness Lite ${{ github.ref_name }}" --notes "Windows Lite installer; optional runtimes not included. Review docs/NHD_LITE_RELEASE.md before publishing." --draft --repo "$env:NHD_DISTRIBUTION_REPO"

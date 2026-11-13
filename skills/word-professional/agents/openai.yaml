@@ -1,0 +1,6 @@
+interface:
+  display_name: "Word Professional"
+  short_description: "Create and edit polished Word documents"
+  default_prompt: "Use $word-professional to format and review this Word document professionally."
+policy:
+  allow_implicit_invocation: true

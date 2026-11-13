@@ -1,0 +1,1876 @@
+{
+  "schemaVersion": 1,
+  "inventoryScope": "D:/ChatGPT-Workstation-MCP/skills",
+  "requestedHistoricalSkillCount": 52,
+  "inventory": {
+    "registeredSkillCount": 51,
+    "physicalFolderCount": 52,
+    "executableSkillFiles": 51,
+    "enabledSkillCount": 50,
+    "unregisteredFolders": [
+      "github-tools-pack"
+    ],
+    "unreconciledDifferenceFromHistoricalCount": 1
+  },
+  "note": "Historical 52 count is not verified by current NHD runtime. Unregistered github-tools-pack is resource-only, not an activatable skill.",
+  "routing": {
+    "canonicalAdminFormatter": "viet-admin-format-checker",
+    "disabledLegacyIds": [
+      "skill-chinh-sua-format-van-ban"
+    ],
+    "legacyAlias": {
+      "skill-chinh-sua-format-van-ban": "viet-admin-format-checker"
+    },
+    "aliasPolicy": "resolve before activation; refuse if target disabled; legacy never executes"
+  },
+  "classificationPolicy": {
+    "io": "inferred workflow contract, subject to per-skill runtime validation",
+    "dependencies": "recommended only; no hard coupling inferred",
+    "backend": "recommended adapter, NOT verified implementation"
+  },
+  "skills": [
+    {
+      "id": "agent-security-regression",
+      "displayName": "agent-security-regression",
+      "description": "Run local adversarial regression cases for indirect prompt injection, malicious tool metadata, secret-exfiltration language and confirmation-suppression attempts. Designed as a lightweight NHD counterpart to AgentDojo-style security evaluation.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "agent_security_testing",
+      "io": {
+        "inputs": [
+          "agent_trace",
+          "attack_cases"
+        ],
+        "outputs": [
+          "security_test_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "test_runner"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/agent-security-regression/SKILL.md",
+      "instructionSha256": "150320261ac755ced232594ab12dfdc3b35a71d7f18a884a38a1889712f73714",
+      "fileCount": 2,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "commune-office-operations",
+      "displayName": "commune-office-operations",
+      "description": "Use when handling commune-level office operations such as UBND xã workflows, thôn reporting, one-door intake coordination, periodic summaries, dispatch follow-up, cross-unit reminders, local administrative coordination, or mixed office tasks across citizen intake, reports, and official communication.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "commune_workflow",
+      "io": {
+        "inputs": [
+          "request",
+          "dispatch",
+          "local_records"
+        ],
+        "outputs": [
+          "workflow_plan",
+          "dossier"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": "office-records-tracker",
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "orchestrator",
+          "document_qa"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/commune-office-operations/SKILL.md",
+      "instructionSha256": "dfed75589488c5f9af7da98e7009d64a8940851a1c24b7fd98d0a31803ec0d0b",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "daily-document-workspace",
+      "displayName": "daily-document-workspace",
+      "description": "Use when creating, saving, organizing, or exporting user-facing documents, reports, bundles, test outputs, Markdown, Word, PDF, TXT, JSON, manifests, or source copies for this user. Always save outputs under D:/Không gian Ai in a daily folder named dd-MM-yyyy, create the folder if missing, avoid overwriting existing files, and include a short manifest when multiple files are produced.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "document_workspace",
+      "io": {
+        "inputs": [
+          "artifact",
+          "target_folder"
+        ],
+        "outputs": [
+          "organized_artifact",
+          "manifest"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/daily-document-workspace/SKILL.md",
+      "instructionSha256": "84c57727b24e6ec4eae4e1d3d78930696c41eee64de4b5f541b1fc6a072d4071",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "data-analytics-duckdb",
+      "displayName": "data-analytics-duckdb",
+      "description": "Analyze large local CSV, Parquet and JSON datasets with DuckDB SQL without loading everything into Excel or pandas memory.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "data",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "dataset_analysis",
+      "io": {
+        "inputs": [
+          "csv",
+          "parquet",
+          "json",
+          "sql"
+        ],
+        "outputs": [
+          "query_results",
+          "data_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "duckdb"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/data-analytics-duckdb/SKILL.md",
+      "instructionSha256": "38b26f525953720272d4a2f703313675ff0d851a5fad825008e88a4a5f7c7609",
+      "fileCount": 3,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "design-reference-library",
+      "displayName": "design-reference-library",
+      "description": "Reference library of real product and brand DESIGN.md files from Awesome DESIGN.md. Use to ground UI art direction in concrete typography, color, spacing, motion, component, and brand patterns instead of generic AI defaults.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "design_references",
+      "io": {
+        "inputs": [
+          "design_brief"
+        ],
+        "outputs": [
+          "design_references"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/design-reference-library/SKILL.md",
+      "instructionSha256": "29dc505c593cd05a4e6fa3636f352f81e44e22692b7e5c8a92d9b278a6eb72bf",
+      "fileCount": 150,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "design-taste-frontend",
+      "displayName": "design-taste-frontend",
+      "description": "Anti-slop frontend skill for landing pages, portfolios, and redesigns. The agent reads the brief, infers the right design direction, and ships interfaces that do not look templated. Real design systems when applicable, audit-first on redesigns, strict pre-flight check.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "frontend_design",
+      "io": {
+        "inputs": [
+          "design_brief",
+          "web_source"
+        ],
+        "outputs": [
+          "web_interface",
+          "design_audit"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "frontend_dev"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/design-taste-frontend/SKILL.md",
+      "instructionSha256": "2e064e92aca020b2e0bad69326fe7ea55d59005ed53d1a8cbce1bd135d44b8b3",
+      "fileCount": 3,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "document-ingest-markitdown",
+      "displayName": "document-ingest-markitdown",
+      "description": "Convert PDF, DOCX, PPTX, XLSX, HTML, email and other supported documents into Markdown using Microsoft MarkItDown for AI analysis, summarization, indexing and RAG-oriented workflows.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "document_ingest",
+      "io": {
+        "inputs": [
+          "pdf",
+          "docx",
+          "pptx",
+          "xlsx",
+          "html"
+        ],
+        "outputs": [
+          "markdown",
+          "extracted_text"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "markitdown",
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/document-ingest-markitdown/SKILL.md",
+      "instructionSha256": "ea1a84f526278243afac25d2160e3aa105d9b512fe6e9fd6037ced5c976f5533",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "docx-generator",
+      "displayName": "docx-generator",
+      "description": "Generate structured .docx files programmatically with the docx JavaScript library, especially for reports, forms, tables and repeatable document templates before high-fidelity Word finalization.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "docx_generate",
+      "io": {
+        "inputs": [
+          "structured_sections",
+          "template"
+        ],
+        "outputs": [
+          "docx"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "docx_js",
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/docx-generator/SKILL.md",
+      "instructionSha256": "7f00d77e062b7e9a8b2264a9f2b1d0e2e5379492f7fdd687df2b01e4b54f3d1c",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "excel-professional",
+      "displayName": "excel-professional",
+      "description": "Professional Microsoft Excel workbook creation, editing, auditing, analysis, and training for .xlsx, .xlsm, .xlsb, .csv, and spreadsheet workflows. Use when Codex needs to work with Excel or Vietnamese requests such as sua file Excel, kiem tra cong thuc, bang tinh, PivotTable, Power Query, dashboard, bieu do, macro VBA, luyen Excel, bai test Excel kho. Handles formulas, tables, PivotTables, PivotCharts, Power Query, Power Pivot, dashboards, data validation, conditional formatting, workbook repair, financial/data-analysis models, and finding difficult Excel practice tests/exercises online.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "data",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "excel_edit_audit",
+      "io": {
+        "inputs": [
+          "spreadsheet",
+          "instructions"
+        ],
+        "outputs": [
+          "xlsx",
+          "audit_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "excel_live",
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/excel-professional/SKILL.md",
+      "instructionSha256": "85d6e31096609963883a84c2b0323153ced9f220a371c73cccde2ae7c81559cc",
+      "fileCount": 6,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "github-tools-pack",
+      "displayName": "github-tools-pack",
+      "description": "",
+      "registration": "filesystem_only",
+      "type": "resource_pack",
+      "category": "workflow",
+      "readiness": "not_registered",
+      "enabled": false,
+      "capability": "unclassified_reference",
+      "io": {
+        "inputs": [
+          "reference"
+        ],
+        "outputs": [
+          "reference"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": null,
+      "instructionSha256": null,
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "image-to-code",
+      "displayName": "image-to-code",
+      "description": "Elite website image-to-code skill for Codex. For visually important web tasks, it must first generate the design image(s) itself, deeply analyze them, then implement the website to match them as closely as possible. In Codex, it must prefer large, readable, section-specific images instead of tiny compressed boards, generate fresh standalone images for sections or detail views instead of cropping old ones, avoid lazy under-generation, avoid cards-inside-cards-inside-cards UI, and keep the hero clean, spacious, readable, and visible on a small laptop.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "image_to_web",
+      "io": {
+        "inputs": [
+          "reference_image",
+          "requirements"
+        ],
+        "outputs": [
+          "web_source"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "frontend_dev",
+          "image_analysis"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/image-to-code/SKILL.md",
+      "instructionSha256": "2944189b448e2a77cbbf55014030b1890a9ec5891acc9fa97fb8c215e0008407",
+      "fileCount": 3,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "knowledge-cat-ppt-skill",
+      "displayName": "knowledge-cat-ppt-skill",
+      "description": "Story-first planning and QA for PowerPoint and slide decks. Use before visual production when the deck needs a clear audience outcome, narrative spine, action titles, evidence mapping, speaker notes, or output-lane selection.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "presentation",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "slide_story_planning",
+      "io": {
+        "inputs": [
+          "presentation_brief",
+          "sources"
+        ],
+        "outputs": [
+          "storyboard",
+          "speaker_notes"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "llm_draft"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/knowledge-cat-ppt-skill/SKILL.md",
+      "instructionSha256": "7635b44333b819cceec4769681a6f4fcb448e6fbfbe18c877cdc516ec959b7c2",
+      "fileCount": 18,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "local-semantic-search",
+      "displayName": "local-semantic-search",
+      "description": "Build a local hybrid retrieval store with FastEmbed, sqlite-vec and SQLite FTS5 for cross-document recall. Supports vector search, BM25-style lexical search, Reciprocal Rank Fusion, provenance locators and source verification without a hosted vector database.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "document_retrieval",
+      "io": {
+        "inputs": [
+          "documents",
+          "search_query"
+        ],
+        "outputs": [
+          "ranked_passages"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "local_index"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/local-semantic-search/SKILL.md",
+      "instructionSha256": "7936b609ed9560835740ea0087fd94178b28a8acdea8e50769f8f30e49569f2c",
+      "fileCount": 5,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "mcp-security-audit",
+      "displayName": "mcp-security-audit",
+      "description": "Run a local static security audit of MCP tool descriptions and packaged skills for prompt-injection, tool-poisoning, unsafe side-effect language, hidden Unicode, suspicious exfiltration hints, and duplicate tool names. No content is sent to a remote scanner.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "mcp_security_audit",
+      "io": {
+        "inputs": [
+          "mcp_metadata",
+          "skill_files"
+        ],
+        "outputs": [
+          "audit_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "filesystem",
+          "test_runner"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/mcp-security-audit/SKILL.md",
+      "instructionSha256": "dc97549a1cbe83e28b9e20ce028aa51a6118818cf629f3e0cb1125a78630499f",
+      "fileCount": 3,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "mcp-trace-evaluation",
+      "displayName": "mcp-trace-evaluation",
+      "description": "Evaluate NHD MCP tool-call telemetry using local OpenInference-compatible TOOL spans. Tracks latency, result size, errors, ambiguous verification and task-run correlation without storing raw prompts, raw tool inputs, raw tool outputs or sending traces to a remote collector.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "trace_evaluation",
+      "io": {
+        "inputs": [
+          "tool_trace"
+        ],
+        "outputs": [
+          "metrics",
+          "audit_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "telemetry"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/mcp-trace-evaluation/SKILL.md",
+      "instructionSha256": "eff5571fb32662685975de5347c8c64a42ab05f3c603b72a57375767c622c4f8",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "media-source-hunter",
+      "displayName": "media-source-hunter",
+      "description": "Find official YouTube video metadata, Google search references, and licensed-stock footage/image candidates with source provenance and rights review. Never download or publish third-party media without authorization.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "media",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "media_discovery",
+      "io": {
+        "inputs": [
+          "query",
+          "storyboard",
+          "license_constraints"
+        ],
+        "outputs": [
+          "asset_candidates",
+          "rights_review"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "media_source_discover",
+          "media_source_status"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/media-source-hunter/SKILL.md",
+      "instructionSha256": "5fdfea983b6cc447547a79536bab1def7dde500ff2052d4592b998382a30eae0",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "message-intake-tasks",
+      "displayName": "message-intake-tasks",
+      "description": "Use when extracting tasks, deadlines, owners, stakeholders, decisions, blockers, waiting items, next steps, and follow-up messages from messy chat logs, Zalo, Telegram, email snippets, meeting notes, or multi-person operational messages.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "message_intake",
+      "io": {
+        "inputs": [
+          "message_thread",
+          "minutes"
+        ],
+        "outputs": [
+          "tasks",
+          "owners",
+          "deadlines"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "document_qa"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/message-intake-tasks/SKILL.md",
+      "instructionSha256": "60d164d20f34f1ff53410f31ad2890f4a8554d5081baf8c02fc2a5367aed7e34",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "natural-cinematic-media",
+      "displayName": "natural-cinematic-media",
+      "description": "Create and QA AI image/video prompts that feel photographed or filmed rather than generically AI-rendered, using concrete cinematography, physical realism, natural imperfection, subject continuity, Google Flow/Veo adaptation, and anti-slop prompt linting.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "media",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "cinematic_media_prompt",
+      "io": {
+        "inputs": [
+          "creative_brief"
+        ],
+        "outputs": [
+          "media_prompt",
+          "qa_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "image_video_prompting"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/natural-cinematic-media/SKILL.md",
+      "instructionSha256": "c5976443975f060631f2b22f34ed9619a347056b8a7f467f28d6d8d429c23e8d",
+      "fileCount": 6,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "ocr-vietnamese-paddleocr",
+      "displayName": "ocr-vietnamese-paddleocr",
+      "description": "OCR Vietnamese and multilingual scanned images/PDF pages locally with PaddleOCR, used when native text extraction fails or Tesseract is unavailable.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "media",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "vietnamese_ocr",
+      "io": {
+        "inputs": [
+          "scan",
+          "image"
+        ],
+        "outputs": [
+          "recognized_text"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "paddleocr"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/ocr-vietnamese-paddleocr/SKILL.md",
+      "instructionSha256": "21c624dcc8de1552be55abe4caf88307e0250ac37d1d87d46bc7eabeb65e9b1a",
+      "fileCount": 3,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-archive-filing-pack",
+      "displayName": "office-archive-filing-pack",
+      "description": "Use when organizing office archives, dossier structures, filing indexes, archive labels, retention-oriented folders, document bundles, handover lists, or end-of-process filing/packaging workflows.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "office_archive",
+      "io": {
+        "inputs": [
+          "dossier",
+          "retention_rule"
+        ],
+        "outputs": [
+          "archive_index",
+          "handover_manifest"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-archive-filing-pack/SKILL.md",
+      "instructionSha256": "ce56a254ca5420b5bdc9553936a34586ec1b647e383cd009b1866eb8f54004e9",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-citizen-intake-pack",
+      "displayName": "office-citizen-intake-pack",
+      "description": "Use when organizing citizen-facing intake workflows such as request intake, complaint logs, service counters, missing-document checklists, handoff notes, appointment follow-ups, and office front-desk processing bundles.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "citizen_intake",
+      "io": {
+        "inputs": [
+          "citizen_request",
+          "evidence"
+        ],
+        "outputs": [
+          "intake_record",
+          "checklist"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "document_qa"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-citizen-intake-pack/SKILL.md",
+      "instructionSha256": "f5b61ccaa7d0bfd70aaeeebd6756c8db34e1f87935982a260f1d9789d7bd20a0",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-email-drafter",
+      "displayName": "office-email-drafter",
+      "description": "Use when drafting, rewriting, formatting, summarizing, or saving office emails, reply chains, follow-up emails, escalation emails, reminder emails, or professional email templates for internal or external communication.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "email_draft",
+      "io": {
+        "inputs": [
+          "email_thread",
+          "instructions"
+        ],
+        "outputs": [
+          "email_draft"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "outlook_read",
+          "llm_draft"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-email-drafter/SKILL.md",
+      "instructionSha256": "7b496ccfe6d4bc4a12a86e0eef72e3e0e4c65497183bef47ff6fa8905cae7209",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-legal-reference-pack",
+      "displayName": "office-legal-reference-pack",
+      "description": "Use when organizing legal-reference packs, policy basis summaries, regulation checklists, cited office justifications, normative-reference appendices, or official-reference bundles that support office documents and workflows without claiming legal certainty beyond cited sources.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "legal_references",
+      "io": {
+        "inputs": [
+          "source_documents",
+          "legal_query"
+        ],
+        "outputs": [
+          "reference_pack"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "document_qa",
+          "legal_sources"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-legal-reference-pack/SKILL.md",
+      "instructionSha256": "510c7bf6eb4ca476868f1fd43396d216fa9a03f1f34e358b94c111721aab3f35",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-records-tracker",
+      "displayName": "office-records-tracker",
+      "description": "Use when tracking incoming/outgoing documents, registry numbers, office correspondence, due dates, document status, issuing units, receiving units, filing logs, office work queues, or records-management style workflows.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "office_records",
+      "io": {
+        "inputs": [
+          "incoming_document",
+          "outgoing_document"
+        ],
+        "outputs": [
+          "registry_record"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-records-tracker/SKILL.md",
+      "instructionSha256": "f9f450b2f3ea3676701238f1b86a2cecc5f54c2fe75b2ad25502885ae3452d08",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-reporting-pack",
+      "displayName": "office-reporting-pack",
+      "description": "Use when preparing periodic office reports such as daily, weekly, monthly, quarterly, annual, progress, status, summary, implementation, or leadership reporting packs that combine narrative summary, metrics, blockers, actions, and appendices.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "office_report",
+      "io": {
+        "inputs": [
+          "metrics",
+          "updates"
+        ],
+        "outputs": [
+          "report_draft"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "llm_draft",
+          "docx"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-reporting-pack/SKILL.md",
+      "instructionSha256": "de41ad8b584bb76e26bdcc516bf25c4eccda188a4261e10020ae5bb728d62f94",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-scan-ocr-intake",
+      "displayName": "office-scan-ocr-intake",
+      "description": "Use when extracting, cleaning, classifying, or structuring text from scanned office documents, photos of paperwork, PDFs, forms, receipts, letters, or low-quality document images before they become editable office records.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "media",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "office_ocr",
+      "io": {
+        "inputs": [
+          "scanned_pdf",
+          "image"
+        ],
+        "outputs": [
+          "text",
+          "structured_record"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "pdf_document",
+          "ocr"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-scan-ocr-intake/SKILL.md",
+      "instructionSha256": "7ceb8f8e5f7d8980e5304f6a015110dce43877401ebcc0449a2de01d5519205c",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-template-library",
+      "displayName": "office-template-library",
+      "description": "Use when creating, normalizing, cataloging, or saving reusable office templates such as report templates, email templates, form skeletons, checklists, meeting formats, and standard operating text blocks.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "office_templates",
+      "io": {
+        "inputs": [
+          "template_brief"
+        ],
+        "outputs": [
+          "reusable_template"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "filesystem",
+          "docx"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-template-library/SKILL.md",
+      "instructionSha256": "07ed194578c01a26c53cd9885ab92dcffb89d6a8ae050a09a1c74a29dfdf58d8",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-word-writer",
+      "displayName": "office-word-writer",
+      "description": "Use when drafting, editing, structuring, formatting, saving, or exporting office-style documents such as reports, proposals, meeting minutes, letters, memos, forms, templates, DOCX-like content, or Word-first business documents.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "word_authoring",
+      "io": {
+        "inputs": [
+          "draft",
+          "outline",
+          "template"
+        ],
+        "outputs": [
+          "docx"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "word_live",
+          "docx"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-word-writer/SKILL.md",
+      "instructionSha256": "83525fc0c41d77ad0ddb5108aec80e618816b0eb0238759b4ca3783cfbba6bf5",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "office-workflow-qa",
+      "displayName": "office-workflow-qa",
+      "description": "Use when reviewing office workflows, templates, trackers, forms, bundles, or process outputs for missing fields, inconsistent statuses, deadline gaps, template defects, routing ambiguity, and operational readiness.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "office_workflow_qa",
+      "io": {
+        "inputs": [
+          "document",
+          "workflow_state"
+        ],
+        "outputs": [
+          "issues",
+          "review_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "document_qa"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/office-workflow-qa/SKILL.md",
+      "instructionSha256": "55b41b2350654e1731e110d1a8f60858e09cc59a1539c8575669bc97374abfbb",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "pdf",
+      "displayName": "pdf",
+      "description": "Use when tasks involve reading, creating, or reviewing PDF files where rendering and layout matter; prefer visual checks by rendering pages (Poppler) and use Python tools such as `reportlab`, `pdfplumber`, and `pypdf` for generation and extraction.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "pdf_processing",
+      "io": {
+        "inputs": [
+          "pdf",
+          "source_document"
+        ],
+        "outputs": [
+          "pdf",
+          "extracted_text",
+          "render"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "pdf_document",
+          "pdf_renderer"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/pdf/SKILL.md",
+      "instructionSha256": "d108cf2b36355ab37eb5962933f4d09785ec002f3105c506129320209306b9d2",
+      "fileCount": 4,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "pdf-layout-pymupdf4llm",
+      "displayName": "pdf-layout-pymupdf4llm",
+      "description": "Extract layout-aware Markdown, JSON, text and tables from PDFs using PyMuPDF4LLM; use for multi-column reports, tables, page chunks and RAG-ready document ingestion.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "pdf_layout_extract",
+      "io": {
+        "inputs": [
+          "pdf"
+        ],
+        "outputs": [
+          "layout_text",
+          "tables"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "pymupdf4llm"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/pdf-layout-pymupdf4llm/SKILL.md",
+      "instructionSha256": "56916a25c85c06baa5acd8831ab25c864d177bb65bdc01a082c771d19a10d38c",
+      "fileCount": 3,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "playwright-cli",
+      "displayName": "playwright-cli",
+      "description": "Use Microsoft Playwright CLI to inspect, exercise, screenshot, and verify web interfaces during implementation. Intended for visual/interaction QA and browser testing, with MCP terminal safety controls.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "browser_testing",
+      "io": {
+        "inputs": [
+          "web_target",
+          "test_plan"
+        ],
+        "outputs": [
+          "browser_report",
+          "screenshot"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "playwright"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/playwright-cli/SKILL.md",
+      "instructionSha256": "0ea0acd7552777856e6c337821b343e9c207782fc766917d7a8cd3a34005f37d",
+      "fileCount": 4,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "pptx-template-engine",
+      "displayName": "pptx-template-engine",
+      "description": "Template-cloning and editable PPTX engine for NHD. Use when a presentation should preserve the exact structure of a reference deck, ingest reusable slide templates, fill stable text fields, customize a reusable design system, or mix cloned slides with native editable custom slides.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "presentation",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "pptx_template_engine",
+      "io": {
+        "inputs": [
+          "template_deck",
+          "content"
+        ],
+        "outputs": [
+          "editable_pptx"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "pptx"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/pptx-template-engine/SKILL.md",
+      "instructionSha256": "cbedd36698200214cf9751b3786fdd9848e6f5ab5f9e9f8ddcab676ce2a31fda",
+      "fileCount": 7,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "pptxgenjs-authoring",
+      "displayName": "pptxgenjs-authoring",
+      "description": "Create and regenerate PowerPoint .pptx files programmatically with PptxGenJS, then verify the result visually and with PowerPoint when available.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "presentation",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "pptx_generate",
+      "io": {
+        "inputs": [
+          "slide_spec"
+        ],
+        "outputs": [
+          "pptx"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "pptxgenjs"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/pptxgenjs-authoring/SKILL.md",
+      "instructionSha256": "609c322cf602ed7b5e1f8b875a1768b7a06d7902ab1ad7d51259968b04d1453b",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "presentation-skill",
+      "displayName": "presentation-skill",
+      "description": "Primary NHD skill for building, redesigning, rendering, and verifying polished editable PowerPoint decks with source-first structure, varied human-looking layouts, style routing, and strict visual QA.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "presentation",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "presentation_authoring",
+      "io": {
+        "inputs": [
+          "outline",
+          "source_assets"
+        ],
+        "outputs": [
+          "pptx",
+          "qa_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "pptx",
+          "powerpoint_live"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/presentation-skill/SKILL.md",
+      "instructionSha256": "cacfa4469c44b58a8e97f60e5d2cc205cd8ff2ea86992e6074b8bfad3aab36af",
+      "fileCount": 47,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "school-office-pack",
+      "displayName": "school-office-pack",
+      "description": "Use when handling school-related office workflows such as school progress reports, student-related summary packs, facility issue logs, teacher/admin coordination, school deadline reminders, education reporting bundles, or commune-to-school operational follow-up.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "school_admin",
+      "io": {
+        "inputs": [
+          "school_record",
+          "brief"
+        ],
+        "outputs": [
+          "report",
+          "workflow_plan"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "document_qa"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/school-office-pack/SKILL.md",
+      "instructionSha256": "8649d308542058d3cae381ba8825bd6b54ba3c164f287a7651d133c9a1565843",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "scientific-research-slide-style",
+      "displayName": "scientific-research-slide-style",
+      "description": "Use when creating, redesigning, or auditing PowerPoint or slide decks for academic research, scientific proposals, thesis-style talks, medical/lab research, technology research, or space/science topics where the user wants the look of the downloaded research presentation templates. The skill includes reference PPTX assets, contact sheets, style rules, and a PPTX audit script for recreating the same geometric, modern research slide language.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "presentation",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "scientific_slide_design",
+      "io": {
+        "inputs": [
+          "research_content",
+          "slides"
+        ],
+        "outputs": [
+          "styled_slides"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "pptx",
+          "slide_qa"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/scientific-research-slide-style/SKILL.md",
+      "instructionSha256": "c3167c946e5ed76488f6a7b2ca9cea97d6f04c29c7c0c14b69478a4d276089a6",
+      "fileCount": 16,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "scientific-research-workflow",
+      "displayName": "scientific-research-workflow",
+      "description": "Find and reconcile scholarly metadata from OpenAlex, Crossref and Semantic Scholar, prefer original research sources, flag retracted OpenAlex records, preserve DOI/provider provenance, then feed selected local papers into the hybrid retrieval workflow for evidence-grounded research.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "research_literature",
+      "io": {
+        "inputs": [
+          "research_question",
+          "paper_ids"
+        ],
+        "outputs": [
+          "source_list",
+          "provenance"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "research_search",
+          "document_qa"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/scientific-research-workflow/SKILL.md",
+      "instructionSha256": "ae550823c0e4e829046b5d4f602f12d54462186881f3255dc9e20747e88b3a67",
+      "fileCount": 2,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "semantic-code-navigation",
+      "displayName": "semantic-code-navigation",
+      "description": "Navigate TypeScript code semantically at symbol/definition/reference level using the TypeScript language service already installed in the MCP project. Use for impact analysis, locating definitions, reference tracing and safe code-change planning without adding another MCP server.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "code_navigation",
+      "io": {
+        "inputs": [
+          "source_code",
+          "symbol_query"
+        ],
+        "outputs": [
+          "symbol_references"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "typescript_service"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/semantic-code-navigation/SKILL.md",
+      "instructionSha256": "fd6484cc3844dea3e53267656e019c5ca789a24a594ab1bb09b655baa59b266e",
+      "fileCount": 2,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "skill-chinh-sua-format-van-ban",
+      "displayName": "skill chỉnh sửa format văn bản",
+      "description": "Dùng khi cần kiểm tra, chuẩn hóa, sửa format hoặc tạo cấu trúc trình bày cho văn bản Việt Nam trong Word. Skill luôn phân loại tài liệu và xác định mẫu/quy định chuyên ngành trước; Nghị định 30/2020/NĐ-CP chỉ là rule pack nền hoặc fallback khi thực sự áp dụng.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": false,
+      "capability": "admin_format_legacy",
+      "io": {
+        "inputs": [
+          "document",
+          "doc_type",
+          "legal_sources"
+        ],
+        "outputs": [
+          "format_audit"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "none_disabled"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/skill-chinh-sua-format-van-ban/SKILL.md",
+      "instructionSha256": "a52ca736b91db4602fb855cb794a420ce620b00812a32a2f01d7084a2400dfd0",
+      "fileCount": 11,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "slide-design",
+      "displayName": "slide-design",
+      "description": "Redesign academic, business, thesis, and financial presentation decks in PowerPoint or slide-like outputs. Use when Codex must improve slide aesthetics, balance layout, typography, charts, tables, images, section flow, or presentation readiness.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "presentation",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "slide_design",
+      "io": {
+        "inputs": [
+          "presentation",
+          "style_brief"
+        ],
+        "outputs": [
+          "pptx",
+          "review_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "powerpoint_live",
+          "pptx"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/slide-design/SKILL.md",
+      "instructionSha256": "c96a927c5dd86283186f6c41317467e6bdf9930f92489fa63a65fe52018d2169",
+      "fileCount": 2,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "temporal-knowledge-graph",
+      "displayName": "temporal-knowledge-graph",
+      "description": "Maintain a lightweight local SQLite temporal/provenance graph for facts whose truth changes over time. Use for policy, legal, project and organizational facts that need valid-from/valid-to dates, source locators and history queries. This is a pilot sidecar and does not replace .nhd project memory.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "data",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "temporal_facts",
+      "io": {
+        "inputs": [
+          "fact",
+          "timestamp",
+          "source"
+        ],
+        "outputs": [
+          "fact_history"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "sqlite"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/temporal-knowledge-graph/SKILL.md",
+      "instructionSha256": "2ebe7ac4581ef8f1c38e565c0887728a50477493ea15d209d6e0246ddeb26a30",
+      "fileCount": 3,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "transcribe",
+      "displayName": "transcribe",
+      "description": "Transcribe audio files to text with optional diarization and known-speaker hints. Use when a user asks to transcribe speech from audio/video, extract text from recordings, or label speakers in interviews or meetings.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "media",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "audio_transcription",
+      "io": {
+        "inputs": [
+          "audio",
+          "speaker_hints"
+        ],
+        "outputs": [
+          "transcript",
+          "speaker_segments"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "asr"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/transcribe/SKILL.md",
+      "instructionSha256": "2eaae81b9a63f877e4028e640b0066288c4b7c05c75f6b8e380570a81432ef47",
+      "fileCount": 7,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "vbi-macro-commodity-writer",
+      "displayName": "vbi-macro-commodity-writer",
+      "description": "Write or rewrite Vietnamese macroeconomics, markets, commodities and investment-analysis articles using a VietnamBusinessInsider-inspired editorial structure: data-led opening, hidden tension, mechanism-first analysis, investment implications and cautious conclusion. Use for forum/blog articles about commodities, macro, geopolitics, inflation, rates, supply chains and market positioning. Never copy source wording.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "finance_article",
+      "io": {
+        "inputs": [
+          "economic_sources",
+          "brief"
+        ],
+        "outputs": [
+          "article_draft"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "llm_draft"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/vbi-macro-commodity-writer/SKILL.md",
+      "instructionSha256": "ab9399e6bfdaefc429922e03b584025ba7c747231673fc9066368baf59924859",
+      "fileCount": 2,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "video-understanding",
+      "displayName": "video-understanding",
+      "description": "Understand local or online video quickly using subtitle-first extraction, local faster-whisper ASR fallback, sparse keyframes, timestamped context, and reusable cached timelines.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "media",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "video_analysis",
+      "io": {
+        "inputs": [
+          "video",
+          "url"
+        ],
+        "outputs": [
+          "timeline",
+          "summary"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "video_tools",
+          "asr"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/video-understanding/SKILL.md",
+      "instructionSha256": "b390f4b146763366245925575f8d5393e2f02df558f4cf9a3d4a4300d1f91d53",
+      "fileCount": 2,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "viet-admin-docx-template-builder",
+      "displayName": "viet-admin-docx-template-builder",
+      "description": "Use when the user wants a reusable DOCX-style template for Vietnamese administrative documents such as công văn, thông báo, tờ trình, báo cáo, quyết định, or biên bản, aligned with Nghị định 30 structure and ready for Word export or downstream DOCX generation.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "admin_template_build",
+      "io": {
+        "inputs": [
+          "doc_type",
+          "rules",
+          "fields"
+        ],
+        "outputs": [
+          "docx_template"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [
+          "viet-admin-format-checker"
+        ],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "docx",
+          "word_live"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/viet-admin-docx-template-builder/SKILL.md",
+      "instructionSha256": "8a89c3e68d45623de3608f538b2217fc5489509c26d623abc663e402f3d3d1f0",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "viet-admin-format-checker",
+      "displayName": "skill chỉnh sửa format văn bản",
+      "description": "Dùng khi cần kiểm tra, chuẩn hóa, sửa format hoặc tạo cấu trúc trình bày cho văn bản Việt Nam trong Word. Skill luôn phân loại tài liệu và xác định mẫu/quy định chuyên ngành trước; Nghị định 30/2020/NĐ-CP chỉ là rule pack nền hoặc fallback khi thực sự áp dụng.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "admin_format_canonical",
+      "io": {
+        "inputs": [
+          "document",
+          "doc_type",
+          "legal_sources"
+        ],
+        "outputs": [
+          "resolved_spec",
+          "format_audit"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "document_qa",
+          "word_live",
+          "docx",
+          "pdf_document"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/viet-admin-format-checker/SKILL.md",
+      "instructionSha256": "6c147db1a35cf7aaba43e02da7d863f195a2d3011b9955a18358cff50c72ce34",
+      "fileCount": 21,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "viet-admin-template-library",
+      "displayName": "viet-admin-template-library",
+      "description": "Use when creating a reusable library of Vietnamese administrative-document templates under Nghị định 30 style expectations, especially packs containing multiple mẫu such as công văn, thông báo, tờ trình, báo cáo, quyết định, biên bản, giấy mời, and kế hoạch.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "admin_template_library",
+      "io": {
+        "inputs": [
+          "doc_type",
+          "official_template"
+        ],
+        "outputs": [
+          "template_reference"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [
+          "viet-admin-format-checker"
+        ],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "filesystem",
+          "docx"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/viet-admin-template-library/SKILL.md",
+      "instructionSha256": "8c817c0aa8307bf4143d92c6eb202e907aeb1f933d70cabc1781bb18a9ec3a68",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "viet-state-document-processing",
+      "displayName": "viet-state-document-processing",
+      "description": "End-to-end NHD Harness workflow for processing an incoming Vietnamese state document (văn bản đến từ Bộ/Sở/UBND cấp trên) - intake, rà soát nội dung và thể thức so với văn bản cấp trên, xác định vai trò đơn vị nhận, soạn văn bản triển khai (kế hoạch, công văn, báo cáo, thông báo) và bắt buộc đi qua release gate trước khi phát hành dự thảo. Use when the user gives a zip/PDF of a công văn, says \"xử lý văn bản này\", \"rà soát công văn\", \"soạn kế hoạch triển khai\", \"UBND xã/phường nhận\", or wants any model to produce a state document that passes NĐ 30/2020/NĐ-CP checks through the harness.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "admin_incoming_document_workflow",
+      "io": {
+        "inputs": [
+          "incoming_document",
+          "parent_documents",
+          "receiver_role"
+        ],
+        "outputs": [
+          "review_report",
+          "gated_draft_docx"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [
+          "viet-admin-format-checker",
+          "vietnam-admin-documents"
+        ],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "pdf_document",
+          "docx",
+          "terminal",
+          "admin_release_gate"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/viet-state-document-processing/SKILL.md",
+      "instructionSha256": "577381f2a17e39c6109ec9e487a48c20ea4b143b4cf9728078a6936cb2adf283",
+      "fileCount": 6,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "vietnam-admin-documents",
+      "displayName": "vietnam-admin-documents",
+      "description": "Use when drafting, editing, formatting, checking, or exporting Vietnamese administrative documents such as công văn, tờ trình, báo cáo, thông báo, kế hoạch, biên bản, giấy mời, quyết định, UBND commune-level documents, official Vietnamese government style, dates, recipients, signers, nơi nhận, or formal public-sector language. Apply Nghị định 30/2020/NĐ-CP style expectations for document structure and presentation, especially for công văn and other administrative documents.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "admin_document_draft",
+      "io": {
+        "inputs": [
+          "brief",
+          "references",
+          "doc_type"
+        ],
+        "outputs": [
+          "administrative_draft"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [
+          "viet-admin-format-checker"
+        ],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "llm_draft",
+          "docx"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/vietnam-admin-documents/SKILL.md",
+      "instructionSha256": "249fb981037a34ac5084fc62f49120690ac38c4a18882abe483fe8268b157c76",
+      "fileCount": 1,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "web-design-guidelines",
+      "displayName": "web-design-guidelines",
+      "description": "Audit web UI and frontend code against Vercel Web Interface Guidelines, accessibility, interaction, typography, forms, animation, performance, and UX rules. Uses a pinned local ruleset and may refresh from the official source when web access is available.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "workflow",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "frontend_qa",
+      "io": {
+        "inputs": [
+          "web_ui",
+          "source_code"
+        ],
+        "outputs": [
+          "audit_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "browser_qa"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/web-design-guidelines/SKILL.md",
+      "instructionSha256": "da69bcfe7a53cc2d1eb8b06b4b074c58b1d788c57fb6a92ee23567d7ab392379",
+      "fileCount": 4,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "word-professional",
+      "displayName": "word-professional",
+      "description": "Professional Microsoft Word document creation, editing, auditing, and training for .docx, .dotx, and .docm files. Use when Codex needs to work with Word documents or Vietnamese requests such as sua file Word, dinh dang Word, tao muc luc, header/footer, mail merge, comment, track changes, xuat PDF, luyen Word, bai test Word kho. Handles complex formatting, styles, templates, tables of contents, section/page setup, accessibility, PDF export, and finding difficult Word practice tests/exercises online.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "word_advanced",
+      "io": {
+        "inputs": [
+          "docx",
+          "template",
+          "edit_request"
+        ],
+        "outputs": [
+          "docx",
+          "qa_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "word_live",
+          "docx"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/word-professional/SKILL.md",
+      "instructionSha256": "57c0aa3ad3774c1cb6079ea7ada3cc211ed10be3696a3bc2b8c2242034472639",
+      "fileCount": 6,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    }
+  ]
+}

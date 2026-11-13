@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NHD MCP Control Center</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/desktop.css">
+  <link rel="stylesheet" href="/redesign.css?v=20261113-vi">
+  <link rel="stylesheet" href="/redesign-responsive.css?v=20260929">
+  <link rel="stylesheet" href="/sbce-panel.css?v=20261113-ui2">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">N</div>
+        <div><strong>NHD MCP</strong><span>Control Center</span></div>
+        <span id="versionBadge" class="version-chip">v—</span>
+      </div>
+      <nav aria-label="Điều hướng chính">
+        <button class="active" data-tab="overview"><span>⌂</span>Dashboard</button>
+        <button data-tab="chat-health"><span>♡</span>Chat Health <em class="new-chip">Mới</em></button>
+        <button data-tab="projects"><span>□</span>Projects</button>
+        <button data-tab="memory"><span>◫</span>Memory</button>
+        <button data-tab="connections"><span>⌘</span>Connections</button>
+        <div class="nav-group">WORKSPACE</div>
+        <button data-tab="workspace"><span>▣</span>Files & Office</button>
+        <button data-tab="desktop"><span>▤</span>Desktop & Intake</button>
+        <div class="nav-group">SYSTEM</div>
+        <button data-tab="automation"><span>⚡</span>Automation</button>
+        <button data-tab="skills"><span>◇</span>Skills & Tools</button>
+        <button data-tab="activity"><span>◷</span>Activity</button>
+        <button data-tab="security"><span>♢</span>Security</button>
+        <button data-tab="settings"><span>⚙</span>Settings</button>
+      </nav>
+      <div class="sidebar-footer">
+        <strong>NHD Workstation MCP</strong>
+        <span>Làm việc thông minh hơn cùng ChatGPT</span>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <div class="command-search"><span>⌕</span><input id="commandInput" placeholder="Ctrl + K  Tìm lệnh, chức năng hoặc trợ giúp..."></div>
+        <div class="top-status"><span class="status-dot ok"></span><div><strong id="topMcpStatus">MCP Online</strong><small id="serviceLine">Đang kết nối dịch vụ cục bộ...</small></div></div>
+        <button id="refreshButton" class="icon-button" title="Làm mới">↻</button>
+        <div class="machine-pill"><span>▰</span><div><strong id="machineName">This machine</strong><small id="machineSub">Local workstation</small></div></div>
+      </header>
+
+      <main>
+        <section id="overview" class="tab active">
+          <div class="welcome-row">
+            <div><p class="eyebrow">NHD CONTROL CENTER</p><h1>Trung tâm điều khiển MCP</h1><p>Một nơi để theo dõi kết nối, project, memory, Chat Health và các tác vụ đang chạy.</p></div>
+            <div class="overall-health"><span class="status-dot ok"></span><div><strong id="overallStatus">All systems operational</strong><small id="lastRefresh">Đang cập nhật...</small></div></div>
+          </div>
+
+          <div class="status-grid">
+            <article class="status-card"><div class="status-icon green">▦</div><div><small>MCP Backend</small><strong id="backendStatus">Đang kiểm tra</strong><span id="backendVersion">—</span></div></article>
+            <article class="status-card"><div class="status-icon teal">◎</div><div><small>Tool Registry</small><strong id="toolRegistryStatus">Đang kiểm tra</strong><span id="toolRegistryMeta">—</span></div></article>
+            <article class="status-card"><div class="status-icon orange">☁</div><div><small>Cloudflare Tunnel</small><strong id="tunnelCardStatus">Đang kiểm tra</strong><span id="tunnelCardMeta">—</span></div></article>
+            <article class="status-card"><div class="status-icon red">▣</div><div><small>Office Apps</small><strong id="officeCardStatus">Đang kiểm tra</strong><span id="officeCardMeta">—</span></div></article>
+            <article class="status-card"><div class="status-icon blue">▰</div><div><small>Computer Access</small><strong id="computerCardStatus">Đang kiểm tra</strong><span id="computerCardMeta">—</span></div></article>
+          </div>
+
+          <article class="overview-token-monitor" data-goto="chat-health" role="button" tabindex="0" aria-label="Mở Chat Health Token Monitor">
+            <div class="token-monitor-copy">
+              <div class="token-monitor-title"><p class="eyebrow">REAL-TIME TOKEN MONITOR</p><span id="overviewTokenLive" class="token-live-badge">CONNECTING</span></div>
+              <div class="token-monitor-main">
+                <strong id="overviewTokenCount">—</strong>
+                <span>tokens ước tính</span>
+              </div>
+              <div class="token-monitor-chat" id="overviewTokenChat">Chưa có telemetry token từ tab ChatGPT</div>
+            </div>
+            <div class="token-monitor-progress">
+              <div class="token-monitor-progress-head">
+                <span>Context budget</span>
+                <strong id="overviewTokenPercent">—</strong>
+              </div>
+              <div class="token-budget-track"><div id="overviewTokenBar" class="token-budget-fill"></div></div>
+              <div class="token-monitor-budget"><span id="overviewTokenBudget">/ 128.000</span><span id="overviewTokenStatus">Đang chờ sensor</span></div>
+            </div>
+            <div class="token-monitor-split">
+              <div><small>User</small><strong id="overviewUserTokens">—</strong></div>
+              <div><small>Assistant</small><strong id="overviewAssistantTokens">—</strong></div>
+              <div><small>Visible text</small><strong id="overviewTextChars">—</strong></div>
+            </div>
+            <span class="token-monitor-arrow">›</span>
+          </article>
+
+          <div class="dashboard-grid">
+            <div class="dashboard-column">
+              <article class="panel project-panel">
+                <div class="panel-heading"><div><p class="eyebrow">ACTIVE PROJECT</p><h2 id="activeProjectName">Đang tải project...</h2></div><button class="ghost-button" data-goto="projects">•••</button></div>
+                <div class="project-path" id="activeProjectRoot">—</div>
+                <div class="project-meta"><span id="projectCheckpoint">Checkpoint —</span><span id="projectUnresolved">0 unresolved</span><span id="projectUpdated">—</span></div>
+                <div class="button-row"><button class="primary" data-goto="projects">Tiếp tục làm việc</button><button data-goto="memory">Xem memory</button><button data-goto="memory">Checkpoint</button></div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-heading"><div><p class="eyebrow">CONNECTED APPS</p><h2>Kết nối ứng dụng</h2></div><button class="link-button" data-goto="connections">Tất cả</button></div>
+                <div id="connectionTiles" class="connection-tiles"></div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-heading"><div><p class="eyebrow">RECENT ACTIVITY</p><h2>Hoạt động gần đây</h2></div><button class="link-button" data-goto="activity">Tất cả hoạt động</button></div>
+                <div id="recentActivity" class="compact-list"></div>
+              </article>
+            </div>
+
+            <div class="dashboard-column narrow">
+              <article class="panel quick-panel">
+                <p class="eyebrow">QUICK ACTIONS</p><h2>Thao tác nhanh</h2>
+                <button data-goto="workspace">▣ &nbsp; Tìm hoặc mở tài liệu <span>›</span></button>
+                <button id="quickHealth">◎ &nbsp; Kiểm tra MCP <span>›</span></button>
+                <button data-goto="desktop">▤ &nbsp; Screen / Desktop <span>›</span></button>
+                <button data-goto="chat-health">♡ &nbsp; Chat Health & handoff <span>›</span></button>
+              </article>
+
+              <article class="panel">
+                <div class="panel-heading"><div><p class="eyebrow">SYSTEM HEALTH</p><h2>Tình trạng hệ thống</h2></div></div>
+                <div id="systemHealthList" class="health-list"></div>
+              </article>
+
+              <article class="panel machine-panel">
+                <div class="panel-heading"><div><p class="eyebrow">MACHINE</p><h2>Máy đang kết nối</h2></div><button class="link-button" data-goto="settings">Quản lý</button></div>
+                <div class="machine-row"><div class="machine-icon">▰</div><div><strong id="machineCardName">This machine</strong><span id="machineCardMeta">—</span></div><span class="mini-status ok">Online</span></div>
+              </article>
+            </div>
+
+            <aside class="dashboard-column health-column">
+              <article class="panel chat-health-summary multi-chat-summary">
+                <div class="panel-heading"><div><p class="eyebrow">MULTI-TAB CHAT HEALTH</p><h2>Sức khỏe các tab chat</h2></div><button class="link-button" data-goto="chat-health">Chi tiết</button></div>
+                <div class="multi-chat-overview">
+                  <div><small>Active tabs</small><strong id="chatTabsActive">—</strong></div>
+                  <div><small>Handoff ready</small><strong id="chatTabsHandoff">—</strong></div>
+                  <div><small>Lowest score</small><strong id="chatTabsLowest">—</strong></div>
+                  <div><small>Tracked tabs</small><strong id="chatTabsTotal">—</strong></div>
+                  <div><small>Max est. tokens</small><strong id="chatTabsTokens">—</strong></div>
+                </div>
+                <div id="chatTabsCardState" class="recommendation neutral"><strong>Đang chờ telemetry</strong><p>Mỗi tab ChatGPT được đo và cảnh báo độc lập.</p></div>
+                <div class="panel-heading mini-heading"><div><p class="eyebrow">NEEDS ATTENTION</p><h2>Tab cần chú ý</h2></div></div>
+                <div id="chatWorstList" class="chat-worst-list"><p>Chưa có dữ liệu tab.</p></div>
+                <div class="button-row"><button class="primary" data-goto="chat-health">Mở Multi-Tab Monitor</button><button data-goto="memory">Xem Memory</button></div>
+              </article>
+              <article class="quote-card">“Đổi chat đúng lúc, giữ context đúng cách.”<span>— NHD MCP</span></article>
+            </aside>
+          </div>
+        </section>
+
+        <section id="chat-health" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">MULTI-TAB CHAT PERFORMANCE</p><h1>Chat Health & Token Monitor</h1><p>Mỗi tab ChatGPT có score, token ước tính, baseline, history và handoff riêng. Không gộp telemetry giữa các tab.</p></div><span id="chatSensorBadge" class="badge neutral">Sensor chưa kết nối</span></div>
+          <div class="info-callout"><strong>Privacy:</strong> sensor đếm chữ và ước tính token ngay trong tab, sau đó chỉ gửi số tổng hợp cùng telemetry hiệu năng. MCP không nhận prompt, câu trả lời, file, cookie hay nội dung transcript. Token hiển thị là ước tính cục bộ, không phải billing token của OpenAI.</div>
+          <div id="multiTabOverviewMetrics" class="metrics"></div>
+
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">CHAT TABS</p><h2>Các tab đang theo dõi</h2></div><div class="chat-tab-controls"><select id="chatTabFilter"><option value="all">Tất cả</option><option value="active">Active</option><option value="healthy">Healthy</option><option value="growing">Growing</option><option value="handoff">Handoff</option><option value="critical">Critical</option><option value="ready">Handoff ready</option></select><select id="chatTabSort"><option value="score">Score thấp nhất</option><option value="recent" selected>Mới hoạt động</option><option value="turns">Nhiều turns</option><option value="tokens">Token ước tính cao nhất</option><option value="heap">Heap cao nhất</option></select></div></div>
+            <div class="table-wrap chat-tabs-table"><table><thead><tr><th>Chat / Tab</th><th>Score</th><th>Level</th><th>Presence</th><th>Turns</th><th>Est. tokens</th><th>Heap</th><th>FPS</th><th>Last seen</th><th>Handoff</th></tr></thead><tbody id="chatTabsBody"><tr><td colspan="10">Đang chờ telemetry...</td></tr></tbody></table></div>
+          </article>
+
+          <div class="selected-chat-grid">
+            <article class="panel selected-chat-summary">
+              <div class="panel-heading"><div><p class="eyebrow">SELECTED TAB</p><h2 id="selectedTabTitle">Chưa chọn tab</h2><p id="selectedTabMeta">—</p></div><span id="selectedTabPresence" class="badge neutral">—</span></div>
+              <div class="score-wrap"><div id="selectedTabScoreRing" class="score-ring"><strong id="selectedTabScore">—</strong><span>/100</span></div><div><strong id="selectedTabState">Chưa có telemetry</strong><p id="selectedTabHint">Chọn một tab để xem chi tiết.</p></div></div>
+              <div id="selectedTabMetrics" class="chat-metrics"></div>
+              <div class="button-row"><button id="ackHandoff" disabled>Đánh dấu đã chuyển chat</button><button id="archiveChatTab" disabled>Archive tab</button><button data-goto="memory">Xem Memory</button></div>
+            </article>
+            <article class="panel automation-panel"><div class="panel-heading"><div><p class="eyebrow">AUTOMATION</p><h2>Auto handoff của tab này</h2><p>Checkpoint và cooldown được tách riêng theo tab.</p></div><span id="autoHandoffBadge" class="badge neutral">Monitoring</span></div><div id="autoHandoffState" class="handoff-state">Đang chờ telemetry.</div><div id="selectedTabTelemetry" class="detail-grid"></div></article>
+          </div>
+
+          <div class="trend-grid">
+            <article class="panel trend-card"><div class="panel-heading"><div><p class="eyebrow">HISTORY</p><h2>Health Score</h2></div><strong id="historyScoreSummary">—</strong></div><div id="scoreHistoryChart" class="history-chart empty">Chưa có lịch sử</div></article>
+            <article class="panel trend-card"><div class="panel-heading"><div><p class="eyebrow">PERFORMANCE</p><h2>FPS</h2></div><strong id="historyFpsSummary">—</strong></div><div id="fpsHistoryChart" class="history-chart empty">Chưa có lịch sử</div></article>
+            <article class="panel trend-card"><div class="panel-heading"><div><p class="eyebrow">MEMORY PRESSURE</p><h2>JS Heap</h2></div><strong id="historyHeapSummary">—</strong></div><div id="heapHistoryChart" class="history-chart empty">Chưa có lịch sử</div></article>
+            <article class="panel trend-card"><div class="panel-heading"><div><p class="eyebrow">CONTEXT SIZE</p><h2>Estimated tokens</h2></div><strong id="historyTokenSummary">—</strong></div><div id="tokenHistoryChart" class="history-chart empty">Chưa có lịch sử token</div></article>
+          </div>
+
+          <article class="panel"><div class="panel-heading"><div><p class="eyebrow">HANDOFF QUEUE</p><h2>Tab cần chuyển chat</h2><p>Ưu tiên các tab đã có checkpoint hoặc đã xuống dưới ngưỡng.</p></div></div><div id="handoffQueue" class="handoff-queue"><p>Chưa có tab cần handoff.</p></div></article>
+
+          <div class="two-col">
+            <article class="panel"><h2>Ngưỡng mặc định</h2><div class="threshold-list"><div><span class="mini-status ok">80–100</span><p><strong>Healthy</strong><br>Tiếp tục làm việc.</p></div><div><span class="mini-status warn">65–79</span><p><strong>Growing</strong><br>Chuẩn bị checkpoint.</p></div><div><span class="mini-status orange">50–64</span><p><strong>Handoff recommended</strong><br>Kết thúc đoạn việc hiện tại và đổi chat.</p></div><div><span class="mini-status bad">&lt;50</span><p><strong>Critical</strong><br>Nên handoff ngay.</p></div></div></article>
+            <article class="panel"><div class="panel-heading"><div><h2>Cài đặt tự động</h2><p>Áp dụng cùng policy nhưng state được giữ riêng từng tab.</p></div></div><div class="settings-grid"><label><span>Auto checkpoint</span><input id="autoCheckpointEnabled" type="checkbox"></label><label><span>Handoff threshold</span><input id="handoffThreshold" type="number" min="25" max="95"></label><label><span>Low-score samples liên tiếp</span><input id="requiredStreak" type="number" min="1" max="12"></label><label><span>Cooldown / tab (phút)</span><input id="cooldownMinutes" type="number" min="0" max="240"></label><label><span>Lưu lịch sử (ngày)</span><input id="historyDays" type="number" min="1" max="30"></label><label><span>Active window (giây)</span><input id="activeSeconds" type="number" min="10" max="300"></label><label><span>Stale after (phút)</span><input id="staleMinutes" type="number" min="1" max="240"></label><label><span>Context budget tham chiếu</span><input id="tokenBudget" type="number" min="8000" max="2000000" step="1000"></label></div><div class="button-row"><button id="saveChatHealthSettings" class="primary">Lưu cài đặt</button><span id="chatHistorySummary" class="status-line"></span></div></article>
+          </div>
+        </section>
+
+        <section id="projects" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">PROJECTS</p><h1>Projects theo task</h1><p>Mỗi công việc mới có một Project, một thư mục vật lý và bộ nhớ riêng. Đổi tab ChatGPT không làm thay đổi project của task hoặc file đã bind.</p></div></div>
+          <div class="two-col">
+            <article class="panel"><div class="panel-heading"><div><h2>Danh sách Project</h2><p id="projectWorkspaceRoot">Đang tải thư mục gốc...</p></div></div><div id="projectList" class="compact-list"><p>Đang tải...</p></div></article>
+            <div id="projectDetails" class="panel"><p>Đang tải...</p></div>
+          </div>
+          <article id="planStatePanel" class="panel plan-state-panel"><div class="panel-heading"><div><p class="eyebrow">DURABLE MULTI-PHASE PLAN</p><h2>Kế hoạch nhiều giai đoạn</h2><p>MCP giữ phase hiện tại và phase tiếp theo xuyên chat/restart; hoàn thành một phase không kết thúc kế hoạch cha.</p></div><span id="planStateBadge" class="badge neutral">Đang tải</span></div><div id="planStateBody" class="plan-state-empty">Đang đọc kế hoạch...</div></article>
+        </section>
+
+        <section id="memory" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">CROSS-CHAT MEMORY</p><h1>Memory</h1><p>Thông tin bền vững giúp ChatGPT tiếp tục công việc sau khi đổi chat.</p></div><span id="memoryBadge" class="badge">Checking</span></div>
+          <div id="memoryMetrics" class="metrics"></div>
+          <div class="two-col"><article class="panel"><h2>Memory health</h2><div id="memoryHealth" class="detail-grid"></div></article><article class="panel"><h2>Nguyên tắc lưu</h2><div class="compact-list"><div>✓ Chỉ lưu metadata, quyết định, checkpoint và việc chưa xử lý.</div><div>✓ Không dùng memory làm quyền cho thao tác nguy hiểm.</div><div>✓ Không lưu credential hoặc toàn bộ document/terminal dump.</div><div>✓ Handoff phải ưu tiên context có liên quan.</div></div></article></div>
+        </section>
+
+        <section id="connections" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">CONNECTION CENTER</p><h1>Connections</h1><p><a href="/setup.html" style="color:#7bd8d2;font-weight:700">Thiết lập tên miền &amp; kết nối ChatGPT</a></p><p>Theo dõi đồng thời MCP remote qua Cloudflare và MCP local cho harness không cần tên miền.</p></div><span id="connectionModeBadge" class="badge neutral">Đang kiểm tra</span></div>
+          <div id="connectionsGrid" class="connections-grid"></div>
+          <div class="two-col">
+            <article class="panel"><div class="panel-heading"><div><h2>Remote MCP — Cloudflare</h2><p>Giữ nguyên đường kết nối hiện tại cho ChatGPT và client remote. OAuth vẫn được bảo vệ trên cổng backend chính.</p></div><div class="actions"><button id="startTunnel" class="primary">Bật tunnel</button><button id="stopTunnel">Tắt</button></div></div><div class="copy-row"><input id="mcpUrl" readonly placeholder="Tunnel chưa hoạt động"><button id="copyUrl">Sao chép</button></div><div id="tunnelStatus" class="status-line"></div></article>
+            <article class="panel"><div class="panel-heading"><div><h2>Local Harness — không cần tên miền</h2><p>Codex và harness chạy trên máy kết nối qua loopback/stdio nhưng dùng chung MCP Core, memory, task state và Governor.</p></div><span id="localHarnessBadge" class="badge neutral">Đang kiểm tra</span></div><div class="copy-row"><input id="localMcpUrl" readonly placeholder="Local MCP chưa sẵn sàng"><button id="copyLocalUrl">Sao chép</button></div><div id="harnessStatus" class="status-line"></div><div id="activeHarnessList" class="compact-list"></div></article>
+          </div>
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">RESULT PAYLOAD TELEMETRY</p><h2>Tool result size</h2><p>Chỉ lưu metadata kích thước/latency; không lưu nội dung result.</p></div><span id="resultTelemetryBadge" class="badge neutral">Đang kiểm tra</span></div>
+            <div id="resultTelemetryMetrics" class="metrics"></div>
+            <div class="table-wrap"><table><thead><tr><th>Tool</th><th>Result chars</th><th>Est. tokens</th><th>Latency</th><th>Budget</th></tr></thead><tbody id="resultTelemetryBody"><tr><td colspan="5">Chưa có tool call trong cửa sổ telemetry.</td></tr></tbody></table></div>
+          </article>
+        </section>
+
+        <section id="workspace" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">WORKSPACE</p><h1>Files & Microsoft Office</h1><p>Tìm tài liệu và theo dõi trạng thái Word, Excel, PowerPoint, Outlook. Bấm <b>Lập chỉ mục</b> một lần, sau đó gõ từ khóa vào ô tìm kiếm bên dưới.</p></div><button id="runIndex" class="primary">Lập chỉ mục</button></div>
+          <div id="officeGrid" class="office-grid"></div>
+          <article class="panel"><div class="search-row"><input id="searchQuery" placeholder="Tìm trong code, DOCX, XLSX, PPTX hoặc PDF"><button id="searchButton">Tìm</button></div><div id="indexStatus" class="status-line"></div></article>
+          <article class="panel"><h2>Kết quả</h2><div id="searchResults" class="results"></div></article>
+        </section>
+
+        <section id="desktop" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">COMPUTER ACCESS</p><h1>Desktop & Intake</h1><p>Screen, Windows UI Automation và các thư mục tiếp nhận tài liệu.</p></div><button id="refreshScreens">↻</button></div>
+          <div id="desktopMetrics" class="metrics"></div>
+          <article class="panel"><h2>Companion status</h2><p id="screenStatus"></p><p id="desktopStatus"></p><p id="intakeStatus"></p></article>
+          <div class="two-col"><article class="panel"><h2>Cửa sổ có thể điều hướng</h2><div id="desktopWindows" class="results"></div></article><article class="panel"><h2>Nguồn có thể chụp</h2><div id="screenSources" class="results"></div></article></div>
+          <article class="panel"><h2>Tài liệu mới trong inbox</h2><div id="intakeFiles" class="results"></div></article>
+        </section>
+
+        <section id="automation" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">AUTOMATION</p><h1>Automation</h1><p>Terminal, browser runtime và durable task state.</p></div></div>
+          <div id="automationMetrics" class="metrics"></div>
+          <article id="executionLanesPanel" class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">DUAL EXECUTION LANES</p><h2>Background + Isolated Agent</h2><p>Background không giành chuột/focus; GUI nặng chạy trong Windows Sandbox riêng.</p></div><button id="refreshExecutionLanes">↻</button></div>
+            <div class="metrics"><div><small>Background</small><strong id="backgroundLaneState">Checking</strong><span id="backgroundLaneMeta">—</span></div><div><small>Isolated Agent</small><strong id="isolatedLaneState">Checking</strong><span id="isolatedLaneMeta">—</span></div><div><small>Scheduler</small><strong id="laneSchedulerState">—</strong><span id="laneLockState">—</span></div></div>
+            <div id="isolatedPrerequisite" class="status-line"></div>
+            <div class="button-row"><button id="startIsolatedAgent" class="primary">Start Isolated Agent</button><button id="stopIsolatedAgent">Stop Isolated Agent</button><button id="openLaneDocs">Kiến trúc</button></div>
+          </article>
+          <article class="panel warning"><strong>Terminal safety:</strong> mọi PowerShell command vẫn phải preview và xác nhận theo policy MCP.</article>
+          <article class="panel"><div class="panel-heading"><h2>Tiến trình đang chạy</h2><button id="refreshRuns">↻</button></div><div id="runningList" class="results"></div></article>
+        </section>
+
+        <section id="skills" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">CAPABILITIES</p><h1>Skills & Tools</h1><p>Workflow skills và MCP registry runtime.</p></div><button id="refreshSkills">↻</button></div>
+          <article class="panel"><div class="search-row triple"><input id="skillSearch" placeholder="Tìm skill"><select id="skillCategory"><option value="">Tất cả nhóm</option><option value="administration">Hành chính</option><option value="documents">Tài liệu</option><option value="workflow">Quy trình</option><option value="data">Dữ liệu</option><option value="presentation">Trình chiếu</option><option value="media">OCR / Media</option></select><button id="searchSkills">Lọc</button></div><div id="skillSummary" class="status-line"></div><div id="skillList" class="results"></div></article>
+          <article class="panel"><div class="panel-heading"><h2>MCP Tool Registry</h2><button id="refreshTools">↻</button></div><div id="toolMetrics" class="metrics"></div><div class="search-row triple"><input id="toolSearch" placeholder="Tìm tool"><select id="toolGroup"><option value="">Tất cả nhóm</option><option>Workstation</option><option>Skills</option><option>Filesystem</option><option>Terminal</option><option>Office</option><option>Screen</option><option>Desktop</option><option>Browser</option><option>Intake</option><option>PDF</option><option>Project</option><option>Document</option></select><button id="searchTools">Lọc</button></div><div id="toolSummary" class="status-line"></div><div class="table-wrap"><table><thead><tr><th>Tool</th><th>Nhóm</th><th>Quyền</th><th>Trạng thái</th><th>Mô tả</th></tr></thead><tbody id="toolBody"></tbody></table></div></article>
+        </section>
+
+        <section id="activity" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">AUDIT</p><h1>Activity</h1><p>Nhật ký tool call, thay đổi file, terminal, tunnel và xác thực.</p></div><button id="refreshActivity">↻</button></div>
+          <article class="panel table-wrap"><table><thead><tr><th>Thời gian</th><th>Action</th><th>Status</th><th>Chi tiết</th></tr></thead><tbody id="activityBody"></tbody></table></article>
+        </section>
+
+        <section id="security" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">SECURITY</p><h1>Security & Permissions</h1><p>Quyền hiệu lực trên máy này và Emergency Stop.</p></div><button id="emergencyButton" class="danger">Dừng khẩn cấp</button></div>
+          <article class="panel"><h2>Quyền đang hoạt động</h2><div class="permissions"><label><input id="writeEnabled" type="checkbox"> File write</label><label><input id="terminalEnabled" type="checkbox"> PowerShell</label><label><input id="skillsEnabled" type="checkbox"> Skill Registry</label><label><input id="screenEnabled" type="checkbox"> Screen Access</label><label><input id="desktopEnabled" type="checkbox"> Desktop Navigation</label><label><input id="visualDesktopEnabled" type="checkbox"> Visual click fallback</label><label><input id="intakeEnabled" type="checkbox"> Document Intake</label><label><input id="ocrEnabled" type="checkbox"> OCR</label></div><label for="intakeRoots"><strong>Thư mục intake</strong></label><textarea id="intakeRoots" rows="4" spellcheck="false"></textarea><div class="button-row"><button id="savePermissions" class="primary">Lưu quyền</button></div></article>
+          <article class="panel"><h2>OAuth pairing</h2><div class="copy-row"><input id="pairingCode" readonly><button id="rotateCode">Xoay mã và thu hồi phiên</button></div></article>
+        </section>
+
+        <section id="sbce" class="tab">
+          <div class="sbce-hero">
+            <div>
+              <p class="eyebrow">SBCE · Strong Brain – Cheap Executor</p>
+              <h1>Bảng SBCE</h1>
+              <p class="sbce-lead">Model rẻ viết nháp, model khác họ chấm chéo, Brain và bạn quyết định cuối.</p>
+            </div>
+            <div class="sbce-hero-actions">
+              <span id="sbceBoardStatus" class="sbce-updated">Đang tải…</span>
+              <a class="sbce-btn ghost" href="/sbce.html" target="_blank" rel="noopener">Nhập key / hiệu chỉnh</a>
+              <button id="sbceRefresh" class="sbce-btn">↻ Làm mới</button>
+            </div>
+          </div>
+          <div id="sbceMetrics" class="sbce-overview"></div>
+
+          <article class="panel sbce-card">
+            <div class="sbce-card-head"><div><h2>Chất lượng theo model</h2><p id="sbceStatsSummary" class="sbce-sub">Đang tính…</p></div>
+              <div class="sbce-legend"><span><i class="ok"></i>Duyệt</span><span><i class="bad"></i>Trả lại</span><span><i class="warn"></i>Đang chờ</span></div></div>
+            <div class="sbce-stats-grid">
+              <div><h3>Model viết</h3><div id="sbceWriterStats" class="sbce-models"></div></div>
+              <div><h3>Model chấm (L1)</h3><div id="sbceJudgeStats" class="sbce-models"></div></div>
+            </div>
+            <p class="sbce-foot">Tỉ lệ đạt = Duyệt / (Duyệt + Trả lại). <b>Bỏ sót</b> = judge rẻ cho qua nhưng Brain vẫn trả lại. Tính trên tối đa 100 job gần nhất.</p>
+          </article>
+
+          <article class="panel sbce-card">
+            <div class="sbce-card-head"><div><h2>Danh sách job</h2><p class="sbce-sub">Bấm vào một job để xem bản nháp và duyệt.</p></div></div>
+            <div class="table-wrap"><table class="sbce-table"><thead><tr><th>Job</th><th>Trạng thái</th><th>Model viết → chấm</th><th>Các bước kiểm</th><th class="num">Chi phí</th><th class="num">Thời gian</th></tr></thead><tbody id="sbceJobRows"></tbody></table></div><p class="sbce-legend muted">Chú giải các bước kiểm: <b>L0</b> = kiểm tra máy (đúng định dạng, không rò chỉ dẫn) · <b>L1</b> = model khác họ chấm chéo · <b>Brain</b> = Claude/GPT duyệt cuối. Chi phí tính bằng credit HHTECH.</p>
+          </article>
+
+          <article id="sbceDetail" class="panel sbce-card sbce-detail" hidden>
+            <div class="sbce-card-head"><div><p class="eyebrow">Chi tiết job</p><h2 id="sbceDetailTitle">—</h2><div id="sbceDetailMeta" class="sbce-detail-meta"></div></div><button id="sbceClose" class="sbce-btn ghost">✕ Đóng</button></div>
+            <div class="sbce-detail-grid">
+              <div>
+                <dl id="sbceDetailInfo" class="sbce-dl"></dl>
+                <h3>Các lần gọi model</h3>
+                <div class="table-wrap"><table class="sbce-table compact"><thead><tr><th>Lúc</th><th>Vai trò</th><th>Model</th><th>Quyết toán</th><th class="num">Chi phí</th></tr></thead><tbody id="sbceCalls"></tbody></table></div>
+              </div>
+              <div><h3>Bản nháp</h3><pre id="sbceDraft" class="sbce-draft"></pre></div>
+            </div>
+            <div class="sbce-review-bar"><p id="sbceReviewHint" class="sbce-sub"></p><button id="sbceReject" class="sbce-btn danger" disabled>Trả lại</button><button id="sbceAccept" class="sbce-btn primary" disabled>✓ Duyệt</button></div>
+          </article>
+        </section>
+
+        <section id="settings" class="tab">
+          <div class="section-heading"><div><p class="eyebrow">SETTINGS</p><h1>Machine & Runtime</h1><p>Thông tin instance và đường dẫn dữ liệu của workstation này.</p></div></div>
+          <article class="panel"><dl><dt>Instance ID</dt><dd id="instanceId"></dd><dt>Data directory</dt><dd id="dataDir"></dd><dt>Root</dt><dd id="rootPath"></dd><dt>Mode</dt><dd><span id="modeBadge" class="badge">Checking</span></dd></dl></article>
+          <article class="panel"><div class="panel-heading"><div><p class="eyebrow">GITHUB RELEASES</p><h2>Cập nhật NHD Lite</h2><p>Tự kiểm tra bản mới; chỉ tải và cài khi bạn xác nhận. SHA-256, sao lưu cấu hình và phục hồi phiên bản cũ được kiểm tra trước khi cài đặt.</p></div></div><div class="button-row"><button id="checkLiteUpdate" class="primary">Kiểm tra &amp; cập nhật NHD</button><span id="liteUpdateState" class="status-line" role="status">Đang kiểm tra phiên bản...</span></div><p class="status-line">Lưu ý: bộ cài chưa ký số; Windows SmartScreen có thể cảnh báo. Việc rollback khi lỗi dựa trên bộ cài phiên bản cũ đã xác minh.</p></article>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/redesign.js?v=20261113-label"></script>
+  <script src="/app.js?v=20261113-vi2"></script>
+  <script src="/lite-updates.js?v=20261109"></script>
+  <script src="/chat-health-v2.js?v=20261113-vi"></script>
+  <script src="/sbce-panel.js?v=20261113-ui"></script>
+  <script src="/dual-lanes.js?v=20261113-vi"></script>
+  <script src="/vi-labels.js?v=20261113-vi"></script>
+</body>
+</html>

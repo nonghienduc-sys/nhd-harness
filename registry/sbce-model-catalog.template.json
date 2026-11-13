@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "provider": "hhtech",
+  "priceSource": "Public HHTECH model listing, not authenticated account billing. NO model can be enabled until a fresh priceAudit from account_usage or billing_statement and explicit owner approval.",
+  "models": [
+    {
+      "id": "t1-deepseek",
+      "model": "deepseek-v4-flash",
+      "provider": "hhtech",
+      "protocol": "openai",
+      "tier": "T1",
+      "family": "deepseek",
+      "roles": [
+        "coder",
+        "writer",
+        "researcher"
+      ],
+      "vndPerM": 350,
+      "dataLabels": [
+        "public/code",
+        "internal",
+        "personal/sensitive"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "t1-qwen",
+      "model": "qwen3-coder-plus",
+      "provider": "hhtech",
+      "protocol": "openai",
+      "tier": "T1",
+      "family": "qwen",
+      "roles": [
+        "coder"
+      ],
+      "vndPerM": 400,
+      "dataLabels": [
+        "public/code",
+        "internal"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "t1-haiku",
+      "model": "claude-haiku-4.5",
+      "provider": "hhtech",
+      "protocol": "anthropic",
+      "tier": "T1",
+      "family": "anthropic",
+      "roles": [
+        "judge",
+        "writer",
+        "researcher"
+      ],
+      "vndPerM": 400,
+      "dataLabels": [
+        "public/code",
+        "internal",
+        "personal/sensitive"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "t2-deepseek",
+      "model": "deepseek-v4-pro",
+      "provider": "hhtech",
+      "protocol": "openai",
+      "tier": "T2",
+      "family": "deepseek",
+      "roles": [
+        "coder",
+        "writer"
+      ],
+      "vndPerM": 600,
+      "dataLabels": [
+        "public/code",
+        "internal"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "t2-gpt",
+      "model": "gpt-5.6-luna",
+      "provider": "hhtech",
+      "protocol": "openai",
+      "tier": "T2",
+      "family": "openai",
+      "roles": [
+        "writer",
+        "judge"
+      ],
+      "vndPerM": 500,
+      "dataLabels": [
+        "public/code",
+        "internal",
+        "personal/sensitive"
+      ],
+      "enabled": false
+    },
+    {
+      "id": "t3-sonnet",
+      "model": "claude-sonnet-5",
+      "provider": "hhtech",
+      "protocol": "anthropic",
+      "tier": "T3",
+      "family": "anthropic",
+      "roles": [
+        "coder",
+        "writer",
+        "judge"
+      ],
+      "vndPerM": 1200,
+      "dataLabels": [
+        "public/code",
+        "internal",
+        "personal/sensitive"
+      ],
+      "enabled": false
+    }
+  ],
+  "sourceUrl": "https://hhtechapi.net/",
+  "observedDate": "2026-11-12",
+  "runtimeActivation": "disabled by default; actual runtime catalog stored outside source in dataDir/sbce-model-catalog.json"
+}

@@ -1,0 +1,36 @@
+version: 1
+priorities:
+  P1:
+    name: mandatory_specific_template
+    description: "Mẫu/biểu mẫu bắt buộc cụ thể."
+  P2:
+    name: direct_specialized_rule
+    description: "Quy định chuyên ngành trực tiếp."
+  P3:
+    name: program_or_procedure_rule
+    description: "Quy định chương trình, thủ tục, thể lệ, đề án."
+  P4:
+    name: local_or_authority_rule
+    description: "Quy định của địa phương/cơ quan có thẩm quyền."
+  P5:
+    name: nd30_general_rule
+    description: "Nghị định 30 và quy tắc hành chính chung."
+  P6:
+    name: organization_rule
+    description: "Quy chế nội bộ hợp lệ."
+  P7:
+    name: best_practice
+    description: "Khuyến nghị trình bày."
+
+conflict_policy:
+  higher_priority_wins: true
+  only_within_same_property_scope: true
+  lower_rule_fills_unspecified_fields: true
+  never_override_specific_template_with_nd30: true
+  preserve_evidence_of_override: true
+
+rule_strength:
+  - mandatory
+  - conditional
+  - advisory
+  - visual_preference

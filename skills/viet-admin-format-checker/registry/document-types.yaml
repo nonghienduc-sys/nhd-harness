@@ -1,0 +1,48 @@
+version: 1
+administrative_types:
+  - {id: nghi_quyet_ca_biet, label: "Nghị quyết (cá biệt)", abbreviation: "NQ"}
+  - {id: quyet_dinh_ca_biet, label: "Quyết định (cá biệt)", abbreviation: "QĐ"}
+  - {id: chi_thi, label: "Chỉ thị", abbreviation: "CT"}
+  - {id: quy_che, label: "Quy chế", abbreviation: "QC"}
+  - {id: quy_dinh, label: "Quy định", abbreviation: "QyĐ"}
+  - {id: thong_cao, label: "Thông cáo", abbreviation: "TC"}
+  - {id: thong_bao, label: "Thông báo", abbreviation: "TB"}
+  - {id: huong_dan, label: "Hướng dẫn", abbreviation: "HD"}
+  - {id: chuong_trinh, label: "Chương trình", abbreviation: "CTr"}
+  - {id: ke_hoach, label: "Kế hoạch", abbreviation: "KH"}
+  - {id: phuong_an, label: "Phương án", abbreviation: "PA"}
+  - {id: de_an, label: "Đề án", abbreviation: "ĐA"}
+  - {id: du_an, label: "Dự án", abbreviation: "DA"}
+  - {id: bao_cao, label: "Báo cáo", abbreviation: "BC"}
+  - {id: bien_ban, label: "Biên bản", abbreviation: "BB"}
+  - {id: to_trinh, label: "Tờ trình", abbreviation: "TTr"}
+  - {id: hop_dong, label: "Hợp đồng", abbreviation: "HĐ"}
+  - {id: cong_van, label: "Công văn", abbreviation: null}
+  - {id: cong_dien, label: "Công điện", abbreviation: "CĐ"}
+  - {id: ban_ghi_nho, label: "Bản ghi nhớ", abbreviation: "BGN"}
+  - {id: ban_thoa_thuan, label: "Bản thỏa thuận", abbreviation: "BTT"}
+  - {id: giay_uy_quyen, label: "Giấy ủy quyền", abbreviation: "GUQ"}
+  - {id: giay_moi, label: "Giấy mời", abbreviation: "GM"}
+  - {id: giay_gioi_thieu, label: "Giấy giới thiệu", abbreviation: "GGT"}
+  - {id: giay_nghi_phep, label: "Giấy nghỉ phép", abbreviation: "GNP"}
+  - {id: phieu_gui, label: "Phiếu gửi", abbreviation: "PG"}
+  - {id: phieu_chuyen, label: "Phiếu chuyển", abbreviation: "PC"}
+  - {id: phieu_bao, label: "Phiếu báo", abbreviation: "PB"}
+  - {id: thu_cong, label: "Thư công", abbreviation: null}
+
+extended_types:
+  - {id: thuyet_minh_y_tuong, label: "Thuyết minh ý tưởng", family: project_document, legal_lookup: true}
+  - {id: thuyet_minh_du_an, label: "Thuyết minh dự án", family: project_document, legal_lookup: true}
+  - {id: ho_so_de_xuat, label: "Hồ sơ đề xuất", family: project_document, legal_lookup: true}
+  - {id: don_de_nghi, label: "Đơn đề nghị", family: statutory_form, legal_lookup: true}
+  - {id: don_dang_ky, label: "Đơn đăng ký", family: statutory_form, legal_lookup: true}
+  - {id: phieu_de_xuat, label: "Phiếu đề xuất", family: statutory_form, legal_lookup: true}
+  - {id: ban_cam_ket, label: "Bản cam kết", family: statutory_form, legal_lookup: true}
+  - {id: ban_ke_khai, label: "Bản kê khai", family: statutory_form, legal_lookup: true}
+  - {id: mau_du_toan, label: "Mẫu dự toán", family: statutory_form, legal_lookup: true}
+  - {id: bao_cao_tai_chinh, label: "Báo cáo tài chính", family: specialized, legal_lookup: true}
+  - {id: ho_so_dau_tu, label: "Hồ sơ đầu tư", family: specialized, legal_lookup: true}
+
+extension_policy:
+  allow_new_profile_without_core_change: true
+  profile_path: "legal-rules/specialized/<domain>/<procedure-or-program>/"

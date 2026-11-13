@@ -1,0 +1,32 @@
+version: 1
+severity:
+  ERROR:
+    meaning: "Trái rule bắt buộc hoặc phá mẫu bắt buộc."
+    blocks_completion: true
+  WARNING:
+    meaning: "Khác mẫu, thiếu nguồn xác minh hoặc có nguy cơ sai."
+    blocks_completion: false
+  INFO:
+    meaning: "Khuyến nghị trình bày."
+    blocks_completion: false
+
+validators:
+  - legal_scope
+  - mandatory_template
+  - page_setup
+  - typography
+  - component_presence
+  - component_position
+  - numbering_and_symbols
+  - signature_block
+  - recipients
+  - tables_and_page_breaks
+  - content_preservation
+  - consistency
+  - visual_layout
+
+completion_gate:
+  unresolved_mandatory_conflicts: 0
+  structural_error_count: 0
+  visual_qa_required: true
+  content_loss_allowed: false

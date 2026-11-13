@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "NHD MCP Cốc Cốc Agent Sensor",
+  "version": "0.4.2",
+  "description": "NHD MCP browser bridge and opt-in, local-only TradingView Fibonacci replay recorder.",
+  "permissions": [
+    "storage",
+    "scripting",
+    "tabs",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*",
+    "http://127.0.0.1:39100/*",
+    "http://localhost:39100/*"
+  ],
+  "background": {
+    "service_worker": "tv-recorder-background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "content.js",
+        "stream-speed-core.js",
+        "stream-speed-observer.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "dom-bridge.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://tradingview.com/chart/*",
+        "https://*.tradingview.com/chart/*"
+      ],
+      "js": [
+        "tv-recorder-core.js",
+        "tv-recorder.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_title": "NHD MCP Cốc Cốc Agent"
+  }
+}

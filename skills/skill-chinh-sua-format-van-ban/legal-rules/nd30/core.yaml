@@ -1,0 +1,39 @@
+version: 1
+rule_pack: nd30_2020
+scope_note: "Chỉ áp khi tài liệu thuộc phạm vi văn bản hành chính hoặc được dùng làm fallback hợp lệ. Không dùng để ghi đè mẫu/quy định chuyên ngành cụ thể."
+
+page:
+  paper: A4
+  orientation_default: portrait
+  landscape_allowed_for_large_tables_or_charts: true
+  margins_mm:
+    top: {min: 20, max: 25, renderer_default: 20}
+    bottom: {min: 20, max: 25, renderer_default: 20}
+    left: {min: 30, max: 35, renderer_default: 30}
+    right: {min: 15, max: 20, renderer_default: 20}
+
+typography:
+  font_family: "Times New Roman"
+  encoding: "Unicode"
+  color: "black"
+  body_size_pt: {min: 13, max: 14}
+
+pagination:
+  position: "top_margin_center"
+  size_pt: {min: 13, max: 14}
+  first_page_visible: false
+
+components:
+  - national_header
+  - motto
+  - issuing_agency
+  - document_number
+  - place_and_date
+  - document_type
+  - subject
+  - body
+  - signer
+  - seal_or_digital_signature_when_applicable
+  - recipients
+
+validation_note: "Chi tiết kích thước/cỡ chữ/vị trí của từng thành phần phải được đối chiếu với nguồn pháp lý chính thức trước khi cập nhật rule pack; không suy diễn từ file mẫu không rõ nguồn."

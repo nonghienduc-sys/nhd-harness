@@ -1,0 +1,22 @@
+version: 1
+policy:
+  official_first: true
+  verify_effective_status: true
+  store_source_id_and_access_date: true
+
+preferred_source_classes:
+  - national_legal_database
+  - government_portal
+  - ministry_or_sector_portal
+  - provincial_official_portal
+  - issuing_agency_official_portal
+
+examples:
+  - "vbpl.vn / Cơ sở dữ liệu văn bản pháp luật"
+  - "vanban.chinhphu.vn / Cổng thông tin Chính phủ"
+  - "moj.gov.vn / Bộ Tư pháp"
+  - "cổng thông tin chính thức của bộ, ngành, tỉnh hoặc cơ quan ban hành"
+
+secondary_sources:
+  use_for: "discovery or cross-check only"
+  must_not_override_official_source: true

@@ -1,0 +1,18 @@
+{
+  "createdAt": "2026-09-29T04:34:57.941163",
+  "backup": "D:\\ChatGPT-Workstation-MCP\\deploy-backups\\ui-design-skills-pre-20260929-043456",
+  "skills": [
+    "design-taste-frontend",
+    "web-design-guidelines",
+    "design-reference-library",
+    "image-to-code",
+    "playwright-cli"
+  ],
+  "vendorCommits": {
+    "taste-skill": "ce26fc25c0e5e8cab638f883de62d9a86ee5e45b",
+    "vercel-agent-skills": "063bee94c3f4df8453406c830b0a7df0f2860278",
+    "web-interface-guidelines": "e3d624baaf29dc1fc645aff3e38f03e564d2d6b1",
+    "awesome-design-md": "f6961238d5cddcf8042a74a70fc400ec67181abb",
+    "playwright-cli": "74354ecc7a43da16d91a9bc54fa8db8283a3fcf5"
+  }
+}
