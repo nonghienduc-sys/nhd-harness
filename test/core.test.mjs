@@ -396,7 +396,8 @@ test('MCP registry includes the interactive intake tool surface', async () => {
   const server = createWorkstationMcp(config, store, files, terminal, office, skills, screen, projects, documents, desktop, intake, pdf, workflow, browser);
   const inventory = getWorkstationToolInventory(server, config);
   // v0.24.15: inventory = every callable name (old names + new facade names); hidden aliases are listed:false.
-  assert.equal(inventory.length, 102);
+  assert.equal(inventory.length, 103);
+  assert.ok(inventory.some(tool => tool.name === "harness_mode"));
   assert.ok(inventory.some(tool => tool.name === 'local_ai_router' && tool.listed === true));
   assert.ok(inventory.some(tool => tool.name === 'local_ai_status' && tool.listed === false));
   for (const name of ['desktop_windows','desktop_inspect','desktop_action','intake_files','pdf_document','desktop_document_intake','office_live_read','browser_status','browser_navigate','browser_inspect','browser_click','browser_fill','browser_wait','browser_screenshot','browser_wait_for','browser_click_verified','browser_fill_verified','workstation_plan','runtime_identity','local_ai_status','local_ai_route','local_ai_dispatch','local_ai_verify','tool_governor','project_rag_status','project_rag_query','project_rag_ingest','office_live_preview_edit','office_live_apply_edit','office_live_insert_at_cursor','office_live_append','context_payload_artifact','self_evolution_status','self_evolution_analyze','self_evolution_record_feedback','self_evolution_propose','self_evolution_evaluate']) assert.ok(inventory.some(tool => tool.name === name));

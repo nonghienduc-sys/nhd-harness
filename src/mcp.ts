@@ -53,6 +53,8 @@ import { registerSelfEvolutionTools } from "./mcp-registries/self-evolution-tool
 import { registerDelegationTools } from "./mcp-registries/delegation-tools.js";
 import { ResultPayloadGatewayService } from "./result-payload-gateway.js";
 import { TOOL_FACADES, buildFacade, facadeOwnedNames, hideToolsFromList, toolFacadesEnabled, type CapturedTool } from "./tool-facades.js";
+import { brainOnlyAllows, brainOnlyDenied, brainSelfDenied, isBrainOnlyActive, isDelegationBlocked,
+  isBrainDetached, brainDetachedAllows, brainDetachedDenied } from "./brain-only.js";
 
 const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false } as const;
 const preview = { readOnlyHint: true, destructiveHint: false, openWorldHint: false } as const;
@@ -93,7 +95,7 @@ function publicTerminalSession(session: TerminalSessionView) {
 
 // v0.24.14: bắt tay ngữ cảnh dùng chung giữa các request (server stateless).
 let sharedContextHandshake: ContextHandshakeService | null = null;
-export type McpRequestContext = { connectionKey?: string | null; agent?: string | null };
+export type McpRequestContext = { connectionKey?: string | null; agent?: string | null; brainOnly?: boolean };
 
 export function createWorkstationMcp(runtimeContext: WorkstationRuntime, requestContext: McpRequestContext = {}) {
   const {
@@ -129,6 +131,12 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   const capturedTools = new Map<string, CapturedTool>();
   (server as any).registerTool = (name: string, definition: any, handler: any) => {
     const wrapped = async (...args: any[]) => {
+      if (isBrainOnlyActive() && !brainOnlyAllows(name)) return brainOnlyDenied(name);
+      if (isBrainDetached() && !brainDetachedAllows(name)) return brainDetachedDenied(name);
+      if (name === "delegate_task" && isDelegationBlocked()) {
+        const action = args[0] && typeof args[0] === "object" ? (args[0] as Record<string, unknown>).action : undefined;
+        if (action === "submit" || action === "run") return brainSelfDenied(name);
+      }
       const started = performance.now();
       const rawInput = args[0] && typeof args[0] === "object" ? args[0] as Record<string, unknown> : null;
       const taskRunId = typeof rawInput?.task_run_id === "string" && rawInput.task_run_id.trim()
@@ -166,6 +174,7 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
     if (facadeOwned.has(name)) return undefined;
     return rawRegisterTool(name, definition, wrapped);
   };
+
   const runtimeCapabilities = async () => {
     const [officeStatus, browserStatus, desktopStatus, pdfStatus] = await Promise.all([office.status(), browser?.status() ?? Promise.resolve({ executable: null }), desktop.status(), pdf.status()]);
     const cocCocStatus = cocCocBridge?.status() ?? { connected: false, connectedTabs: 0 };
@@ -181,7 +190,7 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   };
 
   const projectRag = new ProjectRagService(config, files, pdf);
-  const registryContext = { server, runtime: runtimeContext, governor, runtimeIdentity, localAi, workstationRouter, executionPlanner, runtimeCapabilities, resultPayloadGateway, projectRag };
+  const registryContext = { server, runtime: runtimeContext, governor, runtimeIdentity, localAi, workstationRouter, executionPlanner, runtimeCapabilities, resultPayloadGateway, projectRag, connectionKey: requestContext.connectionKey ?? null };
   registerExecutionPlatformTools(registryContext);
   registerFilesTools(registryContext);
   registerProjectRagTools(registryContext);

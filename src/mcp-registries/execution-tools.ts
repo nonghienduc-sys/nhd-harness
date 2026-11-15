@@ -1,11 +1,69 @@
 import { z } from "zod";
 import { VERSION } from "../version.js";
+import { brainModeFile, readBrainMode, writeBrainMode, isBrainOnlyActive } from "../brain-only.js";
 import type { TaskIntent } from "../router.js";
 import { readOnly, preview, destructive, reversibleMutation, navigation, webRead, webNavigation, result, compactResult, failure, resultWithImages, publicTerminalSession, type ToolRegistryContext } from "./shared.js";
 
 export function registerExecutionPlatformTools(ctx: ToolRegistryContext) {
   const { server, runtime, governor, runtimeIdentity, localAi, workstationRouter, executionPlanner, runtimeCapabilities, resultPayloadGateway } = ctx;
   const { config, store, files, terminal, office, skills, screen, projects, documents, desktop, intake, pdf, desktopIntake, browser, terminalSessions, taskRuns, workspaceMemory, video, cocCocBridge, localIntelligence, executionLanes, isolatedAgent, backgroundTurbo, healthSnapshot, planState } = runtime;
+  // Shared, task-authorized mode manager. Deliberately callable even when BRAIN_ONLY
+  // is active, so the Brain can switch modes without the local Dashboard or a worker.
+  server.registerTool("harness_mode", {
+    description: "Inspect, select, and verify the shared NHD operating mode. harness=Mode 1 Brain+worker, self=Mode 2 Brain+Harness directly (no model worker), direct=Mode 3 Brain detached from workstation. Select requires a running task, moderate task authorization and confirmed=true. The mode applies to remote/local MCP sessions through one persisted state file, but never overrides tool-specific safety gates.",
+    inputSchema: {
+      action: z.enum(["status", "select", "verify"]),
+      mode: z.enum(["harness", "self", "direct"]).optional(),
+      task_run_id: z.string().min(1).max(256).optional(),
+      confirmed: z.boolean().optional(),
+    },
+    annotations: reversibleMutation,
+  }, async (input) => {
+    try {
+      const file = brainModeFile();
+      const status = () => {
+        const mode = readBrainMode(file);
+        return {
+          mode,
+          modeNumber: mode === "harness" ? 1 : mode === "self" ? 2 : 3,
+          scope: "shared-core-runtime",
+          directExecution: mode === "self",
+          workerDelegation: mode === "harness",
+          brainOnlyActive: isBrainOnlyActive(),
+          connectionKey: ctx.connectionKey ?? null,
+          saved: true,
+        };
+      };
+      if (input.action === "status") return result(status());
+      if (input.action === "verify") {
+        const observed = status();
+        const matches = input.mode === undefined || input.mode === observed.mode;
+        return result({ ...observed, matches, verified: matches, expected: input.mode ?? null });
+      }
+      if (!input.mode) throw new Error("HARNESS_MODE_REQUIRED");
+      if (input.confirmed !== true) throw new Error("HARNESS_MODE_CONFIRMATION_REQUIRED");
+      if (!input.task_run_id) throw new Error("HARNESS_MODE_TASK_REQUIRED");
+      if (config.emergencyStop) throw new Error("HARNESS_MODE_EMERGENCY_STOP");
+      if (!taskRuns) throw new Error("HARNESS_MODE_TASK_RUNTIME_UNAVAILABLE");
+      const task = taskRuns.get(input.task_run_id);
+      if (task.state !== "running") throw new Error("HARNESS_MODE_TASK_NOT_RUNNING");
+      if (!taskRuns.authorizations.allows(input.task_run_id, "moderate")) {
+        throw new Error("HARNESS_MODE_TASK_AUTHORIZATION_REQUIRED");
+      }
+      const before = readBrainMode(file);
+      if (before !== input.mode) writeBrainMode(input.mode, file);
+      const after = readBrainMode(file);
+      if (after !== input.mode) throw new Error("HARNESS_MODE_VERIFY_FAILED");
+      store.audit("brain_mode", "mcp_select", {
+        taskRunId: input.task_run_id,
+        from: before,
+        to: after,
+        connection: ctx.connectionKey ?? null,
+      });
+      return result({ ...status(), changed: before !== after, verified: true });
+    } catch (error) { return failure(error); }
+  });
+
   if (executionLanes && isolatedAgent) {
     const assertAutomationEnabled = () => { if (config.emergencyStop) throw new Error("Automation is disabled by Emergency Stop."); };
     server.registerTool("execution_lanes_status", { description: "Report Background + Isolated Agent execution lanes, scheduler capacity/reservations, resource locks and artifact exchange root. Read-only; Background host foreground policy is always blocked.", inputSchema: {}, annotations: readOnly }, async () => { try { return result(executionLanes.status(isolatedAgent.status())); } catch (e) { return failure(e); } });

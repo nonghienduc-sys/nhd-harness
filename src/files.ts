@@ -164,6 +164,7 @@ export class FileService {
     const path = this.resolvePath(String(payload.path));
     assertNotReleaseProtected(path);
     if (kind === "write") assertNoIntroducedRedaction(String(payload.content ?? ""), this.originalTextForRedactionCheck(path), "fs_preview_write");
+    if (kind === "write" && payload.noOverwrite === true && existsSync(path)) throw new Error("SBCE_HANDOFF_WOULD_OVERWRITE");
     const expectedHash = existsSync(path) && statSync(path).isFile() ? this.hashFile(path) : null;
     const effectiveTaskRunId = resolveTaskRunId(taskRunId, payload);
     const actionId = this.store.allocatePendingId();
@@ -232,7 +233,7 @@ export class FileService {
       let destination: string | null = null;
       if (kind === "write") {
         mkdirSync(dirname(path), { recursive: true });
-        writeFileSync(path, String(pending.payload.content ?? ""), "utf8");
+        writeFileSync(path, String(pending.payload.content ?? ""), { encoding: "utf8", flag: pending.payload.noOverwrite === true ? "wx" : "w" });
         if (effectiveTaskRunId) {
           this.store.guardResources([canonicalizeFilePathResource(path, this.config.roots)], {
             mode: "write",

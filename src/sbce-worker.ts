@@ -9,7 +9,8 @@ import { validateWorkOrder, type SbceMode, type SbceModel } from "./sbce-core.js
 import { HhtechProvider } from "./sbce-provider.js";
 import { SbceVault } from "./sbce-vault.js";
 import { loadCatalogFromFile } from "./sbce-catalog.js";
-import { runSbceShadow } from "./sbce-runner.js";
+import { runSbceShadow, SBCE_SAFETY_BASELINE } from "./sbce-runner.js";
+import { createBenchRun, findBenchTasksDir, listBenchRuns, loadBenchTasks, readBenchSummary, stateHeader, summarizeBench } from "./sbce-bench.js";
 const token=process.env.NHD_SBCE_TOKEN??"";
 const mode=(process.env.NHD_SBCE_MODE??"off") as SbceMode;
 if(token.length<32||!["shadow","on"].includes(mode))throw Error("SBCE_WORKER_LAUNCH_DENIED");
@@ -68,9 +69,18 @@ function boardRow(job:any){
   prevRole=role;
   return {modelId:c.model_id,role,state:c.state,costVnd:c.charged_vnd??0,at:c.created_at};
  });
- let title="";try{title=String(store.workOrder(job.id).title??"").slice(0,200);}catch{}
- const review=job.review?{state:job.review.state,summary:job.review.summary,checks:job.review.checks??[],risks:job.review.risks??[],needsBrain:job.review.needsBrain??null,tokensIn:job.review.tokensIn??0,tokensOut:job.review.tokensOut??0,hasDraft:typeof job.review.artifacts?.draft==="string"}:null;
- return {id:job.id,title,kind:job.kind,status:job.status,createdAt:job.createdAt,updatedAt:job.updatedAt,spentVnd:job.spentVnd,budgetVnd:job.budgetVnd,attempts:job.attempts,reason:job.reason,writers:[...new Set(tagged.filter(c=>c.role==="writer").map(c=>c.modelId))],judges:[...new Set(tagged.filter(c=>c.role==="judge").map(c=>c.modelId))],calls:tagged,review};
+ let order:any=null;try{order=store.workOrder(job.id);}catch{}
+ const title=String(order?.title??"").slice(0,200);
+ const review=job.review?{state:job.review.state,summary:job.review.summary,checks:job.review.checks??[],attempts:Array.isArray(job.review.attempts)?job.review.attempts:[],risks:job.review.risks??[],needsBrain:job.review.needsBrain??null,tokensIn:job.review.tokensIn??0,tokensOut:job.review.tokensOut??0,hasDraft:typeof job.review.artifacts?.draft==="string"}:null;
+ return {id:job.id,title,kind:job.kind,status:job.status,createdAt:job.createdAt,updatedAt:job.updatedAt,spentVnd:job.spentVnd,budgetVnd:job.budgetVnd,attempts:job.attempts,reason:job.reason,writers:[...new Set(tagged.filter(c=>c.role==="writer").map(c=>c.modelId))],judges:[...new Set(tagged.filter(c=>c.role==="judge").map(c=>c.modelId))],calls:tagged,review,owner:String(job.owner??"").slice(0,200),criteriaCount:Array.isArray(order?.acceptance)?order.acceptance.length:0};
+}
+// Checklist the Brain wrote for this job (work order). Detail view only; context_pack is never exposed.
+export function boardChecklist(job:any){
+ let order:any=null;try{order=store.workOrder(job.id);}catch{return null;}
+ const cut=(v:any,n:number)=>typeof v==="string"?v.slice(0,n):undefined;
+ return {goal:String(order.goal??"").slice(0,2000),deliverables:(order.deliverables??[]).map((d:any)=>String(d).slice(0,500)),
+  acceptance:(order.acceptance??[]).map((a:any)=>({type:a.type,text:cut(a.text,1500),run:cut(a.run,500),expect:cut(a.expect,200),pattern:cut(a.pattern,500),paths:Array.isArray(a.paths)?a.paths.slice(0,30).map((x:any)=>String(x).slice(0,500)):undefined})),
+  constraints:(order.constraints??[]).map((c:any)=>String(c).slice(0,1000)),risk:order.risk,applyMode:order.apply_mode,projectRoot:order.project_root??null,safety:SBCE_SAFETY_BASELINE.split(/\n- /)};
 }
 // 0.24.32 quality stats per model. Brain verdict: accepted/applied = duyệt; failed with a review pack = trả lại.
 // "missed" = the cheap judge passed L1 but Brain still rejected: the signal that L1 alone is not enough.
@@ -106,7 +116,7 @@ app.get("/admin/jobs",safe(req=>{
 app.get("/admin/jobs/:id",safe(req=>{
  const id=String(req.params.id);
  const job=store.get(id);
- return {...boardRow(job),draft:readDraft(id,job)};
+ return {...boardRow(job),checklist:boardChecklist(job),draft:readDraft(id,job)};
 }));
 app.post("/admin/jobs/:id/review",safe(req=>{
  const id=String(req.params.id);
@@ -141,6 +151,31 @@ app.post("/admin/probe",safe(async(req)=>{
  appendFileSync(probeLog,JSON.stringify(record)+"\n","utf8");
  return record;
 }));
+// 0.24.34 model benchmark: fixed tasks with hidden tests. Separate from jobs, job budgets, the queue and the bandit.
+const benchOut=resolve(dataDir,"sbce-bench");
+let benchActive:ReturnType<typeof createBenchRun>|null=null;
+const benchIds=(v:unknown)=>{if(v===undefined||v===null)return undefined;if(!Array.isArray(v)||v.length>50||!v.every(x=>typeof x==="string"&&/^[a-zA-Z0-9_.-]{1,100}$/.test(x)))throw Error("SBCE_BENCH_IDS_INVALID");return v as string[];};
+const benchInt=(v:unknown,min:number,max:number,def:number)=>{if(v===undefined||v===null)return def;const n=Number(v);if(!Number.isInteger(n)||n<min||n>max)throw Error("SBCE_BENCH_PARAM_INVALID");return n;};
+app.post("/admin/bench/start",safe(async req=>{
+ if(benchActive?.state.status==="running")throw Error("SBCE_BENCH_RUNNING");
+ const dir=findBenchTasksDir(process.env.NHD_SBCE_BENCH_TASKS,import.meta.url);
+ if(!dir)throw Error("SBCE_BENCH_TASKS_DIR_MISSING");
+ const loaded=await loadBenchTasks(dir);
+ const taskIds=benchIds(req.body?.task_ids),modelIds=benchIds(req.body?.model_ids);
+ const tasks=taskIds?loaded.tasks.filter(t=>taskIds.includes(t.task.id)):loaded.tasks;
+ const models=loadCatalog().filter(m=>m.enabled&&(!modelIds||modelIds.includes(m.id)));
+ if(!tasks.length||!models.length)throw Error("SBCE_BENCH_NOTHING_TO_RUN");
+ if(!ephemeralKey&&!vault.configured())throw Error("SBCE_SESSION_KEY_REQUIRED");
+ benchActive=createBenchRun({tasks,models,generator:provider,outDir:benchOut,tmpRoot:resolve(dataDir,"sbce-bench-tmp"),runs:benchInt(req.body?.runs,1,3,2),budgetVnd:benchInt(req.body?.budget_vnd,1,30000,15000),concurrency:benchInt(req.body?.concurrency,1,3,2)});
+ return {run_id:benchActive.state.runId,planned_calls:benchActive.planned,task_errors:loaded.errors};
+}));
+app.post("/admin/bench/status",safe(async req=>{
+ const id=req.body?.run_id===undefined||req.body?.run_id===null?benchActive?.state.runId:String(req.body.run_id);
+ if(!id)return {active:null};
+ if(benchActive&&benchActive.state.runId===id){const s=benchActive.state;return {...stateHeader(s),summary:summarizeBench(s.results,loadCatalog()),results:s.results.slice(-200)};}
+ return await readBenchSummary(benchOut,id);
+}));
+app.post("/admin/bench/list",safe(async()=>({runs:await listBenchRuns(benchOut),active:benchActive?stateHeader(benchActive.state):null})));
 app.post("/jobs/list",safe(req=>({jobs:store.listOwned(String(req.body?.owner??""),Number(req.body?.limit??20))})));
 function pump(){
  while(activeJobs<maxConcurrentJobs&&jobQueue.length){

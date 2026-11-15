@@ -21,7 +21,7 @@ export class SbceStore {
   try{const out=fn();this.db.exec("COMMIT");return out;}catch(e){this.db.exec("ROLLBACK");throw e;}
  }
  publicRow(row:Row){
-  return {id:row.id,status:row.status,owner:row.owner,kind:row.kind,createdAt:row.created_at,updatedAt:row.updated_at,budgetVnd:row.reserved_vnd,spentVnd:row.spent_vnd,attempts:row.attempts,reason:row.reason,review:row.review_pack?JSON.parse(row.review_pack):null};
+  return {applyMode:(JSON.parse(row.work_order) as {apply_mode?:string}).apply_mode??"sandbox_only",id:row.id,status:row.status,owner:row.owner,kind:row.kind,createdAt:row.created_at,updatedAt:row.updated_at,budgetVnd:row.reserved_vnd,spentVnd:row.spent_vnd,attempts:row.attempts,reason:row.reason,review:row.review_pack?JSON.parse(row.review_pack):null};
  }
  row(id:string):Row{
   const row=this.db.prepare("SELECT * FROM sbce_jobs WHERE id=?").get(id) as Row|undefined;
@@ -47,6 +47,7 @@ export class SbceStore {
    if(requested>this.budget().remainingVnd)throw Error("SBCE_DAILY_BUDGET_EXCEEDED");
    const id=newJobId(),at=new Date().toISOString();
    this.db.prepare("INSERT INTO sbce_jobs(id,status,owner,kind,created_at,updated_at,work_order,reserved_vnd) VALUES(?,?,?,?,?,?,?,?)").run(id,"queued",owner,order.kind,at,at,JSON.stringify(order),requested);
+   this.db.prepare("UPDATE sbce_jobs SET status='cancelled',reason=?,updated_at=? WHERE owner=? AND status='needs_brain' AND id<>?").run("SBCE_SUPERSEDED_BY:"+id,at,owner,id);
    return this.get(id);
   });
  }
@@ -138,6 +139,7 @@ export class SbceStore {
   return this.transaction(()=>{
    const row=this.row(id);
    if(row.owner!==owner)throw Error("SBCE_OWNER_MISMATCH");
+   if(row.status==="needs_brain"&&decision==="reject"){this.db.prepare("UPDATE sbce_jobs SET status='failed',reason=?,updated_at=? WHERE id=?").run((note??"SBCE_CLOSED_BY_BRAIN").slice(0,1000),new Date().toISOString(),id);return this.get(id);}
    if(row.status!=="ready_for_review")throw Error("SBCE_NOT_READY_FOR_REVIEW");
    if(!row.review_pack)throw Error("SBCE_REVIEW_PACK_MISSING");
    const pack=JSON.parse(row.review_pack) as {checks?:Array<{ok:boolean}>};

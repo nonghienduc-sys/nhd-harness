@@ -46,6 +46,7 @@ export function publicTerminalSession(session: TerminalSessionView) {
 
 export type ToolRegistryContext = {
   server: McpServer;
+  connectionKey?: string | null;
   runtime: WorkstationRuntime;
   governor: ToolGovernorService;
   runtimeIdentity: RuntimeIdentityService;

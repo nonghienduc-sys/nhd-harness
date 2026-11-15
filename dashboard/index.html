@@ -6,7 +6,7 @@
   <title>NHD MCP Control Center</title>
   <script>(function(){var t=null;try{t=localStorage.getItem('nhdTheme')}catch(_){}if(t!=='light'&&t!=='dark')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-bs-theme',t)})();</script>
   <link rel="stylesheet" href="/vendor/tabler/tabler.min.css?v=1.4.0">
-  <link rel="stylesheet" href="/nhd-tabler.css?v=20261113-tabler">
+  <link rel="stylesheet" href="/nhd-tabler.css?v=20261113-ck">
 </head>
 <body>
   <div class="page">
@@ -29,6 +29,7 @@
               <li class="nav-item"><button type="button" class="nav-link" data-tab="memory"><span class="nav-link-icon" aria-hidden="true">◎</span><span class="nav-link-title">Bộ nhớ</span></button></li>
               <li class="nav-item"><button type="button" class="nav-link" data-tab="desktop"><span class="nav-link-icon" aria-hidden="true">▣</span><span class="nav-link-title">Máy tính & tiếp nhận</span></button></li>
               <li class="nav-item"><button type="button" class="nav-link" data-tab="sbce"><span class="nav-link-icon" aria-hidden="true">⚖</span><span class="nav-link-title">Bảng SBCE</span><span class="badge bg-azure-lt ms-auto">Mới</span></button></li>
+              <li class="nav-item"><button type="button" class="nav-link" data-tab="checklist"><span class="nav-link-icon" aria-hidden="true">☑</span><span class="nav-link-title">Checklist nhiệm vụ</span></button></li>
               <li class="nav-subtitle">Hệ thống</li>
               <li class="nav-item"><button type="button" class="nav-link" data-tab="connections"><span class="nav-link-icon" aria-hidden="true">⌘</span><span class="nav-link-title">Kết nối</span></button></li>
               <li class="nav-item"><button type="button" class="nav-link" data-tab="skills"><span class="nav-link-icon" aria-hidden="true">◇</span><span class="nav-link-title">Kỹ năng & công cụ</span></button></li>
@@ -415,6 +416,19 @@
 </section>
 
 <!-- ===================== BẢNG SBCE ===================== -->
+<section id="checklist" class="tab">
+  <div class="page-header mb-3"><div class="row align-items-center g-2"><div class="col"><div class="page-pretitle">SBCE · Brain giao việc → model rẻ làm → kiểm chéo</div><h2 class="page-title">Checklist nhiệm vụ</h2><div class="text-secondary mt-1">Mỗi chat/tác vụ là một luồng; mỗi job hiện tiêu chí Brain giao và đang ở tầng kiểm nào.</div></div><div class="col-auto btn-list align-items-center"><span id="ckStatus" class="text-secondary small">Đang tải…</span><label class="form-check form-switch m-0"><input id="ckAuto" class="form-check-input" type="checkbox" checked><span class="form-check-label">Tự làm mới</span></label><button type="button" id="ckRefresh" class="btn btn-primary">↻ Làm mới</button></div></div></div>
+  <div id="ckKpis" class="row g-3 mb-3"></div>
+  <div class="ck-toolbar mb-3">
+    <div class="ck-filters" role="group" aria-label="Lọc trạng thái"><button type="button" class="active" data-ck-filter="all">Tất cả</button><button type="button" data-ck-filter="run">Đang chạy</button><button type="button" data-ck-filter="wait">Chờ duyệt</button><button type="button" data-ck-filter="ok">Xong</button><button type="button" data-ck-filter="bad">Lỗi / trả lại</button></div>
+    <input id="ckSearch" class="form-control ck-search" type="search" placeholder="Tìm theo tên job…" autocomplete="off">
+  </div>
+  <div class="ck-layout">
+    <div id="ckThreads" class="ck-threads"></div>
+    <div id="ckDetail" class="ck-detail"></div>
+  </div>
+</section>
+
 <section id="sbce" class="tab">
   <div class="page-header mb-3"><div class="row align-items-center g-2"><div class="col"><div class="page-pretitle">SBCE · Strong Brain – Cheap Executor</div><h2 class="page-title">Bảng SBCE</h2><div class="text-secondary mt-1">Model rẻ viết nháp, model khác họ chấm chéo, Brain và bạn quyết định cuối.</div></div><div class="col-auto btn-list align-items-center"><span id="sbceBoardStatus" class="text-secondary small">Đang tải…</span><a class="btn" href="/sbce.html" target="_blank" rel="noopener">Nhập key / hiệu chỉnh</a><button type="button" id="sbceRefresh" class="btn btn-primary sbce-btn">↻ Làm mới</button></div></div></div>
   <div id="sbceMetrics" class="sbce-overview"></div>
@@ -480,6 +494,8 @@
   <script src="/lite-updates.js?v=20261109"></script>
   <script src="/chat-health-v2.js?v=20261113-vi"></script>
   <script src="/sbce-panel.js?v=20261113-ui"></script>
+  <script src="/checklist-panel.js?v=20261113"></script>
+  <script src="/brain-mode-panel.js?v=20261114"></script>
   <script src="/dual-lanes.js?v=20261113-vi"></script>
   <script src="/vi-labels.js?v=20261113-vi"></script>
   <script src="/auto-reload.js?v=20261113"></script>

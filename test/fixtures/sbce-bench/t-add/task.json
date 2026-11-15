@@ -1,0 +1,9 @@
+{
+  "id": "t-add",
+  "class": "bugfix",
+  "difficulty": "easy",
+  "title": "Fix add",
+  "prompt": "add(a, b) must return the sum.",
+  "files": ["src/add.mjs"],
+  "tests": ["add.test.mjs"]
+}

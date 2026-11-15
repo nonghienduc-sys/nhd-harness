@@ -49,3 +49,11 @@ test('Durable job ledger enforces daily reservation and owner-bound review',()=>
   assert.equal(store.get(jid).status,'accepted');
  }finally{store.close();rmSync(dir,{recursive:true,force:true});}
 });
+test('review receipt keeps newest attempt records that fit and never fails over them',()=>{
+ const attempts=Array.from({length:6},(_,i)=>({attempt:i+1,model:'m'+i,tier:'T1',checks:Array.from({length:12},(_,k)=>({name:'L0_check_'+k,ok:k%2===0})),error:'e'.repeat(500)}));
+ const pack=reviewReceipt({jobId:'j',state:'needs_brain',summary:'s'.repeat(2000),checks:[],costVnd:0,tokensIn:0,tokensOut:0,attempts});
+ assert.ok(JSON.stringify(pack).length<=SBCE_LIMITS.maxReviewChars);
+ assert.ok(pack.attempts.length>=1);
+ assert.equal(pack.attempts.at(-1).attempt,6);
+ assert.equal(pack.attempts[0].error.length,160);
+});

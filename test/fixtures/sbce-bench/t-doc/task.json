@@ -1,0 +1,15 @@
+{
+  "id": "t-doc",
+  "class": "doc",
+  "difficulty": "easy",
+  "title": "Notes",
+  "prompt": "Write NOTES.md with a '## Hello' section containing the word world.",
+  "files": ["src/x.txt"],
+  "checks": {
+    "output_path": "NOTES.md",
+    "must_include": ["## Hello"],
+    "in_section": { "## Hello": ["world"] },
+    "must_not_include": ["TODO"],
+    "max_chars": 200
+  }
+}

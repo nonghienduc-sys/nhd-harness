@@ -18,13 +18,13 @@ test('generated architecture docs are deterministic and current', () => {
   execFileSync(process.execPath, [resolve(root, 'scripts/generate-architecture-docs.mjs'), '--check'], { cwd: root, stdio: 'pipe' });
 });
 
-test('generated capability catalog covers the full 158-tool surface exactly once', () => {
+test('generated capability catalog covers the full 163-tool surface exactly once', () => {
   const data = catalog();
   assert.equal(data.schemaVersion, 1);
   assert.equal(data.version, JSON.parse(read('package.json')).version);
-  assert.equal(data.toolCount, 158);
-  assert.equal(data.tools.length, 158);
-  assert.equal(new Set(data.tools.map(tool => tool.name)).size, 158);
+  assert.equal(data.toolCount, 163);
+  assert.equal(data.tools.length, 163);
+  assert.equal(new Set(data.tools.map(tool => tool.name)).size, 163);
   for (const tool of data.tools) {
     assert.ok(tool.name);
     assert.ok(tool.registryDomain);
@@ -34,7 +34,7 @@ test('generated capability catalog covers the full 158-tool surface exactly once
     assert.ok(['read-only', 'reversible', 'mutation', 'destructive', 'dynamic'].includes(tool.risk), tool.name);
     assert.ok(Array.isArray(tool.runtimeRequirements), tool.name);
   }
-  for (const name of ['fs_apply_write', 'fs_apply_move', 'fs_apply_delete', 'workstation_plan', 'tool_governor', 'runtime_identity', 'context_payload_artifact', 'self_evolution_status', 'self_evolution_record_feedback', 'self_evolution_analyze', 'self_evolution_propose', 'self_evolution_evaluate']) {
+  for (const name of ['harness_mode', 'delegate_task', 'review_pack', 'executor_admin', 'sbce_artifact_handoff', 'fs_apply_write', 'fs_apply_move', 'fs_apply_delete', 'workstation_plan', 'tool_governor', 'runtime_identity', 'context_payload_artifact', 'self_evolution_status', 'self_evolution_record_feedback', 'self_evolution_analyze', 'self_evolution_propose', 'self_evolution_evaluate']) {
     assert.ok(data.tools.some(tool => tool.name === name), `${name} must be generated`);
   }
 });

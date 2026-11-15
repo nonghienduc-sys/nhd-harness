@@ -1,16 +1,17 @@
 {
   "schemaVersion": 1,
-  "version": "0.24.33",
+  "version": "0.24.37",
   "sourceOfTruth": {
     "registration": "src/mcp-registries/*.ts",
     "capabilityPolicy": "src/capability-registry.ts",
     "executionPlan": "src/execution-planner.ts"
   },
-  "toolCount": 158,
+  "toolCount": 163,
   "registryDomains": {
     "Browser": 26,
     "Context": 17,
-    "Execution": 39,
+    "Delegation": 4,
+    "Execution": 40,
     "Files": 31,
     "Media": 19,
     "Office": 21,
@@ -35,14 +36,14 @@
     "Task": 7,
     "Terminal": 6,
     "Video": 9,
-    "Workstation": 9
+    "Workstation": 14
   },
   "permissions": {
     "browser": 26,
     "desktop": 4,
     "intake": 2,
     "mixed": 38,
-    "read": 40,
+    "read": 45,
     "screen": 4,
     "skills": 6,
     "terminal": 6,
@@ -50,7 +51,7 @@
     "write": 23
   },
   "lanes": {
-    "background": 90,
+    "background": 95,
     "either": 53,
     "isolated": 15
   },
@@ -58,7 +59,7 @@
     "destructive": 10,
     "dynamic": 3,
     "mutation": 35,
-    "read-only": 107,
+    "read-only": 112,
     "reversible": 3
   },
   "backgroundLane": {
@@ -86,6 +87,7 @@
     "domainRegistries": [
       "src/mcp-registries/browser-tools.ts",
       "src/mcp-registries/context-tools.ts",
+      "src/mcp-registries/delegation-tools.ts",
       "src/mcp-registries/execution-tools.ts",
       "src/mcp-registries/files-tools.ts",
       "src/mcp-registries/media-tools.ts",
@@ -2491,6 +2493,62 @@
       "description": "Report Background Turbo persistent workers, hot-cache metrics, dynamic concurrency and zero-copy capability. Read-only."
     },
     {
+      "name": "delegate_task",
+      "registryDomain": "Delegation",
+      "group": "Workstation",
+      "permission": "read",
+      "lane": "background",
+      "risk": "read-only",
+      "mutation": false,
+      "destructive": false,
+      "openWorld": false,
+      "runtimeRequirements": [],
+      "annotation": "reversibleMutation",
+      "description": "Brain-to-worker delegation (SBCE). Prefer action \"run\" to submit and wait in one call, returning a compact receipt to save Brain round-trips. Default route for hands-on work: reading/summarizing, drafting, code, tests, docs. Brain writes the work order with machine-checkable acceptance, then reviews. Sandbox proposals need machine verification and Brain review. Never authorizes release, commit or workstation actions."
+    },
+    {
+      "name": "executor_admin",
+      "registryDomain": "Delegation",
+      "group": "Workstation",
+      "permission": "read",
+      "lane": "background",
+      "risk": "read-only",
+      "mutation": false,
+      "destructive": false,
+      "openWorld": false,
+      "runtimeRequirements": [],
+      "annotation": "readOnly",
+      "description": "Read-only SBCE worker health, budget and enabled model catalog. No API keys, prompts, or private outputs are returned."
+    },
+    {
+      "name": "harness_mode",
+      "registryDomain": "Execution",
+      "group": "Workstation",
+      "permission": "read",
+      "lane": "background",
+      "risk": "read-only",
+      "mutation": false,
+      "destructive": false,
+      "openWorld": false,
+      "runtimeRequirements": [],
+      "annotation": "reversibleMutation",
+      "description": "Inspect, select, and verify the shared NHD operating mode. harness=Mode 1 Brain+worker, self=Mode 2 Brain+Harness directly (no model worker), direct=Mode 3 Brain detached from workstation. Select requires a running task, moderate task authorization and confirmed=true. The mode applies to remote/local MCP sessions through one persisted state file, but never overrides tool-specific safety gates."
+    },
+    {
+      "name": "review_pack",
+      "registryDomain": "Delegation",
+      "group": "Workstation",
+      "permission": "read",
+      "lane": "background",
+      "risk": "read-only",
+      "mutation": false,
+      "destructive": false,
+      "openWorld": false,
+      "runtimeRequirements": [],
+      "annotation": "reversibleMutation",
+      "description": "Review a SBCE job receipt (bounded output). Brain approval changes job metadata only; never applies patches or bypasses file preview/apply. Requires originating task ID to approve/reject."
+    },
+    {
       "name": "runtime_identity",
       "registryDomain": "Execution",
       "group": "Workstation",
@@ -2503,6 +2561,20 @@
       "runtimeRequirements": [],
       "annotation": "readOnly",
       "description": "Return one authoritative runtime/source/deployment identity view: live production version, source version, staged candidate, runtime path, source/deployment hashes, git commit when available, and rollback version/path. Read-only."
+    },
+    {
+      "name": "sbce_artifact_handoff",
+      "registryDomain": "Delegation",
+      "group": "Workstation",
+      "permission": "read",
+      "lane": "background",
+      "risk": "read-only",
+      "mutation": false,
+      "destructive": false,
+      "openWorld": false,
+      "runtimeRequirements": [],
+      "annotation": "reversibleMutation",
+      "description": "Trusted SBCE accepted draft -> guarded Windows file. Mode1 Brain reviews, then preview/apply. No worker OS privilege; new TXT/MD/CSV under task root only. Requires task authorization and returns verified host SHA-256."
     },
     {
       "name": "tool_governor",

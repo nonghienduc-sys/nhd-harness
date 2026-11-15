@@ -62,7 +62,7 @@ export class SbceProcess {
  async request(method:"GET"|"POST",path:string,body?:unknown,timeoutMs=27000):Promise<any>{
   if(this.mode==="off")return {status:"disabled",mode:"off"};
   if(!this.child)throw Error("SBCE_WORKER_OFFLINE");
-  if(!/^\/(?:health|admin(?:\/(?:probe|models|jobs(?:\?limit=\d{1,3}|\/job-[a-f0-9-]{8,64}(?:\/review)?)?))?|session-key|jobs(?:\/list|\/[a-zA-Z0-9-]+(?:\/(?:status|cancel|review|pull))?)?)$/.test(path))throw Error("SBCE_INVALID_ROUTE");
+  if(!/^\/(?:health|admin(?:\/(?:probe|models|bench\/(?:start|status|list)|jobs(?:\?limit=\d{1,3}|\/job-[a-f0-9-]{8,64}(?:\/review)?)?))?|session-key|jobs(?:\/list|\/[a-zA-Z0-9-]+(?:\/(?:status|cancel|review|pull))?)?)$/.test(path))throw Error("SBCE_INVALID_ROUTE");
   const response=await fetch("http://127.0.0.1:"+this.port+path,{
    method,headers:{"x-nhd-executor-auth":this.secret,"content-type":"application/json"},
    body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(Math.min(Math.max(timeoutMs,1000),27000))

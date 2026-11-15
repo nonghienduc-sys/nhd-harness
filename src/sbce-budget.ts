@@ -8,10 +8,16 @@ export function preflightMaxCostVnd(model:SbceModel,system:string,prompt:string,
  if(!Number.isInteger(maxOutputTokens)||maxOutputTokens<1||maxOutputTokens>8192)throw Error("SBCE_OUTPUT_LIMIT_INVALID");
  // Conservative UTF-8 upper estimate + fixed message overhead; 2x a billing-verified
  // worst-case rate covers ordinary token usage discrepancies but is not a billing oracle.
- const estimatedInput=Buffer.byteLength(system+"\n"+prompt,"utf8")+1024;
+ // Plus tokens the gateway adds on its side (catalog hiddenInputTokens): billed, never sent by us.
+ const estimatedInput=Buffer.byteLength(system+"\n"+prompt,"utf8")+1024+hiddenTokens(model.hiddenInputTokens);
  const maxTokens=estimatedInput+maxOutputTokens;
  const floor=callFloorVnd(model.minVndPerCall);
  return Math.max(1,Math.ceil(maxTokens*model.vndPerM*2/1_000_000),Math.ceil(floor));
+}
+function hiddenTokens(value:number|undefined):number{
+ if(value===undefined)return 0;
+ if(!Number.isSafeInteger(value)||value<0||value>200_000)throw Error("SBCE_HIDDEN_INPUT_TOKENS_INVALID");
+ return value;
 }
 function callFloorVnd(value:number|undefined):number{
  if(value===undefined)return 0;

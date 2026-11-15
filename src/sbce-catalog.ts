@@ -28,6 +28,8 @@ export const catalogModelSchema=z.object({
  enabled:z.boolean(),
  vndPerM:z.number().finite().positive().max(100_000),
  minVndPerCall:z.number().finite().min(0).max(1000).optional(),
+ // Input tokens the gateway adds per call beyond what we send (HHTECH Anthropic route: ~13k).
+ hiddenInputTokens:z.number().int().min(0).max(200_000).optional(),
  dataLabels:z.array(z.enum(labels)).nonempty().max(3),
  priceAudit:priceAuditSchema.optional(),
 }).passthrough();

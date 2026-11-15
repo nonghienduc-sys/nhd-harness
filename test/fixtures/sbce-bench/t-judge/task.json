@@ -1,0 +1,11 @@
+{
+  "id": "t-judge",
+  "class": "judge",
+  "difficulty": "easy",
+  "title": "Judge",
+  "prompt": "Spec: add returns the sum.",
+  "files": ["src/add.mjs"],
+  "patch": "change.patch",
+  "expected": "reject",
+  "reason": "secret-reason-never-sent"
+}

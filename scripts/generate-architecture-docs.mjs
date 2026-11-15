@@ -17,6 +17,7 @@ const version = String(packageJson.version || '').trim();
 
 const registryDomains = Object.freeze({
   'execution-tools.ts': 'Execution',
+  'delegation-tools.ts': 'Delegation',
   'files-tools.ts': 'Files',
   'context-tools.ts': 'Context',
   'office-tools.ts': 'Office',
@@ -118,7 +119,7 @@ for (const tool of tools) {
   byName.set(tool.name, tool);
 }
 const sortedTools = [...byName.values()].sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name));
-const EXPECTED_TOOL_COUNT = 158;
+const EXPECTED_TOOL_COUNT = 163;
 if (sortedTools.length !== EXPECTED_TOOL_COUNT) {
   throw new Error(`Capability catalog must cover exactly the live ${EXPECTED_TOOL_COUNT}-tool surface; generated ${sortedTools.length}. Fix registry parsing instead of weakening the invariant.`);
 }

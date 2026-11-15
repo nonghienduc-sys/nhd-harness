@@ -1,0 +1,5 @@
+--- a/src/add.mjs
++++ b/src/add.mjs
+@@ -1 +1 @@
+-export const add = (a, b) => a - b;
++export const add = (a, b) => a * b;

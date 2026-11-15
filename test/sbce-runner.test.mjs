@@ -36,3 +36,20 @@ test('SBCE with no enabled models stays within budget and escalates',async()=>{
   assert.equal(r.status,'needs_brain');assert.equal(r.spentVnd,0);assert.equal(r.review.checks[0].ok,false);
  }finally{store.close();rmSync(base,{recursive:true,force:true});}
 });
+test('SBCE records L0 and L1 separately for every attempt instead of a merged L0_L1 flag',async()=>{
+ const base=dir(),store=new SbceStore(join(base,'db.sqlite'));try{
+  const job=store.submit(order('doc_write'),'owner-task');
+  const rejecting={generate:async({model})=>({text:model.id==='judge'?JSON.stringify({pass:false,reason:'Missing citation'}):'This is a long, well-structured and carefully edited draft text that remains sandbox-only.',usage:{input:200,output:90,cached:0},model:model.model,protocol:'openai'})};
+  const r=await runSbceShadow({store,jobId:job.id,models,generator:rejecting,artifactRoot:join(base,'artifacts'),mode:'shadow'});
+  assert.equal(r.status,'needs_brain');
+  assert.equal(r.review.checks.some(c=>c.name==='L0_L1'),false);
+  assert.equal(r.review.checks.filter(c=>c.name.startsWith('L0_')).every(c=>c.ok),true);
+  assert.equal(r.review.checks.find(c=>c.name==='L1_cross_family_judge').ok,false);
+  assert.ok(r.review.attempts.length>=1);
+  for(const a of r.review.attempts){
+   assert.equal(a.model,'writer');
+   assert.equal(a.checks.find(c=>c.name==='L1_cross_family_judge').ok,false);
+   assert.match(a.error,/L1 \(judge\): Missing citation/);
+  }
+ }finally{store.close();rmSync(base,{recursive:true,force:true});}
+});

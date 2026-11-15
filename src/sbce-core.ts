@@ -22,7 +22,7 @@ export const workOrderSchema=z.object({
 export type SbceWorkOrder=z.infer<typeof workOrderSchema>;
 export type SbceMode="off"|"shadow"|"on";
 export type SbceState="queued"|"running"|"verifying"|"fixing"|"needs_brain"|"ready_for_review"|"accepted"|"applied"|"failed"|"cancelled";
-export type SbceModel={id:string;model:string;provider:"hhtech";protocol:"openai"|"anthropic";family:string;tier:"T1"|"T2"|"T3";roles:string[];enabled:boolean;vndPerM:number;minVndPerCall?:number;caps?:string[];dataLabels?:string[]};
+export type SbceModel={id:string;model:string;provider:"hhtech";protocol:"openai"|"anthropic";family:string;tier:"T1"|"T2"|"T3";roles:string[];enabled:boolean;vndPerM:number;minVndPerCall?:number;hiddenInputTokens?:number;caps?:string[];dataLabels?:string[]};
 export function validateWorkOrder(input:unknown,mode:SbceMode):SbceWorkOrder{
  const order=workOrderSchema.parse(input);
  if(mode==="off")throw Error("SBCE_DISABLED");
@@ -35,9 +35,9 @@ export function eligibleModels(models:SbceModel[],role:string,tier:"T1"|"T2"|"T3
  return models.filter(m=>m.enabled&&m.provider==="hhtech"&&m.tier===tier&&m.roles.includes(role)&&Number.isFinite(m.vndPerM)&&m.vndPerM>=0&&(m.dataLabels??["public/code"]).includes(label))
  .sort((a,b)=>a.vndPerM-b.vndPerM||a.id.localeCompare(b.id));
 }
-/** Expected charge of one call: token price or the per-request floor, whichever is higher (P1b billing). */
+/** Expected charge of one call: token price (incl. gateway-added hidden input) or the per-request floor, whichever is higher. */
 export function expectedCallVnd(model:SbceModel,estTokens:number):number{
- const tokens=Number.isFinite(estTokens)&&estTokens>0?estTokens:0;
+ const tokens=(Number.isFinite(estTokens)&&estTokens>0?estTokens:0)+(model.hiddenInputTokens??0);
  return Math.max(tokens*model.vndPerM/1_000_000,model.minVndPerCall??0);
 }
 /**
@@ -61,8 +61,12 @@ const redactionMarker=["[RED","ACTED]"].join("");
 export function refuseRedactedWrite(original:string,next:string){
  if(!original.includes(redactionMarker)&&next.includes(redactionMarker))throw Error("REDACTION_MARKER_WRITE_BLOCKED");
 }
-export function reviewReceipt(input:{jobId:string;state:SbceState;summary:string;checks:{name:string;ok:boolean}[];risks?:string[];costVnd:number;tokensIn:number;tokensOut:number;artifacts?:Record<string,string>;needsBrain?:string}):Record<string,unknown>{
- const pack={job_id:input.jobId,status:input.state,summary:redactSecrets(input.summary).slice(0,2200),checks:input.checks.slice(0,30),risks:(input.risks??[]).slice(0,12),cost:{vnd:input.costVnd,tokens_in:input.tokensIn,tokens_out:input.tokensOut},artifacts:input.artifacts??{},diagnosis:input.needsBrain?.slice(0,1000)};
+export type SbceAttemptRecord={attempt:number;model:string;tier:string;checks:{name:string;ok:boolean}[];error?:string};
+export function reviewReceipt(input:{jobId:string;state:SbceState;summary:string;checks:{name:string;ok:boolean}[];risks?:string[];costVnd:number;tokensIn:number;tokensOut:number;artifacts?:Record<string,string>;needsBrain?:string;attempts?:SbceAttemptRecord[]}):Record<string,unknown>{
+ const pack:Record<string,unknown>={job_id:input.jobId,status:input.state,summary:redactSecrets(input.summary).slice(0,2200),checks:input.checks.slice(0,30),risks:(input.risks??[]).slice(0,12),cost:{vnd:input.costVnd,tokens_in:input.tokensIn,tokens_out:input.tokensOut},artifacts:input.artifacts??{},diagnosis:input.needsBrain?.slice(0,1000)};
  if(JSON.stringify(pack).length>SBCE_LIMITS.maxReviewChars)throw Error("SBCE_REVIEW_TOO_LARGE");
+ // Per-attempt gate history is diagnostic: keep the newest entries that fit, never fail the receipt over it.
+ const attempts=(input.attempts??[]).slice(-SBCE_LIMITS.maxAttempts).map(a=>({attempt:a.attempt,model:String(a.model).slice(0,60),tier:String(a.tier).slice(0,4),checks:a.checks.slice(0,12).map(c=>({name:String(c.name).slice(0,60),ok:c.ok===true})),...(a.error?{error:redactSecrets(a.error).slice(0,160)}:{})}));
+ while(attempts.length){pack.attempts=attempts;if(JSON.stringify(pack).length<=SBCE_LIMITS.maxReviewChars)break;attempts.shift();delete pack.attempts;}
  return pack;
 }

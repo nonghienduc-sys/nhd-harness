@@ -1,4 +1,5 @@
-import { createHmac } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
+import { NativeWinAppExecutor } from "./winapp-uia.js";
 import { AppConfig } from "./config.js";
 import { Store } from "./db.js";
 import type { TaskAuthorizationService, TaskCapabilityAction, TaskCapabilityLeaseView, TaskCapabilityUse } from "./task-authorization.js";
@@ -64,6 +65,11 @@ const ACTION_RULES: Array<{ category: TaskCapabilityAction; level: "moderate" | 
 export class DesktopService {
   private readonly controls = new Map<string, DesktopControl>();
   private readonly windowTitles = new Map<string, string>();
+  private readonly winapp = new NativeWinAppExecutor();
+  private readonly winappControls = new Map<string, {
+    selector: string; windowId: string; name: string; automationId: string;
+    controlType: string; expiresAt: number;
+  }>();
 
   constructor(readonly config: AppConfig, readonly store: Store, private readonly taskAuthorizations?: TaskAuthorizationService) {}
 
@@ -105,11 +111,43 @@ export class DesktopService {
       body: JSON.stringify({ windowId, maxDepth: Math.min(Math.max(Math.trunc(options.maxDepth ?? 12), 1), 30), limit: Math.min(Math.max(Math.trunc(options.limit ?? 800), 20), 2000) }),
     }, 45_000);
     let controls = Array.isArray(body.controls) ? body.controls as DesktopControl[] : [];
+    let fallbackTotal: number | null = null;
+    // Zalo's generic Chromium UIA shell does not expose its actionable controls.
+    // WinApp provides semantic selectors without coordinate/mouse or DOM injection.
+    const app = await this.resolveAppScope(windowId);
+    if (app === "Zalo" && controls.length <= 3 && this.winapp.available()) {
+      try {
+        const accessible = await this.winapp.inspect(windowId, options.maxDepth ?? 10, options.limit ?? 800);
+        fallbackTotal = accessible.length;
+        controls = accessible.map((element) => {
+          const selectorId = "winapp-" + randomUUID();
+          const control: DesktopControl = {
+            selectorId, windowId, name: element.name, automationId: element.automationId,
+            className: element.className, controlType: element.controlType,
+            enabled: element.enabled, offscreen: element.offscreen,
+            password: false, depth: 0, bounds: element.bounds,
+          };
+          this.winappControls.set(selectorId, {
+            selector: element.selector, windowId, name: element.name,
+            automationId: element.automationId, controlType: element.controlType,
+            expiresAt: Date.now() + 120_000,
+          });
+          return control;
+        });
+        this.store.audit("desktop_inspect", "winapp_fallback", {
+          windowId, app, returned: controls.length, backend: "winapp-native-uia"
+        });
+      } catch (error) {
+        this.store.audit("desktop_inspect", "fallback_unavailable", {
+          windowId, app, errorType: error instanceof Error ? error.name : "unknown"
+        });
+      }
+    }
     for (const control of controls) this.controls.set(String(control.selectorId), control);
     const query = options.query?.trim().toLocaleLowerCase("vi");
     if (query) controls = controls.filter((control) => `${control.name} ${control.automationId} ${control.className} ${control.controlType}`.toLocaleLowerCase("vi").includes(query));
     this.store.audit("desktop_inspect", "success", { windowId, query: query ?? null, returned: controls.length, total: Number(body.total ?? controls.length) });
-    return { windowId, controls, total: Number(body.total ?? controls.length), truncated: Boolean(body.truncated) };
+    return { windowId, controls, total: fallbackTotal ?? Number(body.total ?? controls.length), truncated: fallbackTotal !== null ? false : Boolean(body.truncated) };
   }
 
   async action(input: { action: "activate" | "invoke" | "set_text" | "press_key" | "click_point" | "double_click_point" | "scroll" | "wait"; windowId?: string; selectorId?: string; text?: string; key?: string; xRatio?: number; yRatio?: number; direction?: "up" | "down"; amount?: number; milliseconds?: number; taskRunId?: string }) {
@@ -163,6 +201,45 @@ export class DesktopService {
       if (risk.level === "high" && !this.taskAuthorizations.allows(input.taskRunId, "high")) throw new Error(`Host desktop high-risk '${category}' action requires high task authorization.`);
       if (input.action === "invoke") use = this.taskAuthorizations.consumeCapability(input.taskRunId, app, category);
       approval = this.signApproval({ lease: use ?? lease, useId: use?.useId ?? null, runId: input.taskRunId, app, category, mode: input.action === "invoke" ? "consume" : "presence", windowId, selectorId: input.selectorId });
+    }
+    const winappTarget = this.winappControls.get(input.selectorId);
+    if (winappTarget) {
+      if (app !== "Zalo" || winappTarget.windowId !== windowId)
+        throw new Error("WinApp fallback is restricted to the inspected Zalo window.");
+      if (winappTarget.expiresAt < Date.now())
+        throw new Error("WinApp selector expired. Reinspect Zalo before acting.");
+      const fresh = await this.winapp.inspect(windowId, 10, 1000);
+      const matches = fresh.filter((item) =>
+        item.selector === winappTarget.selector &&
+        item.name === winappTarget.name &&
+        item.automationId === winappTarget.automationId &&
+        item.controlType === winappTarget.controlType);
+      if (matches.length !== 1 || !matches[0].enabled || matches[0].offscreen)
+        throw new Error("WinApp target is no longer uniquely visible, enabled and verified.");
+      const confirmed = matches[0];
+      if (input.action === "set_text") {
+        if (confirmed.controlType !== "Edit" || confirmed.automationId !== "contact-search-input")
+          throw new Error("WinApp editing is limited to verified Zalo contact search.");
+      } else if (!confirmed.invokable || (!confirmed.name && !confirmed.automationId)) {
+        throw new Error("Unlabeled/opaque Zalo controls cannot be invoked without semantic evidence.");
+      }
+      if (risk.capabilityRequired) {
+        // A send/upload capability does not by itself establish the destination.
+        // The chat header must be distinguished from a search-result label.
+        const headers = fresh.filter((item) =>
+          /^(Cloud của tôi|My Documents|File của tôi)$/iu.test(item.name.normalize("NFKC").trim()) &&
+          item.controlType === "Text" && !item.inSidebar);
+        if (headers.length !== 1) throw new Error("Zalo destination is not uniquely verified as My Documents.");
+      }
+      const response = input.action === "set_text"
+        ? await this.winapp.setValue(windowId, winappTarget.selector, input.text ?? "")
+        : await this.winapp.invoke(windowId, winappTarget.selector);
+      this.store.audit("desktop_action", "success", {
+        action: input.action, windowId, taskRunId: input.taskRunId,
+        backend: "winapp-native-uia", app, category: risk.category,
+        capabilityLeaseId: lease?.id ?? null, capabilityUseId: use?.useId ?? null,
+      });
+      return { ok: true, backend: "winapp-native-uia", response, app, risk };
     }
     const payload: Record<string, unknown> = { action: input.action, selectorId: input.selectorId };
     if (input.action === "set_text") payload.text = input.text ?? "";

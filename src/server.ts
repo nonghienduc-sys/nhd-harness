@@ -47,6 +47,7 @@ import { ResultPayloadGatewayService } from "./result-payload-gateway.js";
 import { SbceProcess, resolveSbceMode } from "./sbce-process.js";
 import { ProjectRagService } from "./project-rag.js";
 import { ProjectRagWatcher, ragWatchStatePath } from "./project-rag-watch.js";
+import { brainModeFile, isBrainOnlyTransport, readBrainMode, writeBrainMode } from "./brain-only.js";
 
 const config = loadConfig();
 const store = new Store();
@@ -180,6 +181,7 @@ async function handleMcpRequest(request: Request, response: Response, transportK
   const server = createWorkstationMcp(workstationRuntime, {
     connectionKey: [transportKind, harnessIdHeader ?? "", connectionIdHeader ?? "", userAgentHeader ?? ""].join("|"),
     agent: (harnessIdHeader || userAgentHeader || transportKind).slice(0, 80),
+    brainOnly: isBrainOnlyTransport(transportKind),
   });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   try {
@@ -216,6 +218,47 @@ function localOnly(request: Request, response: Response, next: NextFunction) {
   next();
 }
 app.use("/api", localOnly);
+
+// The mode selector is independent from the SBCE worker: Mode 2 must work even when
+// the worker is unavailable or disabled. This endpoint remains localhost-only.
+function brainModeApiGuard(request: Request, response: Response): boolean {
+  const origin = request.headers.origin;
+  if (origin && !["http://127.0.0.1:" + config.port, "http://localhost:" + config.port].includes(origin)) {
+    response.status(403).json({ error: "BRAIN_MODE_ORIGIN_DENIED" });
+    return false;
+  }
+  return true;
+}
+app.get("/api/brain-mode", async (request, response) => {
+  if (!brainModeApiGuard(request, response)) return;
+  const file = brainModeFile(process.env);
+  response.json({
+    mode: readBrainMode(file),
+    modeNumber: readBrainMode(file) === "harness" ? 1 : readBrainMode(file) === "self" ? 2 : 3,
+    scope: "shared-core-runtime",
+    file,
+    override: process.env.NHD_BRAIN_ONLY === "0",
+  });
+});
+
+app.post("/api/brain-mode", async (request, response) => {
+  if (!brainModeApiGuard(request, response)) return;
+  if (request.body?.confirmed !== true) return response.status(400).json({ error: "BRAIN_MODE_CONFIRMATION_REQUIRED" });
+  const mode = request.body?.mode;
+  if (mode !== "harness" && mode !== "self" && mode !== "direct") {
+    return response.status(400).json({ error: "BRAIN_MODE_INVALID" });
+  }
+  try {
+    const before = readBrainMode(brainModeFile(process.env));
+    const result = writeBrainMode(mode, brainModeFile(process.env));
+    const verified = readBrainMode(brainModeFile(process.env)) === mode;
+    if (!verified) throw new Error("BRAIN_MODE_VERIFY_FAILED");
+    store.audit("brain_mode", "dashboard_set", { before, mode, verified });
+    response.json({ ...result, verified, scope: "shared-core-runtime" });
+  } catch {
+    response.status(500).json({ error: "BRAIN_MODE_WRITE_FAILED" });
+  }
+});
 app.get("/api/sbce/status", async (_request,response) => response.json({...await sbceExecutor.status(), modeSource:sbceModeResolved.source}));
 function sbceLocalGuard(request: Request, response: Response): boolean {
   const origin=request.headers.origin;
@@ -250,10 +293,41 @@ app.get("/api/sbce/admin", async(request,response) => {
   try { response.json(await sbceExecutor.request("GET","/admin",undefined,8000)); }
   catch(error) { response.status(503).json({error:error instanceof Error?error.message:"SBCE_ADMIN_FAILED"}); }
 });
+// 0.24.34 model benchmark (local owner only). Spends real HHTECH credit, capped by budget_vnd (default 15000, max 30000).
+app.post("/api/sbce/bench/start", async(request,response) => {
+  if(!sbceLocalGuard(request,response))return;
+  const body=request.body??{};
+  const payload={model_ids:body.model_ids,task_ids:body.task_ids,runs:body.runs,budget_vnd:body.budget_vnd,concurrency:body.concurrency};
+  try { const result=await sbceExecutor.request("POST","/admin/bench/start",payload,20000); store.audit("sbce","bench_start",{runId:result?.run_id,planned:result?.planned_calls,budgetVnd:payload.budget_vnd??15000}); response.json(result); }
+  catch(error) { response.status(409).json({error:error instanceof Error?error.message:"SBCE_BENCH_FAILED"}); }
+});
+app.get("/api/sbce/bench/status", async(request,response) => {
+  if(!sbceReadGuard(request,response))return;
+  const runId=request.query.run_id===undefined?undefined:String(request.query.run_id);
+  if(runId!==undefined&&!/^bench-[0-9TZ-]{10,40}$/.test(runId))return response.status(400).json({error:"SBCE_BENCH_RUN_ID_INVALID"});
+  try { response.json(await sbceExecutor.request("POST","/admin/bench/status",runId?{run_id:runId}:{},8000)); }
+  catch(error) { response.status(503).json({error:error instanceof Error?error.message:"SBCE_BENCH_STATUS_FAILED"}); }
+});
+app.get("/api/sbce/bench/list", async(request,response) => {
+  if(!sbceReadGuard(request,response))return;
+  try { response.json(await sbceExecutor.request("POST","/admin/bench/list",{},8000)); }
+  catch(error) { response.status(503).json({error:error instanceof Error?error.message:"SBCE_BENCH_LIST_FAILED"}); }
+});
+// Checklist board: name each job's owning task run (one MCP chat/task) so parallel chats can be told apart.
+function sbceTaskLookup(jobs:unknown):Record<string,{objective:string;root:string|null;state:string;updatedAt:string}>{
+  const ids=[...new Set((Array.isArray(jobs)?jobs:[]).map((j:any)=>String(j?.owner??"")).filter(id=>id&&id.length<=256))].slice(0,100);
+  const out:Record<string,{objective:string;root:string|null;state:string;updatedAt:string}>={};
+  if(!ids.length)return out;
+  try{
+    const query=store.db.prepare("SELECT id,objective,root,state,updated_at FROM agent_runs WHERE id=?");
+    for(const id of ids){const row=query.get(id) as any;if(row)out[id]={objective:String(row.objective??"").slice(0,300),root:row.root??null,state:String(row.state??""),updatedAt:String(row.updated_at??"")};}
+  }catch{}
+  return out;
+}
 app.get("/api/sbce/jobs", async(request,response) => {
   if(!sbceReadGuard(request,response))return;
   const limit=Math.max(1,Math.min(Number(request.query.limit??50)||50,100));
-  try { response.json(await sbceExecutor.request("GET","/admin/jobs?limit="+limit,undefined,8000)); }
+  try { const board=await sbceExecutor.request("GET","/admin/jobs?limit="+limit,undefined,8000); response.json({...board,tasks:sbceTaskLookup(board?.jobs)}); }
   catch(error) { response.status(503).json({error:error instanceof Error?error.message:"SBCE_JOBS_FAILED"}); }
 });
 app.get("/api/sbce/jobs/:id", async(request,response) => {
