@@ -1,5 +1,14 @@
 ## Unreleased
 
+### 0.24.38 Word Live parallel acceptance hardening - 2026-11-17
+
+- Moved Documents.Open outside the COM activation mutex; bounded mutex acquisition and handling of abandoned owners.
+- Worker emits PID and StartTime immediately after creating a new WINWORD instance, before any slow Word properties or document opening.
+- Pool durably registers early ownership, cancels late queued operations, bounds startup/requests/close, and verifies PID plus creation time before targeted process cleanup.
+- Word Save alone is serialized across independent instances to avoid Office temporary-file contention; document edits still run in parallel.
+- Added real regression for worker termination while holding the mutex and a 145-second independent watchdog with after/finally cleanup.
+- Real test distinguishes concurrent user-visible Word windows from the specific test-owned processes.
+- Production root and releases were not modified; no cutover or push.
 ### 0.24.38 - 2026-11-17
 
 - Isolated path-scoped Word Live sessions: separate harness-owned WINWORD and PowerShell worker for each DOCX; up to four simultaneous sessions, per-path ordering, explicit close, idle and timeout cleanup.

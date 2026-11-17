@@ -22,7 +22,7 @@ type Pending = { resolve: (value: Record<string, unknown>) => void; reject: (err
 type Session = {
   key: string; path: string; worker: ChildProcessWithoutNullStreams;
   buffer: string; stderr: string; record?: WordSessionRecord;
-  readOnly: boolean; staleLock: boolean; stopped: boolean;
+  readOnly: boolean; staleLock: boolean; stopped: boolean; abandonedMutexRecovered: boolean;
   pending: Map<string, Pending>; tail: Promise<unknown>;
 };
 export function normalizeWordPath(path: string): string {
@@ -45,6 +45,15 @@ export function verifiedOrphans(registry: WordSessionRecord[], live: Array<{ pid
   );
 }
 function delay(ms: number) { return new Promise<void>(resolvePromise => setTimeout(resolvePromise, ms)); }
+async function bounded<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(label)), ms); }),
+    ]);
+  } finally { if (timer) clearTimeout(timer); }
+}
 function powershell(command: string, timeout = 7000): Promise<string> {
   return new Promise((res, rej) => execFile("powershell.exe",
     ["-NoProfile", "-NonInteractive", "-Command", command],
@@ -62,7 +71,15 @@ export async function stopVerifiedWordProcess(record: Pick<WordSessionRecord, "p
   // Revalidate in the same PowerShell invocation before kill to prevent PID reuse races.
   const safeDate = JSON.stringify(record.started);
   const cmd = '$p=Get-Process -Id ' + Number(record.pid) + ' -ErrorAction SilentlyContinue; if($p -and $p.ProcessName -eq "WINWORD" -and $p.StartTime.ToUniversalTime().ToString("o") -eq ' + safeDate + '){Stop-Process -Id ' + Number(record.pid) + ' -Force; "stopped"}';
-  return (await powershell(cmd)).includes("stopped");
+  try {
+    return (await powershell(cmd)).includes("stopped");
+  } catch (error) {
+    // Word may have quit naturally after the first identity probe.
+    // Never mistake that race for an unsuccessful cleanup.
+    const after = await getProcessIdentity(record.pid);
+    if (!after || after.name.toUpperCase() !== "WINWORD" || after.started !== record.started) return false;
+    throw error; // Still the same owned process: preserve its registry entry for recovery.
+  }
 }
 
 export class WordLiveSessionPool {
@@ -72,20 +89,23 @@ export class WordLiveSessionPool {
   private readonly ownerId = randomUUID();
   private readonly sessions = new Map<string, Session>();
   private readonly starting = new Map<string, Promise<Session>>();
+  private readonly inflight = new Set<Session>();
   private readonly timer: ReturnType<typeof setInterval>;
   private closed = false;
   private lastOrphanSweep = 0;
   private readonly workerPath: string;
   private readonly bridgePath: string;
   private readonly externalWordDocuments?: () => Promise<string[]>;
+  private readonly workerEnv?: Record<string, string>;
 
-  constructor(options: { maxInstances?: number; idleMs?: number; registryPath?: string; workerPath?: string; bridgePath?: string; externalWordDocuments?: () => Promise<string[]> } = {}) {
+  constructor(options: { maxInstances?: number; idleMs?: number; registryPath?: string; workerPath?: string; bridgePath?: string; externalWordDocuments?: () => Promise<string[]>; workerEnv?: Record<string, string> } = {}) {
     this.maxInstances = Math.max(1, Math.min(32, Number(options.maxInstances ?? process.env.NHD_WORD_LIVE_MAX_INSTANCES ?? 4) || 4));
     this.idleMs = Math.max(1000, Number(options.idleMs ?? process.env.NHD_WORD_LIVE_IDLE_MS ?? 600000) || 600000);
     this.registryPath = options.registryPath ?? join(process.env.LOCALAPPDATA || process.env.TEMP || ".", "nhd-harness", "word-live-sessions.json");
     this.workerPath = options.workerPath ?? resolve(process.cwd(), "office", "word-session-worker.ps1");
     this.bridgePath = options.bridgePath ?? resolve(process.cwd(), "office", "office-bridge.ps1");
     this.externalWordDocuments = options.externalWordDocuments;
+    this.workerEnv = options.workerEnv;
     this.timer = setInterval(() => { void this.reapIdle(); }, Math.max(1000, Math.min(30000, this.idleMs / 2)));
     this.timer.unref();
   }
@@ -109,7 +129,10 @@ export class WordLiveSessionPool {
     const temp = this.registryPath + "." + this.ownerId + ".tmp";
     writeFileSync(temp, JSON.stringify(kept, null, 2), "utf8"); renameSync(temp, this.registryPath);
   }
-  list(): WordSessionRecord[] { return [...this.sessions.values()].flatMap(s => s.record ? [s.record] : []); }
+  list(): WordSessionRecord[] {
+    return [...new Set([...this.sessions.values(), ...this.inflight])]
+      .flatMap(s => s.record ? [s.record] : []);
+  }
   async cleanupOrphans(): Promise<number> {
     let killed = 0;
     const entries = this.readRegistry();
@@ -126,7 +149,7 @@ export class WordLiveSessionPool {
     // Inspect the user-visible Word instance via the legacy read-only bridge,
     // before creating a new COM instance. The path worker never uses ROT/ActiveObject.
     if (this.externalWordDocuments) {
-      const opened = await this.externalWordDocuments();
+      const opened = await bounded(this.externalWordDocuments(), 8000, "WORD_LIVE_EXTERNAL_DOCUMENT_CHECK_TIMEOUT");
       if (opened.some(value => {
         try { return keyForWordPath(value) === key; } catch { return false; }
       })) throw new Error("WORD_LIVE_FILE_IN_USE: document is already open in a user Word instance");
@@ -134,11 +157,16 @@ export class WordLiveSessionPool {
     const args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned", "-File", this.workerPath, "-BridgePath", this.bridgePath, "-Path", path];
     if (opts.read_only) args.push("-ReadOnly");
     if (opts.remove_stale_lock) args.push("-RemoveStaleLock");
-    const child = spawn("powershell.exe", args, { cwd: process.cwd(), windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
-    const session: Session = { key, path, worker: child, buffer: "", stderr: "", readOnly: !!opts.read_only, staleLock: false, stopped: false, pending: new Map(), tail: Promise.resolve() };
+    if (this.closed) throw new Error("WORD_LIVE_POOL_CLOSED");
+    const child = spawn("powershell.exe", args, {
+      cwd: process.cwd(), windowsHide: true, stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, ...this.workerEnv },
+    });
+    const session: Session = { key, path, worker: child, buffer: "", stderr: "", readOnly: !!opts.read_only, staleLock: false, stopped: false, abandonedMutexRecovered: false, pending: new Map(), tail: Promise.resolve() };
+    this.inflight.add(session);
     child.stdout.setEncoding("utf8"); child.stderr.setEncoding("utf8");
     const ready = new Promise<Session>((res, rej) => {
-      const timeout = setTimeout(() => rej(new Error("WORD_LIVE_START_TIMEOUT")), 65000);
+      const timeout = setTimeout(() => fail(new Error("WORD_LIVE_START_TIMEOUT")), 55000);
       let settled = false;
       const fail = (error: Error) => { if (!settled) { settled = true; clearTimeout(timeout); rej(error); } };
       child.stderr.on("data", (chunk: string) => { session.stderr = (session.stderr + chunk).slice(-4000); });
@@ -150,14 +178,26 @@ export class WordLiveSessionPool {
           if (!line) continue;
           let msg: any;
           try { msg = JSON.parse(line); } catch { session.stderr = (session.stderr + "\n" + line).slice(-4000); continue; }
-          if (msg.kind === "failure") { fail(new Error(String(msg.error || "WORD_LIVE_START_FAILED"))); continue; }
-          if (msg.kind === "ready") {
-            const pid = Number(msg.winwordPid);
-            if (!Number.isInteger(pid) || pid <= 0 || !msg.winwordStarted) { fail(new Error("WORD_LIVE_INVALID_PROCESS_ID")); continue; }
-            const date = new Date().toISOString();
-            session.record = { path, workerPid: child.pid ?? -1, pid, started: String(msg.winwordStarted), openedAt: date, lastUsedAt: date, ownerPid: process.pid, ownerId: this.ownerId, readOnly: !!opts.read_only };
-            session.staleLock = !!msg.stale_lock;
-            if (!settled) { settled = true; clearTimeout(timeout); res(session); }
+          if (msg.kind === "failure") { fail(new Error("stage=" + String(msg.stage ?? "unknown") + " line=" + String(msg.position ?? "") + " " + String(msg.error || "WORD_LIVE_START_FAILED"))); continue; }
+          if (msg.kind === "owned_process" || msg.kind === "ready") {
+            const pid = Number(msg.winwordPid), started = String(msg.winwordStarted ?? "");
+            if (!Number.isInteger(pid) || pid <= 0 || !started) {
+              fail(new Error("WORD_LIVE_INVALID_PROCESS_ID")); continue;
+            }
+            if (session.record && (session.record.pid !== pid || session.record.started !== started)) {
+              fail(new Error("WORD_LIVE_PROCESS_IDENTITY_CHANGED")); continue;
+            }
+            if (!session.record) {
+              const date = new Date().toISOString();
+              session.record = { path, workerPid: child.pid ?? -1, pid, started,
+                openedAt: date, lastUsedAt: date, ownerPid: process.pid, ownerId: this.ownerId, readOnly: !!opts.read_only };
+              // Durably record ownership BEFORE any Word Documents.Open call.
+              this.writeRegistry();
+            }
+            if (msg.kind === "ready") {
+              session.staleLock = !!msg.stale_lock;
+              if (!settled) { settled = true; clearTimeout(timeout); res(session); }
+            }
             continue;
           }
           if (msg.kind === "response") {
@@ -174,13 +214,21 @@ export class WordLiveSessionPool {
         fail(e);
         for (const p of session.pending.values()) { clearTimeout(p.timer); p.reject(e); }
         session.pending.clear();
+        // Includes forced worker death during mutex acquisition / startup.
+        void this.destroySession(session).catch(() => {});
       });
     });
-    try { await ready; this.sessions.set(key, session); this.writeRegistry(); return session; }
+    try {
+      await ready;
+      if (session.stopped) throw new Error("WORD_LIVE_SESSION_CLOSED_DURING_START");
+      this.inflight.delete(session);
+      this.sessions.set(key, session);
+      this.writeRegistry();
+      return session;
+    }
     catch (error) {
-      try { child.kill(); } catch {}
-      // A startup error may have already started Word but failed before sending 'ready':
-      // worker's finally block owns and closes it. Never kill an unknown PID.
+      // Never abandon a child or Word whose PID/start-time arrived before ready.
+      await this.destroySession(session);
       throw error;
     }
   }
@@ -197,9 +245,11 @@ export class WordLiveSessionPool {
     const opening = (async () => {
       const deadline = Date.now() + Math.max(10, Number(process.env.NHD_WORD_LIVE_POOL_WAIT_MS ?? 60000));
       while (this.sessions.size + this.starting.size >= this.maxInstances) {
+        if (this.closed) throw new Error("WORD_LIVE_POOL_CLOSED");
         if (Date.now() >= deadline) throw new Error("WORD_LIVE_POOL_BUSY: maximum Word Live sessions reached");
         await delay(100);
       }
+      if (this.closed) throw new Error("WORD_LIVE_POOL_CLOSED");
       return this.launch(path, key, opts);
     })();
     this.starting.set(key, opening);
@@ -224,27 +274,56 @@ export class WordLiveSessionPool {
     });
   }
   async request(action: "word_inspect" | "word_apply" | "test_timeout", opts: WordSessionOptions, input: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
-    const session = await this.acquire(opts);
-    if (session.readOnly && action !== "word_inspect") throw new Error("WORD_LIVE_READ_ONLY: writes and saves prohibited");
-    const act = async () => {
-      const data = await this.requestRaw(session, action, input, Math.max(100, Math.min(120000, opts.timeout_ms ?? 120000)));
-      if (session.record) { session.record.lastUsedAt = new Date().toISOString(); this.writeRegistry(); }
-      return { ...data, path: session.path, pid: session.record?.pid, stale_lock: session.staleLock };
-    };
-    const run = session.tail.then(act);
-    session.tail = run.catch(() => {});
-    return run;
+    let cancelled = false;
+    const requested = (async () => {
+      const session = await this.acquire(opts);
+      if (cancelled || this.closed) {
+        await this.destroySession(session);
+        throw new Error("WORD_LIVE_REQUEST_TIMEOUT: cancelled during session startup");
+      }
+      if (session.readOnly && action !== "word_inspect") throw new Error("WORD_LIVE_READ_ONLY: writes and saves prohibited");
+      const act = async () => {
+        if (cancelled || session.stopped) throw new Error("WORD_LIVE_REQUEST_TIMEOUT: queued request cancelled");
+        const save = action === "word_apply" && (input.operation as {type?: string} | undefined)?.type === "word_save";
+        const defaultMs = save ? 45000 : 20000;
+        const maxMs = save ? 45000 : 25000;
+        const data = await this.requestRaw(session, action, input, Math.max(100, Math.min(maxMs, opts.timeout_ms ?? defaultMs)));
+        if (session.record) { session.record.lastUsedAt = new Date().toISOString(); this.writeRegistry(); }
+        return { ...data, path: session.path, pid: session.record?.pid, stale_lock: session.staleLock, abandoned_mutex_recovered:session.abandonedMutexRecovered };
+      };
+      const run = session.tail.then(act);
+      session.tail = run.catch(() => {});
+      return run;
+    })();
+    try {
+      return await bounded(requested, 85000, "WORD_LIVE_REQUEST_TIMEOUT");
+    } catch (error) {
+      if (error instanceof Error && error.message === "WORD_LIVE_REQUEST_TIMEOUT") {
+        cancelled = true;
+        const key = keyForWordPath(opts.path);
+        const targets = [...new Set([...this.inflight, ...this.sessions.values()])].filter(s => s.key === key);
+        await Promise.allSettled(targets.map(s => this.destroySession(s)));
+      }
+      throw error;
+    }
   }
   private async destroySession(session: Session): Promise<void> {
     if (session.stopped) return;
     session.stopped = true;
     this.sessions.delete(session.key);
-    for (const p of session.pending.values()) { clearTimeout(p.timer); p.reject(new Error("WORD_LIVE_SESSION_CLOSED")); }
+    this.inflight.delete(session);
+    for (const p of session.pending.values()) {
+      clearTimeout(p.timer); p.reject(new Error("WORD_LIVE_SESSION_CLOSED"));
+    }
     session.pending.clear();
+    try { session.worker.stdin.end(); } catch {}
     try { session.worker.kill(); } catch {}
+    session.worker.stdout.destroy();
+    session.worker.stderr.destroy();
     if (session.record) {
-      await delay(350);
+      await delay(250);
       await stopVerifiedWordProcess(session.record);
+      // Only erase the evidence once the exact recorded process is gone.
       this.removeRegistryEntry(session.record);
     }
   }
@@ -253,9 +332,9 @@ export class WordLiveSessionPool {
     const session = this.sessions.get(key);
     if (!session) return { closed: false, path: normalizeWordPath(pathInput) };
     try {
-      await session.tail.catch(() => {});
-      await this.requestRaw(session, "close", {}, 8000);
-      await delay(350);
+      await bounded(session.tail.catch(() => {}), 15000, "WORD_LIVE_CLOSE_QUEUE_TIMEOUT");
+      await bounded(this.requestRaw(session, "close", {}, 4000), 5000, "WORD_LIVE_CLOSE_TIMEOUT");
+      await delay(250);
     } finally { await this.destroySession(session); }
     return { closed: true, path: session.path, pid: session.record?.pid };
   }
@@ -271,7 +350,12 @@ export class WordLiveSessionPool {
     }
   }
   async closeAll() {
-    this.closed = true; clearInterval(this.timer);
-    await Promise.allSettled([...this.sessions.values()].map(s => this.close(s.path)));
+    this.closed = true;
+    clearInterval(this.timer);
+    const starting = [...this.inflight];
+    await bounded(Promise.allSettled([
+      ...[...this.sessions.values()].map(s => this.close(s.path)),
+      ...starting.map(s => this.destroySession(s)),
+    ]), 30000, "WORD_LIVE_CLOSE_ALL_TIMEOUT");
   }
 }

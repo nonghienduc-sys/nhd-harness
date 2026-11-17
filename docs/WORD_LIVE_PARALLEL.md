@@ -2,7 +2,7 @@
 
 ## Mục đích
 
-Word Live hỗ trợ sửa nhiều DOCX khác nhau cùng lúc. Mỗi tệp có một PowerShell worker riêng và một tiến trình WINWORD riêng do NHD Harness tạo. Các bước mở Word COM được điều phối bằng mutex ngắn để xác nhận PID, còn thao tác chỉnh sửa diễn ra song song. Không ảnh hưởng Word hay tài liệu người dùng đang mở.
+Word Live hỗ trợ sửa nhiều DOCX khác nhau cùng lúc. Mỗi tệp có một PowerShell worker riêng và một tiến trình WINWORD riêng do NHD Harness tạo. Chỉ bước tạo Word COM được điều phối bằng mutex ngắn để xác nhận PID; Documents.Open không giữ mutex. Chỉnh sửa các tệp khác nhau diễn ra song song, riêng word_save dùng mutex để tránh xung đột tạo tệp tạm. Không ảnh hưởng Word hay tài liệu người dùng đang mở.
 
 **Tương thích:** không truyền tham số path, Word/Excel/PowerPoint tiếp tục dùng phiên Office đang mở theo hành vi cũ; tuyệt đối không đóng phiên của người dùng.
 
@@ -23,7 +23,7 @@ Các thao tác word_replace_paragraph, word_format_paragraphs, word_save và cá
 
 Mặc định tối đa **4** phiên; cấu hình NHD_WORD_LIVE_MAX_INSTANCES trước khi khởi động companion (1–32). Khi hết chỗ, chờ tối đa 60 giây theo NHD_WORD_LIVE_POOL_WAIT_MS, sau đó trả WORD_LIVE_POOL_BUSY. Các yêu cầu cùng đường dẫn được chuẩn hóa realpath/không phân biệt hoa thường và xếp hàng tuần tự; các tệp khác nhau xử lý song song. Sau mỗi tệp luôn gọi close để nhường chỗ.
 
-Tự đóng khi rảnh 10 phút theo NHD_WORD_LIVE_IDLE_MS (mặc định 600000 ms), khi lỗi/timeout hoặc lúc Harness dừng. Không tự lặp thao tác thất bại hoặc có kết quả chưa rõ.
+Tự đóng khi rảnh 10 phút theo NHD_WORD_LIVE_IDLE_MS (mặc định 600000 ms), khi lỗi/timeout hoặc lúc Harness dừng. Giới hạn cứng: ready 55 giây, thao tác 25 giây, toàn yêu cầu 85 giây, close 5 giây. Không tự lặp một chỉnh sửa có kết quả chưa rõ.
 
 ## Lỗi và khóa tệp
 
@@ -40,7 +40,7 @@ Phiên có path chạy ẩn, không chụp cửa sổ Word của người dùng 
 
 - Chỉ đóng hoặc dừng đúng PID WINWORD mà Harness tạo và đã xác thực PID **cùng thời điểm StartTime**; không bao giờ dừng theo tên WINWORD, không chạm vào Word người dùng.
 - Worker dùng COM riêng, Visible=false, DisplayAlerts=0, Documents.Open với ConfirmConversions=false, AddToRecentFiles=false và ReadOnly theo cờ; worker path không gọi GetActiveObject. Hàm inspect/edit được dùng chung với bridge cũ bằng cách truyền word/doc, không sao chép nghiệp vụ.
-- Word ẩn thường không có HWND, vì vậy nhận PID bằng chênh lệch danh sách WINWORD trước/sau tạo COM trong mutex khởi tạo. Nếu không xuất hiện đúng một tiến trình mới, không đóng PID không xác định.
+- Word ẩn thường không có HWND, vì vậy nhận PID bằng chênh lệch danh sách WINWORD trước/sau tạo COM trong mutex khởi tạo. Worker gửi owned_process gồm PID + StartTime TRƯỚC Documents.Open; pool ghi registry ngay, dọn đúng phiên do mình sở hữu khi thất bại. Nếu không xác minh được PID thì từ chối để bảo vệ Word của người dùng.
 - Sổ phiên lưu ngoài kho tại %LOCALAPPDATA%\nhd-harness\word-live-sessions.json; có path, PID worker, PID WINWORD, StartTime, chủ phiên, lúc mở/lần dùng cuối. Khi khởi động và định kỳ, dọn chỉ các bản ghi mồ côi có chủ tiến trình đã kết thúc, PID còn mang tên WINWORD và StartTime khớp.
 - Đóng có kiểm soát Document.Close(false), Word.Quit(), giải phóng COM; nếu quá hạn chỉ dừng PID thuộc chính phiên đó đã xác thực. Không lưu nếu chưa có word_save.
 
@@ -56,4 +56,4 @@ Chạy lần lượt ở thư mục worktree, không khởi động lại produc
 2. node --test test/*.test.mjs
 3. cmd /c "set NHD_WORD_LIVE_REAL=1&& node --test test/word-live-parallel-real.test.mjs"
 
-Test thật tạo bốn DOCX trong thư mục tạm của hệ điều hành, ghi PID Word trước/sau, đo khoảng thời gian chạy chồng nhau, chỉnh sửa và lưu độc lập, kiểm tra XML, không rò WINWORD hay tệp khóa, không đóng Word có sẵn; kiểm tra khóa đang sử dụng, khóa cũ và timeout.
+Test thật tạo bốn DOCX tạm, bốn phiên độc lập, sửa song song, lưu theo mutex và kiểm tra XML. Test bổ sung worker mất giữa lúc giữ mutex nhưng phiên tiếp theo vẫn mở được. Có finally + after và watchdog 145 giây để bảo đảm kết thúc trước ba phút. Phân biệt PID do test tạo với Word do người khác mở đồng thời; không tác động Word ngoài phiên test.
