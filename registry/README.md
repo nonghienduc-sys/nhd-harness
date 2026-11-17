@@ -2,10 +2,11 @@
 
 ## Scope và tình trạng
 
-- Nguồn: `src/skills.ts`, toàn bộ thư mục thực tế tại `skills/`, `SKILL.md` và `C:\ProgramData\ChatGPTWorkstationBridge\config.json`.
-- Kiểm kê tại thời điểm tạo: **49 skill đã đăng ký**, **48 enabled**, **1 disabled** (legacy), **50 thư mục**, trong đó `github-tools-pack` chỉ có `SOURCES.md` và **không phải skill thực thi**.
-- Con số **52 skill** được nêu trong lịch sử chưa khớp với runtime hiện tại (thiếu 3 mục so với 49 runtime). Không suy đoán hoặc bịa 3 ID. Tìm kiếm các skill ngoài nguồn kiểm kê hiện tại phải làm như một cuộc kiểm kê riêng.
-- Canonical: `viet-admin-format-checker`, legacy disabled: `skill-chinh-sua-format-van-ban`. Đường dẫn file legacy và tài nguyên giữ nguyên.
+- Nguồn: src/skills.ts, skills/ và registry/skill-capabilities.v1.json.
+- Kiểm kê sau cài ngày 17/11/2026: 54 skill được đăng ký, 53 enabled, 1 disabled (legacy), 55 thư mục.
+- Ba skill mới: anthropic-docx, anthropic-xlsx (giữ nguyên Apache 2.0 LICENSE.txt), van-ban-theo-mau.
+- github-tools-pack chỉ chứa tài nguyên, không phải skill thực thi. Mốc lịch sử 52 không phải giới hạn đăng ký.
+- Skill chuẩn quản lý format hành chính vẫn là viet-admin-format-checker; skill legacy vẫn disabled.
 
 ## Schema
 

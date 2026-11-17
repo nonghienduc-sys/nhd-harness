@@ -40,12 +40,12 @@ function makeAdapter(overrides={}){
 }
 test('Step 2 registry tracks observed inventory; legacy disabled; reproducible',()=>{
  assert.equal(registry.schemaVersion,1);
- assert.equal(registry.inventory.registeredSkillCount,51);
- assert.equal(registry.inventory.physicalFolderCount,52);
- assert.equal(registry.inventory.enabledSkillCount,50);
- assert.equal(registry.skills.length,52);
- assert.equal(registry.skills.filter(s=>s.registration==='nhd_skill_catalog').length,51);
- assert.equal(new Set(registry.skills.map(s=>s.id)).size,52);
+ assert.equal(registry.inventory.registeredSkillCount,54);
+ assert.equal(registry.inventory.physicalFolderCount,55);
+ assert.equal(registry.inventory.enabledSkillCount,53);
+ assert.equal(registry.skills.length,55);
+ assert.equal(registry.skills.filter(s=>s.registration==='nhd_skill_catalog').length,54);
+ assert.equal(new Set(registry.skills.map(s=>s.id)).size,55);
  assert.equal(registry.skills.find(s=>s.id==='skill-chinh-sua-format-van-ban').enabled,false);
  assert.equal(registry.skills.find(s=>s.id==='viet-admin-format-checker').enabled,true);
  assert.equal(registry.skills.find(s=>s.id==='github-tools-pack').type,'resource_pack');

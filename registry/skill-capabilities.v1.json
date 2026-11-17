@@ -3,14 +3,14 @@
   "inventoryScope": "D:/ChatGPT-Workstation-MCP/skills",
   "requestedHistoricalSkillCount": 52,
   "inventory": {
-    "registeredSkillCount": 51,
-    "physicalFolderCount": 52,
-    "executableSkillFiles": 51,
-    "enabledSkillCount": 50,
+    "registeredSkillCount": 54,
+    "physicalFolderCount": 55,
+    "executableSkillFiles": 54,
+    "enabledSkillCount": 53,
     "unregisteredFolders": [
       "github-tools-pack"
     ],
-    "unreconciledDifferenceFromHistoricalCount": 1
+    "unreconciledDifferenceFromHistoricalCount": -2
   },
   "note": "Historical 52 count is not verified by current NHD runtime. Unregistered github-tools-pack is resource-only, not an activatable skill.",
   "routing": {
@@ -61,6 +61,79 @@
       "instructionFile": "skills/agent-security-regression/SKILL.md",
       "instructionSha256": "150320261ac755ced232594ab12dfdc3b35a71d7f18a884a38a1889712f73714",
       "fileCount": 2,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "anthropic-docx",
+      "displayName": "anthropic-docx",
+      "description": "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx) or Word templates (.dotx). Triggers include: any mention of Microsoft Word Documents, such as 'Word doc', 'word document', '.docx', '.dotx', 'microsoft doc'. Also use when extracting or reorganizing content from .docx or .dotx files, inserting or replacing images in documents, find-and-replace in Word files, working with tracked changes or comments, or converting content into a polished Word document. If the user asks for a deliverable as a Word or .docx file (to download, email or print), use this skill. However, if they ask for a document, page, report, memo, or notes WITHOUT naming a file format and the session offers Claude's own dedicated document or page skill or connector, use that instead, even if they will email or print it. Do NOT use for PDFs, spreadsheets, Google Docs, or coding unrelated to document generation.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "documents",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "anthropic_docx_workflow",
+      "io": {
+        "inputs": [
+          "word_template",
+          "docx"
+        ],
+        "outputs": [
+          "validated_docx",
+          "qa_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "office_xml",
+          "python"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/anthropic-docx/SKILL.md",
+      "instructionSha256": "dc20588671c44ff2af246cf3eb1e4d881e6bc29e7e2085772cf373614e6645bd",
+      "fileCount": 62,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "anthropic-xlsx",
+      "displayName": "anthropic-xlsx",
+      "description": "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .xltx, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); create a new spreadsheet from scratch or from other data sources; or convert between tabular file formats. Trigger especially when the user references a spreadsheet file by name or path — even casually (like \\\"the xlsx in my downloads\\\") — and wants something done to it or produced from it. Also trigger for cleaning or restructuring messy tabular data files (malformed rows, misplaced headers, junk data) into proper spreadsheets. The deliverable must be a spreadsheet file. Do NOT trigger when the primary deliverable is a Word document, HTML report, standalone Python script, database pipeline, or Google Sheets API integration, even if tabular data is involved.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "data",
+      "readiness": "enhanced",
+      "enabled": true,
+      "capability": "anthropic_xlsx_workflow",
+      "io": {
+        "inputs": [
+          "xlsx",
+          "xlsm",
+          "csv"
+        ],
+        "outputs": [
+          "xlsx",
+          "qa_report"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "openpyxl",
+          "filesystem"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/anthropic-xlsx/SKILL.md",
+      "instructionSha256": "05077f0f1a4ad96c83beecf6eb6fdae0af3ee34fe723e06e16bce1844d3f86e5",
+      "fileCount": 54,
       "classificationProvenance": "curated_from_skill_description_and_inventory"
     },
     {
@@ -1535,6 +1608,46 @@
       "instructionFile": "skills/transcribe/SKILL.md",
       "instructionSha256": "2eaae81b9a63f877e4028e640b0066288c4b7c05c75f6b8e380570a81432ef47",
       "fileCount": 7,
+      "classificationProvenance": "curated_from_skill_description_and_inventory"
+    },
+    {
+      "id": "van-ban-theo-mau",
+      "displayName": "van-ban-theo-mau",
+      "description": "Quy trình bắt buộc tạo văn bản Word dựa trên tệp mẫu gốc, giữ thể thức và kiểm soát bố cục, bảng, căn cứ, số liệu.",
+      "registration": "nhd_skill_catalog",
+      "type": "executable_skill",
+      "category": "administration",
+      "readiness": "ready",
+      "enabled": true,
+      "capability": "admin_from_template",
+      "io": {
+        "inputs": [
+          "word_template",
+          "mapping",
+          "facts"
+        ],
+        "outputs": [
+          "docx",
+          "receipt"
+        ]
+      },
+      "dependencies": {
+        "recommendedSkills": [
+          "viet-admin-format-checker",
+          "anthropic-docx"
+        ],
+        "hardRuntimeDependencies": []
+      },
+      "backend": {
+        "recommendedAdapters": [
+          "template_builder",
+          "format_validator"
+        ],
+        "verifiedExecutable": false
+      },
+      "instructionFile": "skills/van-ban-theo-mau/SKILL.md",
+      "instructionSha256": "691a1768f009a954b28bca2ba1d4e8c35e0b36cce118a736082751762c151cb4",
+      "fileCount": 2,
       "classificationProvenance": "curated_from_skill_description_and_inventory"
     },
     {
