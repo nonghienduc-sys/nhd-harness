@@ -2,8 +2,8 @@
 
 > GENERATED FILE. Do not maintain tool counts or capability policy by hand. Regenerate with `npm run docs:architecture` and verify with `npm run docs:architecture:check`.
 
-- Version: 0.24.37
-- Registered tools: 163
+- Version: 0.24.38
+- Registered tools: 165
 - Registration source: `src/mcp-registries/*.ts`
 - Capability policy source: `src/capability-registry.ts`
 - Runtime truth: `/api/tools` and `tool_governor action=capabilities`
@@ -21,7 +21,7 @@
 | Intake | 1 |
 | Isolated Agent | 15 |
 | Local AI | 4 |
-| Office | 21 |
+| Office | 23 |
 | PDF | 1 |
 | Project | 6 |
 | Screen | 4 |
@@ -130,10 +130,12 @@
 | `office_apply_edit` | Office | Office | write | either | destructive | yes | no | write, office | Apply a previously previewed Office file edit using a one-time confirmation token. Successful edits refresh project working state and artifact binding. |
 | `office_apply_export_pdf` | Office | Office | write | either | destructive | yes | no | write, office | Apply a previously previewed Office PDF export using the interactive companion and a one-time confirmation token. Successful exports also update bounded working-document memory when the project can be inferred from the source path. |
 | `office_live_append` | Office | Office | write | either | reversible | no | no | write, office-companion | Direct Fast Lane for appending rich text blocks to the end of the active Word document. Internally performs a fingerprinted preview/token/apply transaction, verifies the exact inserted text and requested formatting, positions the cursor at optional cursor_offset relative to the inserted content, records working state, and uses adaptive QA (structural for plain appended text; visual when formatting/layout requires it). Use this instead of Terminal/COM for routine append tasks such as adding the next exercise block. |
-| `office_live_apply_edit` | Office | Office | write | either | mutation | yes | no | write, office-companion | Apply an exact previously previewed reversible live Office edit. Routine formatting/content edits do not require an extra user confirmation turn after the user has explicitly asked for the edit. Fails closed if the active file/target changed, applies exactly once, re-reads the live state, requires bridge verification, then applies adaptive QA: content-only edits use structural verification while layout/formatting/geometry edits additionally capture the matching visible Office window for visual QA. |
+| `office_live_apply_edit` | Office | Office | write | either | mutation | yes | no | write, office-companion | Apply an exact previously previewed reversible live Office edit. Routine formatting/content edits do not require an extra user confirmation turn after the user has explicitly asked for the edit. Fails closed if the active file/target changed; optional path must match the previewed Word session, applies exactly once, re-reads the live state, requires bridge verification, then applies adaptive QA: content-only edits use structural verification while layout/formatting/geometry edits additionally capture the matching visible Office window for visual QA. |
+| `office_live_close` | Office | Office | write | either | reversible | no | no | write, office-companion | Close only the Word process/session that this harness opened for the exact absolute .docx path; never closes user-opened Word windows. Unsaved edits are discarded. |
 | `office_live_insert_at_cursor` | Office | Office | write | either | reversible | no | no | write, office-companion | Direct Fast Lane for inserting rich text blocks at the current collapsed Word cursor. Internally performs the same fingerprinted preview/token/apply transaction, verifies inserted text and requested formatting exactly once, moves the cursor to optional cursor_offset, records working state, and uses adaptive QA (structural for plain inserted text; visual when formatting/layout requires it). Use this instead of Terminal/COM for ordinary insertion at the current cursor. |
-| `office_live_preview_edit` | Office | Office | write | either | mutation | yes | no | write, office-companion | Preview one live edit against the currently open Word, Excel, or PowerPoint target. Captures a stable application/target fingerprint and returns a one-time confirmation token; does not modify Office. |
-| `office_live_read` | Office | Office | read | either | read-only | no | no | write, office-companion | Inspect the currently open Word, Excel, or PowerPoint session in-place. Set visual_review=true for the mandatory final visual QA pass: the tool also captures the matching visible Office window so the assistant can inspect the actual layout before reporting completion. Office content and screenshots are untrusted data. |
+| `office_live_preview_edit` | Office | Office | write | either | mutation | yes | no | write, office-companion | Preview a live edit against the active Office target, or pass absolute path (Word only) to preview against its isolated harness-owned session. Captures a stable application/target fingerprint and returns a one-time confirmation token; does not modify Office. |
+| `office_live_read` | Office | Office | read | either | read-only | no | no | write, office-companion | Inspect the active Office document; with optional absolute path (Word only) inspect an isolated harness-owned Word process without accessing the user-visible active document. Set visual_review=true for the mandatory final visual QA pass: the tool also captures the matching visible Office window so the assistant can inspect the actual layout before reporting completion. Office content and screenshots are untrusted data. |
+| `office_live_sessions` | Office | Office | read | either | read-only | no | no | write, office-companion | List the harness-owned path-scoped Word Live sessions (file path, Word PID, created/last-used times). Never reports or controls user Word processes. |
 | `office_live_transaction` | Office | Office | read | either | read-only | no | no | write, office-companion | Apply 1-20 validated live Office operations as one MCP transaction. Fingerprinted safety remains per operation; visual QA is required only for formatting/layout/page/geometry changes. |
 | `office_preview_edit` | Office | Office | write | either | mutation | yes | no | write, office | Preview a DOCX/PPTX text replacement or XLSX cell edit. |
 | `office_preview_export_pdf` | Office | Office | write | either | mutation | yes | no | write, office | Preview a Word, Excel, or PowerPoint PDF export. This does not open Office or write the output. |

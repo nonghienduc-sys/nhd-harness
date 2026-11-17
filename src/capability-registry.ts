@@ -72,7 +72,7 @@ const PROJECT_PARTIAL_TOOLS = new Set(["project_open", "project_memory", "projec
 const WRITE_TOOLS = new Set([
   "fs_preview_write", "fs_preview_move", "fs_preview_delete",
   "office_preview_edit", "office_apply_edit", "office_preview_export_pdf", "office_apply_export_pdf",
-  "office_live_preview_edit", "office_live_apply_edit", "office_live_insert_at_cursor", "office_live_append",
+  "office_live_preview_edit", "office_live_apply_edit", "office_live_close", "office_live_insert_at_cursor", "office_live_append",
   "document_edit_preview", "document_edit_apply",
   "project_rag_ingest",
   ...PROJECT_PARTIAL_TOOLS,

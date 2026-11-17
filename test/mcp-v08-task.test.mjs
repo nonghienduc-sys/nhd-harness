@@ -42,7 +42,7 @@ test('current MCP lists 70 tools when durable task runtime plus task adapters ar
   const f=await fixture(); const server=f.makeServer(); const client=await connect(server);
   try{
     const listed=await client.listTools(); const names=listed.tools.map(x=>x.name);
-    assert.equal(names.length,71);
+    assert.equal(names.length,73);
     assert.ok(names.includes("harness_mode"));
     for(const name of ['task_run','task_run_step','task_run_reference','task_run_checkpoint','task_protocol_status','task_agent_cycle','fs_index_watch','local_ai_status','local_ai_route','local_ai_dispatch','local_ai_verify','tool_governor','project_rag_status','project_rag_query','project_rag_ingest']) assert.ok(names.includes(name)||server._nhdHiddenTools?.has(name),name);
   }finally{await client.close();await server.close();f.store.db.close();}

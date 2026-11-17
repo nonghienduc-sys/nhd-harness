@@ -3,6 +3,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { resolve } from "node:path";
 import { loadConfig } from "./config.js";
+import { WordLiveSessionPool, type WordSessionOptions } from "./word-live-sessions.js";
 
 const config = loadConfig();
 const app = express();
@@ -16,7 +17,7 @@ app.use((request, response, next) => {
 const supportedActions = new Set([
   "word_export_pdf", "excel_export_pdf", "powerpoint_export_pdf", "word_document_status",
   "word_selection_read", "word_selection_replace", "excel_selection_read", "powerpoint_selection_read",
-  "word_inspect", "word_apply", "excel_inspect", "excel_apply", "powerpoint_inspect", "powerpoint_apply",
+  "word_inspect", "word_apply", "word_close", "word_sessions", "excel_inspect", "excel_apply", "powerpoint_inspect", "powerpoint_apply",
   "outlook_search", "outlook_read",
 ]);
 
@@ -59,6 +60,20 @@ class OfficeBridgeWorker {
 }
 
 const bridgeWorker = new OfficeBridgeWorker();
+const wordPool = new WordLiveSessionPool({
+  externalWordDocuments: async () => {
+    // Only reads Document.FullName via the existing legacy bridge. Never touches or closes user Word.
+    try {
+      const state = await bridgeWorker.request("word_documents_list", {});
+      return Array.isArray(state.paths) ? state.paths.filter((p): p is string => typeof p === "string") : [];
+    } catch { return []; } // FileShare.None still guards a document held by another process.
+  },
+});
+void wordPool.cleanupOrphans().catch(error => console.error("Word Live orphan cleanup failed:", error));
+const closeWordPool = () => { void wordPool.closeAll(); };
+process.once("beforeExit", closeWordPool);
+process.once("SIGTERM", () => { void wordPool.closeAll().finally(() => process.exit(0)); });
+process.once("SIGINT", () => { void wordPool.closeAll().finally(() => process.exit(0)); });
 bridgeWorker.start().catch((error)=>console.error("Office worker prewarm failed:",error));
 
 app.get("/status", async (_request, response) => {
@@ -80,7 +95,21 @@ app.get("/status", async (_request, response) => {
 app.post("/action", async (request, response) => {
   const action = String(request.body?.action ?? "");
   if (!supportedActions.has(action)) return response.status(400).json({ error: "Unsupported action." });
-  try { response.json(await bridgeWorker.request(action, request.body?.input ?? {})); }
+  try {
+    const input = (request.body?.input ?? {}) as Record<string, unknown>;
+    if (action === "word_sessions") { response.json({ sessions: wordPool.list(), maxInstances: wordPool.maxInstances }); return; }
+    if (action === "word_close") {
+      response.json(await wordPool.close(String(input.path ?? ""))); return;
+    }
+    if ((action === "word_inspect" || action === "word_apply") && typeof input.path === "string" && input.path) {
+      const options: WordSessionOptions = {
+        path: input.path, read_only: input.read_only === true,
+        remove_stale_lock: input.remove_stale_lock === true,
+      };
+      response.json(await wordPool.request(action, options, input)); return;
+    }
+    response.json(await bridgeWorker.request(action, input));
+  }
   catch (error) { response.status(500).json({ error: error instanceof Error ? error.message : String(error), persistentBridge: bridgeWorker.status() }); }
 });
 

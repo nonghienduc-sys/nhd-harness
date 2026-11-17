@@ -30,6 +30,7 @@ type OfficeOperation =
   | { type: "set_cell"; sheet: string; cell: string; value: string | number | boolean | null };
 
 export type OfficeLiveApplication = "word" | "excel" | "powerpoint";
+export type WordLivePathOptions = { path?: string; read_only?: boolean; remove_stale_lock?: boolean };
 
 export type WordFormatSpec = {
   fontName?: string;
@@ -276,7 +277,8 @@ function validateLiveOperation(application: OfficeLiveApplication, operation: Of
 export class OfficeService {
   constructor(readonly config: AppConfig, readonly store: Store, readonly files: FileService) {}
 
-  private liveResourceKeys(application: OfficeLiveApplication, livePath?: string): string[] {
+  private liveResourceKeys(application: OfficeLiveApplication, livePath?: string, pathScoped = false): string[] {
+    if (pathScoped && livePath) return [canonicalizeFilePathResource(livePath, this.config.roots)];
     const resources: string[] = [`office:live:${application}`];
     const trimmed = String(livePath ?? "").trim();
     if (trimmed && /^[A-Za-z]:[\\/]/.test(trimmed)) {
@@ -525,12 +527,14 @@ export class OfficeService {
     }
   }
 
-  async inspectLive(application: OfficeLiveApplication, options: { detail?: "summary" | "context" | "full"; contextChars?: number; target?: Record<string, unknown> } = {}) {
+  async inspectLive(application: OfficeLiveApplication, options: { detail?: "summary" | "context" | "full"; contextChars?: number; target?: Record<string, unknown> } & WordLivePathOptions = {}) {
     const contextChars = Math.max(0, Math.min(20_000, options.contextChars ?? 4_000));
-    return this.live(liveAction(application, "inspect"), { detail: options.detail ?? "context", contextChars, target: options.target ?? {} });
+    if (options.path && application !== "word") throw new Error("Word Live path is supported only for application=word.");
+    return this.live(liveAction(application, "inspect"), { detail: options.detail ?? "context", contextChars, target: options.target ?? {}, ...(options.path ? {path: options.path, read_only: options.read_only === true, remove_stale_lock: options.remove_stale_lock === true} : {}) });
   }
 
-  async previewLiveEdit(application: OfficeLiveApplication, operation: OfficeLiveOperation, taskRunId?: string) {
+  async previewLiveEdit(application: OfficeLiveApplication, operation: OfficeLiveOperation, taskRunId?: string, pathOptions: WordLivePathOptions = {}) {
+    if (pathOptions.path && application !== "word") throw new Error("Word Live path is supported only for application=word.");
     if (this.config.emergencyStop || !this.config.writeEnabled) throw new Error("Office live writes are disabled.");
     const effectiveTaskRunId = resolveTaskRunId(taskRunId, operation as unknown as Record<string, unknown>);
 
@@ -544,13 +548,13 @@ export class OfficeService {
       }
     }
     validateLiveOperation(application, effectiveOperation);
-    const legacySelectionReplace = application === "word" && operation.type === "replace_selection" && !compatibilityFastLane;
+    const legacySelectionReplace = application === "word" && operation.type === "replace_selection" && !compatibilityFastLane && !pathOptions.path;
     if (!legacySelectionReplace) assertLiveOperationRedactionSafe(effectiveOperation);
 
     // Preserve the original v0.5 Word selection transaction contract for existing clients/tests.
     // Only an exact NHD_WORD_DIRECT_V1 envelope bypasses legacy selection replacement; it is
     // decoded into the same V2 word_append / word_insert_at_cursor operation used by new clients.
-    if (application === "word" && operation.type === "replace_selection" && !compatibilityFastLane) {
+    if (application === "word" && operation.type === "replace_selection" && !compatibilityFastLane && !pathOptions.path) {
       const current = await this.live("word_selection_read", {});
       if (!current.open || !current.selection || typeof current.selection !== "object") throw new Error("Word has no active document selection.");
       const selection = current.selection as Record<string, unknown>;
@@ -562,7 +566,7 @@ export class OfficeService {
       const baseline = { path: String(current.path ?? ""), name: String(current.name ?? ""), start, end, text };
       const actionId = this.store.allocatePendingId();
       const ephemeralOwnerId = effectiveTaskRunId ? undefined : createEphemeralOwnerId("pending", actionId);
-      this.store.guardResources(this.liveResourceKeys(application, baseline.path), {
+      this.store.guardResources(this.liveResourceKeys(application, baseline.path, !!pathOptions.path), {
         mode: "write",
         taskRunId: effectiveTaskRunId,
         ephemeralOwnerId,
@@ -588,7 +592,7 @@ export class OfficeService {
     }
 
     const target = operationTarget(application, effectiveOperation);
-    const current = await this.inspectLive(application, { detail: "summary", contextChars: 0, target });
+    const current = await this.inspectLive(application, { detail: "summary", contextChars: 0, target, ...pathOptions });
     if (!current.open) throw new Error(`${application} has no active document/workbook/presentation.`);
     const fingerprint = String(current.fingerprint ?? "");
     if (!fingerprint) throw new Error("Office Live V2 inspect did not return a stable fingerprint.");
@@ -601,7 +605,7 @@ export class OfficeService {
     };
     const actionId = this.store.allocatePendingId();
     const ephemeralOwnerId = effectiveTaskRunId ? undefined : createEphemeralOwnerId("pending", actionId);
-    this.store.guardResources(this.liveResourceKeys(application, baseline.path), {
+    this.store.guardResources(this.liveResourceKeys(application, baseline.path, !!pathOptions.path), {
       mode: "write",
       taskRunId: effectiveTaskRunId,
       ephemeralOwnerId,
@@ -616,6 +620,7 @@ export class OfficeService {
         operation: effectiveOperation,
         baseline,
         compatibilityFastLane,
+        ...(pathOptions.path ? { pathOptions } : {}),
         ...(effectiveTaskRunId ? { taskRunId: effectiveTaskRunId } : {}),
         ...(ephemeralOwnerId ? { ephemeralOwnerId } : {}),
       },
@@ -627,12 +632,16 @@ export class OfficeService {
     return { actionId: pending.id, confirmationToken: pending.confirmationToken, expiresAt: pending.expiresAt, application, operation: effectiveOperation, baseline, expectedHash, compatibilityFastLane };
   }
 
-  async applyLiveEdit(actionId: string, confirmationToken: string, taskRunId?: string) {
+  async applyLiveEdit(actionId: string, confirmationToken: string, taskRunId?: string, requestedPath?: string) {
     if (this.config.emergencyStop || !this.config.writeEnabled) throw new Error("Office live writes are disabled.");
     const previewPending = this.store.getPending(actionId, confirmationToken);
     if (!["office:live_edit", "office:live_edit_v2"].includes(previewPending.kind)) throw new Error("Pending action is not an Office live edit.");
     const previewApp = String(previewPending.payload.application) as OfficeLiveApplication;
     const previewBaseline = (previewPending.payload.baseline ?? {}) as Record<string, unknown>;
+    const originalPathOptions = (previewPending.payload.pathOptions ?? {}) as WordLivePathOptions;
+    if (requestedPath && String(requestedPath).toLowerCase() !== String(originalPathOptions.path ?? "").toLowerCase()) {
+      throw new Error("WORD_LIVE_PATH_MISMATCH: apply path differs from preview.");
+    }
     const recordedTaskRunId = typeof previewPending.payload.taskRunId === "string" ? previewPending.payload.taskRunId.trim() : undefined;
     const recordedEphemeralOwnerId = typeof previewPending.payload.ephemeralOwnerId === "string" ? previewPending.payload.ephemeralOwnerId.trim() : undefined;
     const explicitTaskRunId = resolveTaskRunId(taskRunId);
@@ -643,7 +652,7 @@ export class OfficeService {
       throw new Error(`Foreign pending Office live edit denied: anonymous preview cannot be applied by task '${explicitTaskRunId}'.`);
     }
     const effectiveTaskRunId = explicitTaskRunId ?? recordedTaskRunId;
-    this.store.guardResources(this.liveResourceKeys(previewApp, String(previewBaseline.path ?? "")), {
+    this.store.guardResources(this.liveResourceKeys(previewApp, String(previewBaseline.path ?? ""), !!originalPathOptions.path), {
       mode: "write",
       taskRunId: effectiveTaskRunId,
       ephemeralOwnerId: recordedEphemeralOwnerId,
@@ -675,7 +684,8 @@ export class OfficeService {
       const baseline = pending.payload.baseline as Record<string, unknown>;
       validateLiveOperation(application, operation);
       const target = operationTarget(application, operation);
-      const current = await this.inspectLive(application, { detail: "summary", contextChars: 0, target });
+      const pathOptions = (pending.payload.pathOptions ?? {}) as WordLivePathOptions;
+      const current = await this.inspectLive(application, { detail: "summary", contextChars: 0, target, ...pathOptions });
       const currentBaseline = {
         application,
         path: String(current.path ?? ""),
@@ -685,12 +695,12 @@ export class OfficeService {
       };
       if (!pending.expectedHash || sha256(JSON.stringify(currentBaseline)) !== pending.expectedHash) throw new Error("Office live target changed after preview; inspect and preview again.");
 
-      const bridgeResult = await this.live(liveAction(application, "apply"), { operation });
+      const bridgeResult = await this.live(liveAction(application, "apply"), { operation, ...(pathOptions.path ? {path:pathOptions.path, read_only:pathOptions.read_only === true, remove_stale_lock:pathOptions.remove_stale_lock === true} : {}) });
       if (bridgeResult.verified !== true) throw new Error(String(bridgeResult.error ?? "Office Live V2 verification failed after apply."));
-      const after = await this.inspectLive(application, { detail: "context", contextChars: 2_000, target });
+      const after = await this.inspectLive(application, { detail: "context", contextChars: 2_000, target, ...pathOptions });
       this.store.audit("office_live_apply_edit", "success", { application, actionId, path: baseline.path, operation: operation.type, target, verified: true, taskRunId: effectiveTaskRunId ?? recordedEphemeralOwnerId ?? null });
       const qaLevel = qaLevelForOperation(operation);
-      return { applied: true, application, operation: operation.type, path: String(after.path ?? baseline.path ?? ""), state: after, receipt: bridgeResult.receipt ?? null, verified: true, machineVerified: true, qaLevel, visualReviewRequired: qaLevel === "visual", completionState: qaLevel === "visual" ? "awaiting_visual_review" : "verified", at: nowIso() };
+      return { applied: true, application, operation: operation.type, path: String(after.path ?? baseline.path ?? ""), state: after, receipt: bridgeResult.receipt ?? null, verified: true, machineVerified: true, qaLevel, visualReviewRequired: !pathOptions.path && qaLevel === "visual", completionState: pathOptions.path ? "verified_hidden_no_visual" : qaLevel === "visual" ? "awaiting_visual_review" : "verified", at: nowIso() };
     } finally {
       if (recordedEphemeralOwnerId) {
         this.store.releaseEphemeralOwnerResources(recordedEphemeralOwnerId, "office_live_apply_edit_completed");
@@ -698,19 +708,22 @@ export class OfficeService {
     }
   }
 
-  async runLiveTransaction(application: OfficeLiveApplication, operations: OfficeLiveOperation[], taskRunId?: string) {
+  async runLiveTransaction(application: OfficeLiveApplication, operations: OfficeLiveOperation[], taskRunId?: string, pathOptions: WordLivePathOptions = {}) {
     if (!Array.isArray(operations) || operations.length < 1 || operations.length > 20) throw new Error("Office live transaction requires 1-20 operations.");
     const effectiveTaskRunId = resolveTaskRunId(taskRunId);
     const startedAt = nowIso(); const receipts: unknown[] = []; let visualRequired = false;
     for (const operation of operations) {
       validateLiveOperation(application, operation);
       if (qaLevelForOperation(operation) === "visual") visualRequired = true;
-      const previewed = await this.previewLiveEdit(application, operation, effectiveTaskRunId);
-      receipts.push(await this.applyLiveEdit(previewed.actionId, previewed.confirmationToken, effectiveTaskRunId));
+      const previewed = await this.previewLiveEdit(application, operation, effectiveTaskRunId, pathOptions);
+      receipts.push(await this.applyLiveEdit(previewed.actionId, previewed.confirmationToken, effectiveTaskRunId, pathOptions.path));
     }
-    const state = await this.inspectLive(application, { detail: "context", contextChars: 2000 });
-    return { applied:true, application, operations:operations.map((item)=>item.type), operationCount:operations.length, receipts, state, verified:true, machineVerified:true, qaLevel:visualRequired?"visual":"structural", visualReviewRequired:visualRequired, completionState:visualRequired?"awaiting_visual_review":"verified", startedAt, completedAt:nowIso() };
+    const state = await this.inspectLive(application, { detail: "context", contextChars: 2000, ...pathOptions });
+    return { applied:true, application, operations:operations.map((item)=>item.type), operationCount:operations.length, receipts, state, verified:true, machineVerified:true, qaLevel:visualRequired?"visual":"structural", visualReviewRequired:!pathOptions.path&&visualRequired, completionState:pathOptions.path?"verified_hidden_no_visual":visualRequired?"awaiting_visual_review":"verified", startedAt, completedAt:nowIso() };
   }
+
+  async closeWordLive(path: string) { return this.live("word_close", { path }); }
+  async listWordLiveSessions() { return this.live("word_sessions", {}); }
 
   async live(action: string, input: Record<string, unknown>) {
     if (action.startsWith("outlook_") && !["outlook_search", "outlook_read"].includes(action)) throw new Error("Outlook is read-only.");

@@ -33,7 +33,8 @@ async function closeServer(server){
   await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
 }
 
-async function waitExit(child,timeoutMs=15000){
+// Allow cold-start contention when the entire suite runs concurrently.
+async function waitExit(child,timeoutMs=30000){
   if(child.exitCode!=null)return child.exitCode;
   return await new Promise((resolve,reject)=>{
     let settled=false;

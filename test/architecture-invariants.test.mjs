@@ -18,13 +18,13 @@ test('generated architecture docs are deterministic and current', () => {
   execFileSync(process.execPath, [resolve(root, 'scripts/generate-architecture-docs.mjs'), '--check'], { cwd: root, stdio: 'pipe' });
 });
 
-test('generated capability catalog covers the full 163-tool surface exactly once', () => {
+test('generated capability catalog covers the full 165-tool surface exactly once', () => {
   const data = catalog();
   assert.equal(data.schemaVersion, 1);
   assert.equal(data.version, JSON.parse(read('package.json')).version);
-  assert.equal(data.toolCount, 163);
-  assert.equal(data.tools.length, 163);
-  assert.equal(new Set(data.tools.map(tool => tool.name)).size, 163);
+  assert.equal(data.toolCount, 165);
+  assert.equal(data.tools.length, 165);
+  assert.equal(new Set(data.tools.map(tool => tool.name)).size, 165);
   for (const tool of data.tools) {
     assert.ok(tool.name);
     assert.ok(tool.registryDomain);

@@ -51,7 +51,7 @@ test('current MCP lists 65 tools (v0.24.15 facades) when process-scope terminal 
   const {server}=services(coordinator); const client=await connect(server);
   try{
     const listed=await client.listTools(); const names=listed.tools.map(x=>x.name);
-    assert.equal(names.length,66);
+    assert.equal(names.length,68);
     assert.ok(names.includes("harness_mode"));
     for(const name of ['terminal_session','terminal_session_preview','terminal_session_execute','project_rag_status','project_rag_query','project_rag_ingest']) assert.ok(names.includes(name)||server._nhdHiddenTools?.has(name),name);
   }finally{await client.close();await server.close();}

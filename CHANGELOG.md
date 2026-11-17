@@ -1,4 +1,12 @@
-﻿## Unreleased
+## Unreleased
+
+### 0.24.38 - 2026-11-17
+
+- Isolated path-scoped Word Live sessions: separate harness-owned WINWORD and PowerShell worker for each DOCX; up to four simultaneous sessions, per-path ordering, explicit close, idle and timeout cleanup.
+- Added persistent PID/start-time registry, safe orphan reaping, FileShare.None lock checks and explicit stale owner-file handling without touching the user's Word windows.
+- Added optional Word path/read_only/remove_stale_lock tool parameters, office_live_close/office_live_sessions, transaction routing and backward-compatible no-path behavior.
+- Added unit tests, real four-file parallel COM regression tests, and Vietnamese operational documentation.
+
 
 # Changelog
 

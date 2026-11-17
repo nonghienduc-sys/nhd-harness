@@ -1,3 +1,6 @@
+// Legacy registry fixtures deliberately test direct tool routing rather than Brain-only connection policy.
+// Scope the override to child processes that import this test helper; production never imports it.
+process.env.NHD_BRAIN_ONLY = "0";
 import { createWorkstationMcp as createRuntimeMcp, getWorkstationToolInventory } from '../../dist/mcp.js';
 import { createWorkstationRuntime } from '../../dist/workstation-runtime.js';
 

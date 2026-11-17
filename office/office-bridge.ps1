@@ -145,10 +145,10 @@ function Get-WordPageSnapshot($page) {
   }
 }
 
-function Get-WordInspect($Request) {
+function Get-WordInspect($Request, $word = $null, $doc = $null) {
   try {
-    $word = [Runtime.InteropServices.Marshal]::GetActiveObject('Word.Application')
-    $doc = $word.ActiveDocument
+    if ($null -eq $word) { $word = [Runtime.InteropServices.Marshal]::GetActiveObject('Word.Application') }
+    if ($null -eq $doc) { $doc = $word.ActiveDocument }
     if ($null -eq $doc) { return @{ok=$true; open=$false} }
     $selection = $word.Selection
     $scope = 'selection'
@@ -294,9 +294,9 @@ function Test-WordFormatSnapshot($snap, $format) {
   return [bool]$ok
 }
 
-function Apply-WordOperation($operation) {
-  $word = [Runtime.InteropServices.Marshal]::GetActiveObject('Word.Application')
-  $doc = $word.ActiveDocument
+function Apply-WordOperation($operation, $word = $null, $doc = $null) {
+  if ($null -eq $word) { $word = [Runtime.InteropServices.Marshal]::GetActiveObject('Word.Application') }
+  if ($null -eq $doc) { $doc = $word.ActiveDocument }
   if ($null -eq $doc) { throw 'Word has no active document.' }
   $type = [string]$operation.type
   $verified = $false
@@ -699,6 +699,7 @@ function Apply-PowerPointOperation($operation) {
 }
 
 switch ($Action) {
+  '__load_functions_only__' { }
   'status' {
     Get-RunningOfficeStatus | ConvertTo-Json -Compress
   }
@@ -712,6 +713,17 @@ switch ($Action) {
       $doc.Close($false)
       @{ok=$true; output=[string]$payload.output} | ConvertTo-Json -Compress
     } finally { $word.Quit() }
+  }
+  'word_documents_list' {
+    try {
+      $existingWord = [Runtime.InteropServices.Marshal]::GetActiveObject('Word.Application')
+      $openedPaths = @()
+      foreach ($openedDoc in $existingWord.Documents) {
+        if ($openedPaths.Count -ge 200) { break }
+        try { $openedPaths += [string]$openedDoc.FullName } catch {}
+      }
+      @{ok=$true;paths=@($openedPaths)} | ConvertTo-Json -Depth 4 -Compress
+    } catch { @{ok=$true;paths=@()} | ConvertTo-Json -Compress }
   }
   'word_document_status' {
     try {
