@@ -1,6 +1,6 @@
 {
   "name": "chatgpt-workstation-mcp-bridge",
-  "version": "0.24.38",
+  "version": "0.24.39",
   "private": true,
   "type": "module",
   "description": "Windows workstation MCP bridge for ChatGPT Web with controlled file, terminal, and Office access.",
@@ -11,7 +11,7 @@
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
     "dashboard": "electron .",
-    "test": "npm run build && node --test test/*.test.mjs",
+    "test": "npm run build && node --test --test-concurrency=4 test/*.test.mjs",
     "service:install": "node scripts/install-service.cjs",
     "service:uninstall": "node scripts/uninstall-service.cjs",
     "package:win": "npm run test && electron-builder --win nsis",

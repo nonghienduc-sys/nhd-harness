@@ -8,6 +8,8 @@ import { nowIso, redact, sha256 } from "./security.js";
 import { assessTerminalRisk, RiskAssessment } from "./risk-policy.js";
 import { TaskAuthorizationService } from "./task-authorization.js";
 import { BackgroundTurboService, isTurboSafePowerShell } from "./background-turbo.js";
+import { cleanWordProcesses, nativeWordProcessProvider, wordCleanupEnabled, type WordProcessProvider, type WordProcessInfo } from "./word-cleanup.js";
+import { receiptStaleWarnings } from "./receipt-write.js";
 
 export type Risk = "normal" | "elevated" | "critical";
 
@@ -16,6 +18,7 @@ export type TerminalServiceOptions = {
   drainGraceMs?: number;
   spawnProcess?: typeof spawn;
   isProcessAlive?: (pid: number) => boolean;
+  wordProcessProvider?: WordProcessProvider;
 };
 
 export class TerminalService {
@@ -24,6 +27,8 @@ export class TerminalService {
   private readonly drainGraceMs: number;
   private readonly spawnProcess: typeof spawn;
   private readonly processAliveProbe: (pid: number) => boolean;
+  private readonly wordProcessProvider: WordProcessProvider;
+  private readonly wordMonitoringEnabled: boolean;
   private readonly taskAuthorizations?: TaskAuthorizationService;
   private backgroundTurbo?: BackgroundTurboService;
 
@@ -33,6 +38,9 @@ export class TerminalService {
     this.spawnProcess = options.spawnProcess ?? spawn;
     this.processAliveProbe = options.isProcessAlive ?? ((pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } });
     this.taskAuthorizations = taskAuthorizations;
+    this.wordProcessProvider = options.wordProcessProvider ?? nativeWordProcessProvider;
+    // Simulated launchers have no genuine Windows command process to monitor.
+    this.wordMonitoringEnabled = !options.spawnProcess || Boolean(options.wordProcessProvider);
   }
 
   attachBackgroundTurbo(service: BackgroundTurboService) { this.backgroundTurbo = service; }
@@ -45,7 +53,7 @@ export class TerminalService {
     return this.assess(command).legacyRisk;
   }
 
-  preview(command: string, cwd = "D:\\", timeoutSeconds = 120, environment: Record<string, string> = {}, taskRunId?: string) {
+  preview(command: string, cwd = "D:\\", timeoutSeconds = 120, environment: Record<string, string> = {}, taskRunId?: string, wordCleanup = true) {
     if (this.config.emergencyStop || !this.config.terminalEnabled) throw new Error("Terminal is disabled.");
     if (!command.trim() || command.length > 20_000) throw new Error("Command is empty or too long.");
     const workdir = this.files.resolvePath(cwd);
@@ -73,7 +81,7 @@ export class TerminalService {
     const requestedTimeoutSeconds = Math.min(Math.max(timeoutSeconds, 1), 1800);
     const effectiveTimeoutSeconds = requestedTimeoutSeconds;
     const launchMode = inspection.standaloneScriptPath ? "utf8_encoded_script" : /[^\x00-\x7F]/.test(command) ? "utf8_encoded_command" : "command";
-    const pending = this.store.createPending("terminal", { command, cwd: workdir, timeoutSeconds: effectiveTimeoutSeconds, requestedTimeoutSeconds, launchMode, standaloneScriptPath: inspection.standaloneScriptPath, risk, riskScore: assessment.score, riskLevel: assessment.level, confirmationMode: effectiveConfirmationMode, riskReasons: assessment.reasons, commandHash, criticalConfirmation, environment: executionEnvironment, taskRunId: taskRunId ?? null, taskAuthorizationId: taskAuthorization?.id ?? null }, commandHash);
+    const pending = this.store.createPending("terminal", { command, cwd: workdir, timeoutSeconds: effectiveTimeoutSeconds, requestedTimeoutSeconds, launchMode, standaloneScriptPath: inspection.standaloneScriptPath, risk, riskScore: assessment.score, riskLevel: assessment.level, confirmationMode: effectiveConfirmationMode, riskReasons: assessment.reasons, commandHash, criticalConfirmation, environment: executionEnvironment, taskRunId: taskRunId ?? null, wordCleanup, taskAuthorizationId: taskAuthorization?.id ?? null }, commandHash);
     this.store.audit("terminal_preview", "pending", { actionId: pending.id, cwd: workdir, risk, riskScore: assessment.score, riskLevel: assessment.level, confirmationMode: assessment.confirmationMode, riskReasons: assessment.reasons, command: redact(command) });
     return {
       actionId: pending.id,
@@ -102,6 +110,31 @@ export class TerminalService {
   }
 
   async execute(actionId: string, commandHash: string, confirmationToken: string, criticalConfirmation?: string): Promise<Record<string, unknown>> {
+    const pending = this.store.getPending(actionId);
+    const taskRunId = typeof pending.payload.taskRunId === "string" ? pending.payload.taskRunId : null;
+    const enabled = pending.payload.wordCleanup !== false && wordCleanupEnabled() && this.wordMonitoringEnabled;
+    let before: WordProcessInfo[] = [];
+    let initialError: string | null = null;
+    if (enabled) {
+      try { before = await this.wordProcessProvider.list(); }
+      catch (error) { initialError = String(error); }
+    }
+    const startedAt = Date.now();
+    const output = await this.executeCore(actionId, commandHash, confirmationToken, criticalConfirmation);
+    const endedAt = Date.now();
+    if (enabled && !initialError) {
+      output.word_cleanup = await cleanWordProcesses({
+        before, commandPid: Number(output.pid) || undefined, startedAt, endedAt
+      }, this.wordProcessProvider);
+    } else {
+      output.word_cleanup = { enabled: enabled && !initialError, killed: [], kept: [], errors: initialError ? [initialError] : [] };
+    }
+    const stale = receiptStaleWarnings(taskRunId);
+    if (stale.length) output.warnings = stale;
+    return output;
+  }
+
+  private async executeCore(actionId: string, commandHash: string, confirmationToken: string, criticalConfirmation?: string): Promise<Record<string, unknown>> {
     if (this.config.emergencyStop || !this.config.terminalEnabled) throw new Error("Terminal is disabled.");
     this.pruneDeadRuns();
     if (this.running.size >= this.maxConcurrentRuns) throw new Error(`At most ${this.maxConcurrentRuns} terminal processes may run concurrently.`);

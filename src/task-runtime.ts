@@ -47,6 +47,7 @@ export type TaskRunView = {
   activeStepId: string | null;
   checkpointSequence: number;
   createdAt: string;
+  startedAt: string | null;
   updatedAt: string;
   deadlineAt: string;
   checkpoints: TaskCheckpoint[];
@@ -275,6 +276,7 @@ export class TaskRunManager {
     if (state !== "planned" && state !== "paused") throw new TaskRunError("INVALID_STATE", `Task run is ${state}; it cannot be started/resumed.`);
     if (run.active_step_id) throw new TaskRunError("ACTIVE_STEP", "Task run already has an active step.");
     this.updateRun(id, { state: "running" });
+    this.store.db.prepare("UPDATE agent_runs SET started_at=COALESCE(started_at,?) WHERE id=?").run(new Date(this.now()).toISOString(), id);
     return this.get(id);
   }
 
@@ -574,6 +576,8 @@ export class TaskRunManager {
       );
       CREATE INDEX IF NOT EXISTS idx_agent_run_refs_run ON agent_run_refs(run_id,created_at);
     `);
+    const columns = this.store.db.prepare("PRAGMA table_info(agent_runs)").all() as Array<{name:string}>;
+    if (!columns.some((column) => column.name === "started_at")) this.store.db.exec("ALTER TABLE agent_runs ADD COLUMN started_at TEXT");
   }
 
   private row(id: string): Record<string, unknown> {
@@ -634,6 +638,7 @@ export class TaskRunManager {
       activeStepId: row.active_step_id == null ? null : String(row.active_step_id),
       checkpointSequence: Number(row.checkpoint_seq),
       createdAt: String(row.created_at),
+      startedAt: row.started_at == null ? null : String(row.started_at),
       updatedAt: String(row.updated_at),
       deadlineAt: String(row.deadline_at),
       checkpoints,

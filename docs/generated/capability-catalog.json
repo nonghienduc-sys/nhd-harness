@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "version": "0.24.38",
+  "version": "0.24.39",
   "sourceOfTruth": {
     "registration": "src/mcp-registries/*.ts",
     "capabilityPolicy": "src/capability-registry.ts",
     "executionPlan": "src/execution-planner.ts"
   },
-  "toolCount": 165,
+  "toolCount": 166,
   "registryDomains": {
     "Browser": 26,
     "Context": 17,
     "Delegation": 4,
     "Execution": 40,
-    "Files": 31,
+    "Files": 32,
     "Media": 19,
     "Office": 23,
     "Self-Evolution": 5
@@ -36,14 +36,14 @@
     "Task": 7,
     "Terminal": 6,
     "Video": 9,
-    "Workstation": 14
+    "Workstation": 15
   },
   "permissions": {
     "browser": 26,
     "desktop": 4,
     "intake": 2,
     "mixed": 38,
-    "read": 46,
+    "read": 47,
     "screen": 4,
     "skills": 6,
     "terminal": 6,
@@ -51,12 +51,12 @@
     "write": 24
   },
   "lanes": {
-    "background": 95,
+    "background": 96,
     "either": 55,
     "isolated": 15
   },
   "risks": {
-    "destructive": 10,
+    "destructive": 11,
     "dynamic": 3,
     "mutation": 35,
     "read-only": 113,
@@ -2567,6 +2567,20 @@
       "runtimeRequirements": [],
       "annotation": "reversibleMutation",
       "description": "Inspect, select, and verify the shared NHD operating mode. harness=Mode 1 Brain+worker, self=Mode 2 Brain+Harness directly (no model worker), direct=Mode 3 Brain detached from workstation. Select requires a running task, moderate task authorization and confirmed=true. The mode applies to remote/local MCP sessions through one persisted state file, but never overrides tool-specific safety gates."
+    },
+    {
+      "name": "receipt_write",
+      "registryDomain": "Files",
+      "group": "Workstation",
+      "permission": "read",
+      "lane": "background",
+      "risk": "destructive",
+      "mutation": true,
+      "destructive": true,
+      "openWorld": false,
+      "runtimeRequirements": [],
+      "annotation": "destructive",
+      "description": "Seal a JSON receipt atomically: compute sha256 of files, block credentials, add sealed_at/task_run_id and update configured NHD_SO_THOI_GIAN CSV. Use receipt_write, not manual SHA-256."
     },
     {
       "name": "review_pack",

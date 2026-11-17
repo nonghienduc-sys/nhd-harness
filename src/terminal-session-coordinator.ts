@@ -38,11 +38,11 @@ export class TerminalSessionCoordinator {
     return this.sessions.setEnvironment(sessionId, env);
   }
 
-  preview(sessionId: string, command: string, timeoutSeconds?: number): SessionPreview {
+  preview(sessionId: string, command: string, timeoutSeconds?: number, wordCleanup = true): SessionPreview {
     const session = this.sessions.get(sessionId);
     if (session.state !== "open" && session.state !== "failed") throw new Error(`Terminal session is ${session.state}; it cannot preview a new step.`);
     if (/\b(?:Set-Location|Push-Location|Pop-Location)\b/i.test(command) || /(?:^|[;\r\n])\s*(?:cd|chdir|sl|pushd|popd)\b/i.test(command)) throw new Error("Persistent terminal sessions require terminal_session set_cwd instead of shell directory-changing commands.");
-    const preview = this.terminal.preview(command, session.cwd, timeoutSeconds, session.env);
+    const preview = this.terminal.preview(command, session.cwd, timeoutSeconds, session.env, undefined, wordCleanup);
     return { session, preview };
   }
 

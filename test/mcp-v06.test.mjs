@@ -57,7 +57,7 @@ test('current base MCP protocol lists 62 tools (v0.24.15 facades) including payl
   try {
     const listed = await client.listTools();
     const names = listed.tools.map(tool => tool.name);
-    assert.equal(names.length, 65);
+    assert.equal(names.length, 66);
     assert.ok(names.includes("harness_mode"));
     for (const name of ['runtime_identity','workstation_plan','browser_wait_for','browser_click_verified','browser_fill_verified','local_ai_status','local_ai_route','local_ai_dispatch','local_ai_verify','tool_governor','context_payload_artifact','project_rag_status','project_rag_query','project_rag_ingest']) assert.ok(names.includes(name) || server._nhdHiddenTools?.has(name), name);
   } finally { await client.close(); await server.close(); }

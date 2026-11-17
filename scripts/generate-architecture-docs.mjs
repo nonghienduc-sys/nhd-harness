@@ -119,7 +119,7 @@ for (const tool of tools) {
   byName.set(tool.name, tool);
 }
 const sortedTools = [...byName.values()].sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name));
-const EXPECTED_TOOL_COUNT = 165;
+const EXPECTED_TOOL_COUNT = 166;
 if (sortedTools.length !== EXPECTED_TOOL_COUNT) {
   throw new Error(`Capability catalog must cover exactly the live ${EXPECTED_TOOL_COUNT}-tool surface; generated ${sortedTools.length}. Fix registry parsing instead of weakening the invariant.`);
 }

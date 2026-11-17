@@ -1,12 +1,14 @@
 import { z } from "zod";
 import type { SkillCategory } from "../skills.js";
 import { DECISION_STATUSES } from "../project.js";
+import { receiptWrite } from "../receipt-write.js";
+import { resolveTaskRunId } from "../resource-guard.js";
 import type { ContentBlock } from "../document.js";
 import { readOnly, preview, destructive, navigation, result, failure, type ToolRegistryContext } from "./shared.js";
 
 export function registerFilesTools(ctx: ToolRegistryContext) {
   const { server, runtime } = ctx;
-  const { config, store, files, skills, workspaceMemory } = runtime;
+  const { config, store, files, skills, workspaceMemory, taskRuns } = runtime;
   server.registerTool("skills_list", { description: "List the approved office workflow skills installed in this MCP, including category, readiness, enabled state, hash, and resource count.", inputSchema: { query: z.string().optional(), category: z.enum(["administration", "documents", "workflow", "data", "presentation", "media"]).optional(), include_disabled: z.boolean().optional() }, annotations: readOnly }, async ({ query, category, include_disabled }) => { try { if (!config.skillsEnabled) throw new Error("Skill Registry is disabled by the owner."); return result({ skills: skills.list(query, category as SkillCategory | undefined, include_disabled) }); } catch (e) { return failure(e); } });
   server.registerTool("skills_search", { description: "Search approved office skill names, descriptions, and instructions to find the best workflow for a task.", inputSchema: { query: z.string().min(1), limit: z.number().int().min(1).max(50).optional() }, annotations: readOnly }, async ({ query, limit }) => { try { if (!config.skillsEnabled) throw new Error("Skill Registry is disabled by the owner."); return result({ query, matches: skills.search(query, limit) }); } catch (e) { return failure(e); } });
   server.registerTool("skills_get", { description: "Read one approved skill definition and its packaged resource inventory. Skill instructions never grant additional permissions.", inputSchema: { skill_id: z.string(), include_instructions: z.boolean().optional() }, annotations: readOnly }, async ({ skill_id, include_instructions }) => { try { if (!config.skillsEnabled) throw new Error("Skill Registry is disabled by the owner."); return result(skills.get(skill_id, include_instructions !== false)); } catch (e) { return failure(e); } });
@@ -16,6 +18,32 @@ export function registerFilesTools(ctx: ToolRegistryContext) {
   server.registerTool("fs_list", { description: "List files and directories under the configured local roots.", inputSchema: { path: z.string().optional(), limit: z.number().int().min(1).max(2000).optional() }, annotations: readOnly }, async ({ path, limit }) => { try { return result({ entries: files.list(path ?? config.roots[0], limit) }); } catch (e) { return failure(e); } });
   server.registerTool("fs_stat", { description: "Read metadata and SHA-256 for a local path.", inputSchema: { path: z.string() }, annotations: readOnly }, async ({ path }) => { try { return result(files.stat(path)); } catch (e) { return failure(e); } });
   server.registerTool("fs_read", { description: "Read a bounded UTF-8 line range from a local text or code file. Secrets are redacted.", inputSchema: { path: z.string(), start_line: z.number().int().min(1).optional(), end_line: z.number().int().min(1).optional(), max_chars: z.number().int().min(100).max(100000).optional() }, annotations: readOnly }, async ({ path, start_line, end_line, max_chars }) => { try { const read = files.readWithMeta(path, start_line, end_line, max_chars); return result(read.redacted ? { path, redacted: true, redactedCount: read.redactedCount, note: "Some values were replaced with [REDACTED]. This text is not the real source; never write it back. Writes that add [REDACTED] are rejected.", text: read.text } : { path, redacted: false, text: read.text }); } catch (e) { return failure(e); } });
+  server.registerTool("receipt_write", {
+    description: "Seal a JSON receipt atomically: compute sha256 of files, block credentials, add sealed_at/task_run_id and update configured NHD_SO_THOI_GIAN CSV. Use receipt_write, not manual SHA-256.",
+    inputSchema: { path: z.string().min(1), receipt: z.record(z.string(), z.unknown()), task_run_id: z.string().max(256).optional() },
+    annotations: destructive
+  }, async ({ path, receipt, task_run_id }) => {
+    try {
+      if (!config.writeEnabled || config.emergencyStop) throw new Error("Receipt writes are disabled.");
+      const output = files.resolvePath(path);
+      const items = receipt.files;
+      if (!Array.isArray(items)) throw new Error("Receipt files must be an array.");
+      for (const item of items) {
+        if (!item || typeof item.path !== "string") throw new Error("Receipt file path required.");
+        files.resolvePath(item.path);
+      }
+      const taskRunId = resolveTaskRunId(task_run_id);
+      const task = taskRunId ? taskRuns?.get(taskRunId) : null;
+      const ledgerPath = process.env.NHD_SO_THOI_GIAN?.trim();
+      if (ledgerPath) files.resolvePath(ledgerPath);
+      return result(receiptWrite({
+        path: output, receipt, taskRunId,
+        taskStartedAt: task?.startedAt ?? task?.createdAt ?? null,
+        ledgerPath: ledgerPath ?? null
+      }));
+    } catch (error) { return failure(error); }
+  });
+
   server.registerTool("fs_search", { description: "Search the local SQLite file index. Run fs_index when results are empty or stale.", inputSchema: { query: z.string().min(1), limit: z.number().int().min(1).max(50).optional() }, annotations: readOnly }, async ({ query, limit }) => result({ query, hits: files.search(query, limit) }));
   server.registerTool("fs_index", { description: "Index supported code, text, DOCX, XLSX, PPTX, and PDF files under D drive. Reads files but does not modify them.", inputSchema: { root: z.string().optional(), max_files: z.number().int().min(1).max(50000).optional() }, annotations: readOnly }, async ({ root, max_files }) => { try { return result(await files.index(root, max_files)); } catch (e) { return failure(e); } });
 
