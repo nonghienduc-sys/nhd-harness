@@ -22,7 +22,7 @@ const TEXT_EXT = new Set([".txt", ".md", ".json", ".toml", ".yaml", ".yml", ".xm
 const OFFICE_TEMP_NAME = /^~\$/;
 
 // v0.24.9: vùng phát hành chỉ do atomic release controller ghi; fs tools không bao giờ được ghi/chuyển/xóa vào đây.
-const RELEASE_SOURCE_ROOT = resolve(process.env.NHD_SOURCE_ROOT || "D:\\ChatGPT-Workstation-MCP");
+const RELEASE_SOURCE_ROOT = resolve(process.env.NHD_SOURCE_ROOT || process.cwd());
 export function isReleaseProtectedPath(target: string, sourceRoot: string = RELEASE_SOURCE_ROOT): boolean {
   const norm = (value: string) => resolve(value).replace(/[\\/]+$/, "").toLowerCase();
   const candidate = norm(target);

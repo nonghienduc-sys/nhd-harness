@@ -35,6 +35,6 @@ Endpoint mặc định: `http://127.0.0.1:39100`. Có thể đổi trong Options
 
 Từ bản mở rộng 2026-11-08, chỉ trên `chatgpt.com`, script `stream-speed-observer.js` theo dõi các thay đổi của phản hồi đang sinh để ước tính thời gian đến văn bản đầu tiên (TTFV), ký tự/giây và token/giây quy đổi từ ký tự/4. Không lấy token ẩn hoặc thông tin từ API OpenAI. Kết quả phản hồi một lần, tab nền hoặc không thấy rõ lúc kết thúc được đánh dấu độ tin cậy thấp.
 
-Dữ liệu bộ đo **không gồm nội dung prompt, đáp án hay URL cuộc trò chuyện**. Lưu tối đa 2000 dòng metadata trong `chrome.storage.local`; có thể xuất CSV/JSONL tại Options và đồng bộ về NHD localhost. Khi backend hỗ trợ route `/api/benchmarks/response-speed/sample`, dữ liệu cũng được lưu tại `D:\NHD Projects\Model Benchmark MCP\ChatGPT Plus UI`.
+Dữ liệu bộ đo **không gồm nội dung prompt, đáp án hay URL cuộc trò chuyện**. Lưu tối đa 2000 dòng metadata trong `chrome.storage.local`; có thể xuất CSV/JSONL tại Options và đồng bộ về NHD localhost. Khi backend hỗ trợ route `/api/benchmarks/response-speed/sample`, dữ liệu cũng được lưu tại `thư mục dữ liệu Model Benchmark do chủ máy tự cấu hình`.
 
 Bật/tắt, gắn nhãn model và nhóm tác vụ trong Options. Chỉ tính những phản hồi **bắt đầu sau khi extension được kích hoạt**; không khôi phục lại tốc độ của câu trả lời cũ. Bộ quan sát chỉ theo dõi thay đổi DOM của ChatGPT và không quét định kỳ khi không có câu đang trả lời.

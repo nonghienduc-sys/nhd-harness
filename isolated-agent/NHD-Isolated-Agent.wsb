@@ -7,7 +7,7 @@
   <AudioInput>Disable</AudioInput>
   <VideoInput>Disable</VideoInput>
   <MappedFolders>
-    <MappedFolder><HostFolder>D:\ChatGPT-Workstation-MCP\isolated-agent</HostFolder><SandboxFolder>C:\NHD\Agent</SandboxFolder><ReadOnly>true</ReadOnly></MappedFolder>
+    <MappedFolder><HostFolder>{{HOST_AGENT_DIR}}</HostFolder><SandboxFolder>C:\NHD\Agent</SandboxFolder><ReadOnly>true</ReadOnly></MappedFolder>
     <MappedFolder><HostFolder>C:\Program Files\nodejs</HostFolder><SandboxFolder>C:\NHD\Node</SandboxFolder><ReadOnly>true</ReadOnly></MappedFolder>
     <MappedFolder><HostFolder>D:\NHD-Agent-Exchange</HostFolder><SandboxFolder>C:\NHD\Exchange</SandboxFolder><ReadOnly>false</ReadOnly></MappedFolder>
   </MappedFolders>

@@ -522,7 +522,7 @@
         "verifiedExecutable": false
       },
       "instructionFile": "skills/knowledge-cat-ppt-skill/SKILL.md",
-      "instructionSha256": "7635b44333b819cceec4769681a6f4fcb448e6fbfbe18c877cdc516ec959b7c2",
+      "instructionSha256": "fef070de69e36b08922e39245ce2a2b3420338408e98193699581e4094a28be1",
       "fileCount": 18,
       "classificationProvenance": "curated_from_skill_description_and_inventory"
     },
@@ -1256,7 +1256,7 @@
         "verifiedExecutable": false
       },
       "instructionFile": "skills/pptx-template-engine/SKILL.md",
-      "instructionSha256": "cbedd36698200214cf9751b3786fdd9848e6f5ab5f9e9f8ddcab676ce2a31fda",
+      "instructionSha256": "999bbaf16d6878bd315ca57ac3eee3442114e4128456d26c37f7c66a92f3f22d",
       "fileCount": 7,
       "classificationProvenance": "curated_from_skill_description_and_inventory"
     },
@@ -1325,7 +1325,7 @@
         "verifiedExecutable": false
       },
       "instructionFile": "skills/presentation-skill/SKILL.md",
-      "instructionSha256": "cacfa4469c44b58a8e97f60e5d2cc205cd8ff2ea86992e6074b8bfad3aab36af",
+      "instructionSha256": "1117abd24f33413af2fcf1c4ddf807831237bb37ea27c56ba2f95ac51d0e29d2",
       "fileCount": 47,
       "classificationProvenance": "curated_from_skill_description_and_inventory"
     },
@@ -1465,7 +1465,7 @@
         "verifiedExecutable": false
       },
       "instructionFile": "skills/semantic-code-navigation/SKILL.md",
-      "instructionSha256": "fd6484cc3844dea3e53267656e019c5ca789a24a594ab1bb09b655baa59b266e",
+      "instructionSha256": "3baeb717af3a9a4f6fb39a3d373e9cbe9283ae52c9485dc70eca1e2ed67dc0eb",
       "fileCount": 2,
       "classificationProvenance": "curated_from_skill_description_and_inventory"
     },

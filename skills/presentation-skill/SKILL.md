@@ -8,7 +8,7 @@ description: Primary NHD skill for building, redesigning, rendering, and verifyi
 This is the **default production skill for high-quality PowerPoint** in NHD Workstation MCP.
 
 MIT-licensed upstream runtime:
-`D:\ChatGPT-Workstation-MCP\vendor\slide-skill-sources\presentation-skill`
+`<harness-root>\vendor\slide-skill-sources\presentation-skill`
 
 The upstream Node dependencies are installed in that vendor checkout. Do not install `node_modules` under this skill folder.
 
@@ -46,7 +46,7 @@ If visual direction is genuinely uncertain, audition 2–3 styles on the **same 
 
 ### 4. Build with the vendor runtime
 Run commands from:
-`D:\ChatGPT-Workstation-MCP\vendor\slide-skill-sources\presentation-skill`
+`<harness-root>\vendor\slide-skill-sources\presentation-skill`
 
 Useful entry point:
 `python scripts/present.py`

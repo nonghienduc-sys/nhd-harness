@@ -68,7 +68,7 @@
     await refresh();
   });
   $('openLaneDocs')?.addEventListener('click', async () => {
-    const path='D:\\ChatGPT-Workstation-MCP\\docs\\DUAL_EXECUTION_LANES_v0.20.md';
+    const path='docs/DUAL_EXECUTION_LANES_v0.20.md';
     try { await navigator.clipboard.writeText(path); setText('isolatedPrerequisite', `Đã copy đường dẫn tài liệu: ${path}`); }
     catch { setText('isolatedPrerequisite', `Tài liệu: ${path}`); }
   });

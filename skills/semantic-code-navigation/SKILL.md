@@ -14,10 +14,10 @@ This skill brings the core Serena-style benefitâ€”symbol-aware code navigationâ€
 
 ## Commands
 ```powershell
-node skills/semantic-code-navigation/scripts/ts_semantic.mjs find --project D:\ChatGPT-Workstation-MCP --name RuntimeIdentityService
-node skills/semantic-code-navigation/scripts/ts_semantic.mjs references --project D:\ChatGPT-Workstation-MCP --name RuntimeIdentityService --limit 100
-node skills/semantic-code-navigation/scripts/ts_semantic.mjs outline --project D:\ChatGPT-Workstation-MCP --file src/runtime-identity.ts
-node skills/semantic-code-navigation/scripts/ts_semantic.mjs quickinfo --project D:\ChatGPT-Workstation-MCP --file src/runtime-identity.ts --line 115 --column 14
+node skills/semantic-code-navigation/scripts/ts_semantic.mjs find --project . --name RuntimeIdentityService
+node skills/semantic-code-navigation/scripts/ts_semantic.mjs references --project . --name RuntimeIdentityService --limit 100
+node skills/semantic-code-navigation/scripts/ts_semantic.mjs outline --project . --file src/runtime-identity.ts
+node skills/semantic-code-navigation/scripts/ts_semantic.mjs quickinfo --project . --file src/runtime-identity.ts --line 115 --column 14
 ```
 
 ## Workflow

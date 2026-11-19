@@ -6,7 +6,7 @@ description: Template-cloning and editable PPTX engine for NHD. Use when a prese
 # PPTX Template Engine — NHD integration
 
 MIT-licensed upstream engine:
-`D:\ChatGPT-Workstation-MCP\vendor\slide-skill-sources\pptx-gen`
+`<harness-root>\vendor\slide-skill-sources\pptx-gen`
 
 The vendor checkout has its Node dependencies installed. Keep generated projects, templates, brand settings, and finished decks outside the engine checkout.
 
@@ -24,12 +24,12 @@ For a source-first deck with no reference template, **presentation-skill** is us
 ## Default NHD workspace
 
 General reusable workspace:
-`D:\ChatGPT-Workstation-MCP\presentation-workspace`
+`<harness-root>\presentation-workspace`
 
 Project-specific deck source/output should still live under the active project folder.
 
 Engine command:
-`node D:\ChatGPT-Workstation-MCP\vendor\slide-skill-sources\pptx-gen\bin\pptx-gen.mjs`
+`node <harness-root>\vendor\slide-skill-sources\pptx-gen\bin\pptx-gen.mjs`
 
 Do not install the engine globally unless there is a specific reason.
 

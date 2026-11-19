@@ -12,6 +12,8 @@ module.exports = {
     "runtime/cloudflared.exe", "runtime/python-embed/**/*", "package.json",
     "!**/*.bak", "!**/*.backup", "!**/*.log",
     "!**/*.sqlite", "!**/*.sqlite-*", "!**/*.db",
+    "!browser-extension/chat-health/recovery/**",
+    "!skills/van-ban-theo-mau/**",
     "!**/.env*", "!**/secrets*", "!**/config.json", "!**/release-state.json"
   ],
   win: { ...manifest.build.win, target: ["nsis"], artifactName: "NHD-Harness-Lite-${version}.${ext}" },

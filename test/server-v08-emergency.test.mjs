@@ -24,7 +24,7 @@ async function freePort(){
 }
 
 // Full-suite parallel workers can delay server bootstrap on a busy Windows host.
-async function waitHealth(port,timeoutMs=30000){
+async function waitHealth(port,timeoutMs=90000){
   const deadline=Date.now()+timeoutMs;
   let last;
   while(Date.now()<deadline){

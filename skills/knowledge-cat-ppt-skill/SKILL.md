@@ -7,7 +7,7 @@ description: Story-first planning and QA for PowerPoint and slide decks. Use bef
 
 This skill is the **story and deck-planning layer** for NHD Workstation MCP. It is adapted from the MIT-licensed Knowledge Cat PPT project stored at:
 
-`D:\ChatGPT-Workstation-MCP\vendor\slide-skill-sources\knowledge-cat-ppt-skill`
+`<harness-root>\vendor\slide-skill-sources\knowledge-cat-ppt-skill`
 
 The production copy keeps the upstream reference library under `references/` and the MIT license in `LICENSE`.
 

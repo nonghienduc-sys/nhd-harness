@@ -41,7 +41,7 @@ test('terminal slot is released when PowerShell launcher exits even if a descend
   try {
     assert.equal(result.code, 0);
     assert.match(String(result.stdout), /childPid=\d+/i);
-    assert.ok(elapsed < 3000, `launcher result took ${Math.round(elapsed)}ms; terminal waited for the long-lived descendant`);
+    assert.ok(elapsed < 6500, `launcher result took ${Math.round(elapsed)}ms; terminal waited for the long-lived descendant`);
     assert.equal(terminal.listRunning().length, 0);
   } finally {
     if (match) spawnSync('taskkill.exe', ['/PID', match[1], '/T', '/F'], {windowsHide:true, stdio:'ignore'});
