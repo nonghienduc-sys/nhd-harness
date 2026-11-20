@@ -2,7 +2,7 @@
 
 > GENERATED FILE. Do not maintain tool counts or capability policy by hand. Regenerate with `npm run docs:architecture` and verify with `npm run docs:architecture:check`.
 
-- Version: 0.24.41
+- Version: 0.24.42
 - Registered tools: 167
 - Registration source: `src/mcp-registries/*.ts`
 - Capability policy source: `src/capability-registry.ts`
@@ -194,7 +194,7 @@
 | `delegate_task` | Delegation | Workstation | read | background | read-only | no | no | none | Brain-to-worker delegation (SBCE). Prefer action "run" to submit and wait in one call, returning a compact receipt to save Brain round-trips. Default route for hands-on work: reading/summarizing, drafting, code, tests, docs. Brain writes the work order with machine-checkable acceptance, then reviews. Sandbox proposals need machine verification and Brain review. Never authorizes release, commit or workstation actions. |
 | `executor_admin` | Delegation | Workstation | read | background | read-only | no | no | none | Read-only SBCE worker health, budget and enabled model catalog. No API keys, prompts, or private outputs are returned. |
 | `harness_mode` | Execution | Workstation | read | background | read-only | no | no | none | Inspect, select, and verify the shared NHD operating mode. harness=Mode 1 Brain+worker, self=Mode 2 Brain+Harness directly (no model worker), direct=Mode 3 Brain detached from workstation. Select requires a running task, moderate task authorization and confirmed=true. The mode applies to remote/local MCP sessions through one persisted state file, but never overrides tool-specific safety gates. |
-| `receipt_write` | Files | Workstation | read | background | destructive | yes | no | none | Seal a JSON receipt atomically: compute sha256 of files, block credentials, add sealed_at/task_run_id and update configured NHD_SO_THOI_GIAN CSV. Use receipt_write, not manual SHA-256. |
+| `receipt_write` | Files | Workstation | read | background | destructive | yes | no | none | Seal file hashes and verify checks against real Harness terminal audit evidence; completed receipts with missing/failed checks are rejected. Run checks via terminal first; prefer preset and expect_exit over hand-written regex. |
 | `review_pack` | Delegation | Workstation | read | background | read-only | no | no | none | Review a SBCE job receipt (bounded output). Brain approval changes job metadata only; never applies patches or bypasses file preview/apply. Requires originating task ID to approve/reject. |
 | `runtime_identity` | Execution | Workstation | read | background | read-only | no | no | none | Return one authoritative runtime/source/deployment identity view: live production version, source version, staged candidate, runtime path, source/deployment hashes, git commit when available, and rollback version/path. Read-only. |
 | `sbce_artifact_handoff` | Delegation | Workstation | read | background | read-only | no | no | none | Trusted SBCE accepted draft -> guarded Windows file. Mode1 Brain reviews, then preview/apply. No worker OS privilege; new TXT/MD/CSV under task root only. Requires task authorization and returns verified host SHA-256. |

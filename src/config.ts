@@ -28,6 +28,7 @@ export type AppConfig = {
   disabledSkills: string[];
   structuredOnlyClients?: string[];
   toolCatalog?: ToolCatalogSettings;
+  documentTemplateTools?: { python?: string; buildScript?: string; formatCheckScript?: string };
   tunnelEnabled: boolean;
   openAiSecureTunnelEnabled: boolean;
   openAiSecureTunnelProfile: string;
@@ -101,6 +102,7 @@ function defaults(): AppConfig {
     disabledSkills: [],
     structuredOnlyClients: [],
     toolCatalog: { mode: "full", clients: [], coreTools: [...DEFAULT_TOOL_CATALOG_CORE_TOOLS] },
+    documentTemplateTools: {},
     tunnelEnabled: false,
     openAiSecureTunnelEnabled: process.env.WORKSTATION_OPENAI_TUNNEL_ENABLED === "1",
     openAiSecureTunnelProfile: String(process.env.WORKSTATION_OPENAI_TUNNEL_PROFILE ?? "nhd-local"),

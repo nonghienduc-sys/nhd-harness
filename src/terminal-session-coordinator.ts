@@ -1,4 +1,5 @@
 import { TerminalService } from "./terminal.js";
+import { redact } from "./security.js";
 import { TerminalSessionManager, TerminalSessionView } from "./terminal-session.js";
 
 export type SessionPreview = {
@@ -51,7 +52,13 @@ export class TerminalSessionCoordinator {
     const active = busy.activeStep;
     if (!active) throw new Error("Terminal session failed to enter an active step.");
     try {
+      const pending = this.terminal.store?.getPending?.(actionId)?.payload ?? null;
       const result = await this.terminal.execute(actionId, commandHash, confirmationToken, criticalConfirmation);
+      if (pending) this.terminal.store.audit("terminal_session_execute", Number(result.code) === 0 ? "success" : "error", {
+        sessionId, taskRunId: pending.taskRunId ?? null,
+        command: redact(String(pending.command ?? "")),
+        cwd: String(pending.cwd ?? ""), ...result
+      });
       const exitCode = typeof result.code === "number" ? Number(result.code) : null;
       const timedOut = Boolean(result.timedOut);
       const cancelled = false;

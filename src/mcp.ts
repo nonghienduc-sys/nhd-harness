@@ -43,6 +43,8 @@ import { getWorkstationToolInventory } from "./capability-registry.js";
 export type { ToolInventoryItem } from "./capability-registry.js";
 export { getWorkstationToolInventory };
 import { registerCatalogDescribeTool, registerExecutionPlatformTools, registerExecutionTerminalTools } from "./mcp-registries/execution-tools.js";
+import { registerDocumentTemplateTools } from "./mcp-registries/document-template-tools.js";
+import { validationIssuesFromOutput } from "./mcp-validation-audit.js";
 import { registerFilesTools, registerProjectDocumentTools } from "./mcp-registries/files-tools.js";
 import { ProjectRagService } from "./project-rag.js";
 import { registerProjectRagTools } from "./mcp-registries/project-rag-tools.js";
@@ -202,6 +204,7 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   const registryContext = { server, runtime: runtimeContext, governor, runtimeIdentity, localAi, workstationRouter, executionPlanner, runtimeCapabilities, resultPayloadGateway, projectRag, connectionKey: requestContext.connectionKey ?? null };
   registerExecutionPlatformTools(registryContext);
   registerFilesTools(registryContext);
+  registerDocumentTemplateTools(registryContext);
   registerProjectRagTools(registryContext);
   registerExecutionTerminalTools(registryContext);
   registerContextTools(registryContext);
@@ -215,7 +218,8 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   // The catalogue is fixed for this MCP instance. Descriptions always use the
   // SDK-generated FULL schemas (including facade schemas) as the source of truth.
   let getFullTools: (() => Promise<any[]>) | null = null;
-  registerCatalogDescribeTool(server, async () => getFullTools ? getFullTools() : []);
+  registerCatalogDescribeTool(server, async () => getFullTools ? getFullTools() : [], (tool, found) =>
+    store.audit?.("tool_describe", found ? "ok" : "error", { tool, found }));
 
   if (facadesOn) {
     const hidden = new Set<string>();
@@ -258,8 +262,16 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   }
   if (typeof originalCall === "function") {
     protocol.setRequestHandler(CallToolRequestSchema, async (request: any, extra: any) => {
-      const output = await originalCall(request, extra);
-      const name = request.params.name;
+      const name = String(request?.params?.name ?? "");
+      let output: any;
+      try { output = await originalCall(request, extra); }
+      catch (error) {
+        const issues = validationIssuesFromOutput({ isError: true, content: [{ type: "text", text: String(error) }] });
+        if (issues) store.audit?.("tool_invalid_params", "error", { tool: name, issues });
+        throw error;
+      }
+      const issues = validationIssuesFromOutput(output);
+      if (issues) store.audit?.("tool_invalid_params", "error", { tool: name, issues });
       if (!catalogActive() || coreTools.has(name) || !output?.isError) return output;
       const validationMessage = (output.content ?? []).find((block: any) => block.type === "text" &&
         typeof block.text === "string" && block.text.includes("Input validation error:"))?.text;

@@ -56,6 +56,7 @@ __pycache__/
 !/scripts/admin-document-layout-fixture.mjs
 !/scripts/admin-docx-backend.mjs
 !/scripts/atomic-release.mjs
+!/scripts/audit-summary.mjs
 !/scripts/build-admin-skill-registry.mjs
 !/scripts/cutover-atomic-release.ps1
 !/scripts/generate-admin-docx-fixtures.mjs

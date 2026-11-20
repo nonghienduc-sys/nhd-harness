@@ -83,7 +83,10 @@ export class TerminalService {
     const launchMode = inspection.standaloneScriptPath ? "utf8_encoded_script" : /[^\x00-\x7F]/.test(command) ? "utf8_encoded_command" : "command";
     const pending = this.store.createPending("terminal", { command, cwd: workdir, timeoutSeconds: effectiveTimeoutSeconds, requestedTimeoutSeconds, launchMode, standaloneScriptPath: inspection.standaloneScriptPath, risk, riskScore: assessment.score, riskLevel: assessment.level, confirmationMode: effectiveConfirmationMode, riskReasons: assessment.reasons, commandHash, criticalConfirmation, environment: executionEnvironment, taskRunId: taskRunId ?? null, wordCleanup, taskAuthorizationId: taskAuthorization?.id ?? null }, commandHash);
     this.store.audit("terminal_preview", "pending", { actionId: pending.id, cwd: workdir, risk, riskScore: assessment.score, riskLevel: assessment.level, confirmationMode: assessment.confirmationMode, riskReasons: assessment.reasons, command: redact(command) });
+    const advice = /\.docx\b/i.test(inspection.text) && /Document\s*\(|python-docx|from\s+docx\b|\.save\s*\(/i.test(inspection.text)
+      ? "Với văn bản theo mẫu hãy dùng doc_from_template + doc_format_check." : undefined;
     return {
+      ...(advice ? { advice } : {}),
       actionId: pending.id,
       confirmationToken: pending.confirmationToken,
       expiresAt: pending.expiresAt,
@@ -159,7 +162,7 @@ export class TerminalService {
     if (turboEligible) {
       const turbo = await this.backgroundTurbo!.execPowerShellQuery(command, cwd);
       const result = { runId: id, pid: turbo.workerPid, startedAt, completedAt: nowIso(), timedOut: false, truncated: false, stdout: redact(turbo.stdout), stderr: redact(turbo.stderr), code: turbo.code, signal: null, turbo: true, workerElapsedMs: turbo.elapsedMs };
-      this.store.audit("terminal_execute", Number(result.code) === 0 ? "success" : "error", { actionId, cwd, command: redact(command), ...result });
+      this.store.audit("terminal_execute", Number(result.code) === 0 ? "success" : "error", { actionId, cwd, taskRunId: taskRunId || null, command: redact(command), ...result });
       return result;
     }
     const result = await new Promise<Record<string, unknown>>((resolvePromise) => {
@@ -218,7 +221,7 @@ export class TerminalService {
     });
     const officeMutationHint = Number(result.code) === 0 ? this.detectOfficeMutation(command, cwd) : null;
     if (officeMutationHint) (result as Record<string, unknown>).officeMutationHint = officeMutationHint;
-    this.store.audit("terminal_execute", Number(result.code) === 0 ? "success" : "error", { actionId, cwd, command: redact(command), officeMutationHint, ...result });
+    this.store.audit("terminal_execute", Number(result.code) === 0 ? "success" : "error", { actionId, cwd, taskRunId: taskRunId || null, command: redact(command), officeMutationHint, ...result });
     return result;
   }
 

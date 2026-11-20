@@ -7,7 +7,7 @@ export type ToolCatalogSettings = {
 
 export const DEFAULT_TOOL_CATALOG_CORE_TOOLS = [
   "fs_read", "fs_list", "fs_stat", "fs_search",
-  "fs_preview_write", "fs_apply_write", "fs_preview_delete", "fs_apply_delete",
+  "fs_preview_write", "fs_apply_write", "doc_from_template", "doc_format_check",
   "terminal_preview", "terminal_execute", "terminal_session", "terminal_session_preview",
   "terminal_session_execute", "task_run", "task_run_step", "receipt_write",
   "workstation_plan", "office_read", "office_preview_edit", "office_apply_edit",
@@ -33,7 +33,7 @@ export function toolCatalogCore(settings?: ToolCatalogSettings): Set<string> {
 export function catalogueTool<T extends { name: string; description?: string; inputSchema?: unknown }>(tool: T, core: ReadonlySet<string>): T {
   if (core.has(tool.name)) return tool;
   const raw = String(tool.description ?? "").replace(/\s+/g, " ").trim();
-  const room = Math.min(92, 160 - DESCRIBE_HINT.length - 1);
+  const room = Math.min(68, 160 - DESCRIBE_HINT.length - 1);
   let prefix = raw.slice(0, room).trimEnd();
   if (raw.length > room && prefix.includes(" ")) prefix = prefix.slice(0, prefix.lastIndexOf(" ")).trimEnd();
   return { ...tool, description: prefix ? prefix + " " + DESCRIBE_HINT : DESCRIBE_HINT,

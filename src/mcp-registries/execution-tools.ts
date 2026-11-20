@@ -7,7 +7,7 @@ import type { TaskIntent } from "../router.js";
 import { readOnly, preview, destructive, reversibleMutation, navigation, webRead, webNavigation, result, compactResult, failure, resultWithImages, publicTerminalSession, type ToolRegistryContext } from "./shared.js";
 
 /** Read-only catalogue lookup uses the same registered-tool interceptor as all other tools. */
-export function registerCatalogDescribeTool(server: any, source: () => Promise<any[]>) {
+export function registerCatalogDescribeTool(server: any, source: () => Promise<any[]>, audit: (tool: string, found: boolean) => void = () => {}) {
   server.registerTool("tool_describe", {
     description: "Read full descriptions and input schemas for 1-10 registered MCP tools.",
     inputSchema: { names: z.array(z.string().min(1)).min(1).max(10) },
@@ -15,6 +15,7 @@ export function registerCatalogDescribeTool(server: any, source: () => Promise<a
   }, async ({ names }: { names: string[] }) => {
     const all = await source();
     const byName = new Map<string, any>(all.map((tool: any) => [tool.name, tool]));
+    for (const name of names) audit(name, byName.has(name));
     const missing = names.filter((name) => !byName.has(name));
     if (missing.length) return failure(missing.map((name) =>
       `Tool "${name}" does not exist. Closest matches: ${suggestToolNames(name, [...byName.keys()]).join(", ")}`).join("\n"));

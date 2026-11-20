@@ -19,7 +19,7 @@ export function registerFilesTools(ctx: ToolRegistryContext) {
   server.registerTool("fs_stat", { description: "Read metadata and SHA-256 for a local path.", inputSchema: { path: z.string() }, annotations: readOnly }, async ({ path }) => { try { return result(files.stat(path)); } catch (e) { return failure(e); } });
   server.registerTool("fs_read", { description: "Read a bounded UTF-8 line range from a local text or code file. Secrets are redacted.", inputSchema: { path: z.string(), start_line: z.number().int().min(1).optional(), end_line: z.number().int().min(1).optional(), max_chars: z.number().int().min(100).max(100000).optional() }, annotations: readOnly }, async ({ path, start_line, end_line, max_chars }) => { try { const read = files.readWithMeta(path, start_line, end_line, max_chars); return result(read.redacted ? { path, redacted: true, redactedCount: read.redactedCount, note: "Some values were replaced with [REDACTED]. This text is not the real source; never write it back. Writes that add [REDACTED] are rejected.", text: read.text } : { path, redacted: false, text: read.text }); } catch (e) { return failure(e); } });
   server.registerTool("receipt_write", {
-    description: "Seal a JSON receipt atomically: compute sha256 of files, block credentials, add sealed_at/task_run_id and update configured NHD_SO_THOI_GIAN CSV. Use receipt_write, not manual SHA-256.",
+    description: "Seal file hashes and verify checks against real Harness terminal audit evidence; completed receipts with missing/failed checks are rejected. Run checks via terminal first; prefer preset and expect_exit over hand-written regex.",
     inputSchema: { path: z.string().min(1), receipt: z.record(z.string(), z.unknown()), task_run_id: z.string().max(256).optional() },
     annotations: destructive
   }, async ({ path, receipt, task_run_id }) => {
@@ -36,8 +36,13 @@ export function registerFilesTools(ctx: ToolRegistryContext) {
       const task = taskRunId ? taskRuns?.get(taskRunId) : null;
       const ledgerPath = process.env.NHD_SO_THOI_GIAN?.trim();
       if (ledgerPath) files.resolvePath(ledgerPath);
+      const since = taskRunId && task ? (task.startedAt ?? task.createdAt) :
+        new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+      const auditRows = store.db.prepare(
+        "SELECT at,action,detail FROM audit WHERE action IN ('terminal_execute','terminal_session_execute','task_run_step') AND at>=? ORDER BY id DESC LIMIT 5000"
+      ).all(since) as Array<{ at: string; action: string; detail: string }>;
       return result(receiptWrite({
-        path: output, receipt, taskRunId,
+        path: output, receipt, taskRunId, auditRows,
         taskStartedAt: task?.startedAt ?? task?.createdAt ?? null,
         ledgerPath: ledgerPath ?? null
       }));

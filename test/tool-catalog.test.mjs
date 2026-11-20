@@ -79,7 +79,7 @@ test('catalog preserves SDK full tools, validator, facades and per-client select
     const enabled=await start('catalog-selected-client', {
       toolCatalog:{mode:'full',clients:['thin-catalog'],coreTools:[
         'fs_read','fs_list','fs_stat','fs_search','fs_preview_write',
-        'fs_apply_write','fs_preview_delete','fs_apply_delete','terminal_preview','terminal_execute',
+        'fs_apply_write','doc_from_template','doc_format_check','terminal_preview','terminal_execute',
         'terminal_session','terminal_session_preview','terminal_session_execute','task_run','task_run_step',
         'receipt_write','workstation_plan','office_read','office_preview_edit','office_apply_edit',
         'pdf_document','tool_describe','context_bootstrap','context_recall','tool_governor',
@@ -153,6 +153,21 @@ test('catalog preserves SDK full tools, validator, facades and per-client select
     }
     console.log('TOOL_CATALOG tested read-only tool correct+invalid calls='+count);
     assert.ok(count>=10,'at least 10 read-only non-core tools');
+    // Verify protocol-level SDK validation reaches audit even before handlers run.
+    const sentinel='PRIVATE_ARGUMENT_VALUE_74182';
+    const invalidCall=await call(enabled,'catalog-session','fs_list',{limit:sentinel});
+    assert.equal(invalidCall.isError,true);
+    const {DatabaseSync}=await import('node:sqlite');
+    const db=new DatabaseSync(join(enabled.data,'workstation.sqlite'),{readOnly:true});
+    const audits=db.prepare("SELECT action,detail FROM audit WHERE action IN ('tool_describe','tool_invalid_params')").all();
+    db.close();
+    const inspected=audits.filter(row=>row.action==='tool_describe').map(row=>JSON.parse(row.detail));
+    const invalids=audits.filter(row=>row.action==='tool_invalid_params').map(row=>JSON.parse(row.detail));
+    assert.ok(inspected.some(row=>row.tool==='fs_reed' && row.found===false), 'missing name is audited');
+    assert.ok(inspected.some(row=>row.tool!=='fs_reed' && row.found===true), 'found name is audited');
+    assert.ok(invalids.some(row=>row.tool==='fs_list' && row.issues.some(issue=>issue.startsWith('limit:'))),
+      'field path and Zod code should be recorded');
+    assert.ok(!JSON.stringify(audits).includes(sentinel),'invalid argument values cannot enter audit');
   } finally {
     for(const s of servers.toReversed()) await stop(s);
   }
@@ -163,7 +178,7 @@ test('global catalog override and core limit retain tool_describe', () => {
   assert.equal(toolCatalogMode({mode:'full', clients:['agent']},'worker-agent-v2'), 'catalog');
   assert.equal(toolCatalogMode({mode:'catalog', clients:[]},'other'), 'catalog');
   assert.equal(toolCatalogMode(undefined,'other'), 'full');
-  assert.deepEqual([...DEFAULT_TOOL_CATALOG_CORE_TOOLS], ["fs_read","fs_list","fs_stat","fs_search","fs_preview_write","fs_apply_write","fs_preview_delete","fs_apply_delete","terminal_preview","terminal_execute","terminal_session","terminal_session_preview","terminal_session_execute","task_run","task_run_step","receipt_write","workstation_plan","office_read","office_preview_edit","office_apply_edit","pdf_document","tool_describe","context_bootstrap","context_recall","tool_governor"]);
+  assert.deepEqual([...DEFAULT_TOOL_CATALOG_CORE_TOOLS], ["fs_read","fs_list","fs_stat","fs_search","fs_preview_write","fs_apply_write","doc_from_template","doc_format_check","terminal_preview","terminal_execute","terminal_session","terminal_session_preview","terminal_session_execute","task_run","task_run_step","receipt_write","workstation_plan","office_read","office_preview_edit","office_apply_edit","pdf_document","tool_describe","context_bootstrap","context_recall","tool_governor"]);
   const core=toolCatalogCore({coreTools:Array.from({length:90},(_,i)=>'tool'+i)});
   assert.equal(core.size,25);
   assert.ok(core.has('tool_describe'));
