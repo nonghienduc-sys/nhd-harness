@@ -27,6 +27,98 @@ function relevance(query: string, text: string): number {
   return tokens.reduce((score, token) => score + (hay.includes(token) ? 1 : 0), 0);
 }
 
+
+// Retain the contextual memory that determines how the Brain performs the task.
+function compactGovernorMemory(value: unknown, query: string): Record<string, any> | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const pack = { ...(value as Record<string, any>) };
+  if (Array.isArray(pack.projectFacts)) {
+    const ranked = pack.projectFacts.map((fact: any) => ({ fact, score:
+      relevance(query, String(fact?.key ?? "") + " " + String(fact?.value ?? "")) +
+        (fact?.category === "working_state" ? 0.5 : 0) }));
+    ranked.sort((a: any, b: any) => b.score - a.score);
+    pack.projectFactsOmitted = Math.max(0, ranked.length - 5);
+    pack.projectFacts = ranked.slice(0, 5).map(({ fact }: any) => ({ ...fact, value: clip(fact?.value, 400) }));
+  }
+  for (const key of ["globalPreferences", "projectPreferences"]) {
+    if (Array.isArray(pack[key])) pack[key] = pack[key].map((pref: any) =>
+      ({ key: pref?.key, value: clip(pref?.value, 300) }));
+  }
+  if (Array.isArray(pack.similarTasks)) pack.similarTasks = pack.similarTasks.slice(0, 3).map((task: any) =>
+    ({ id: task?.id, state: task?.state, objective: clip(task?.objective, 300), summary: clip(task?.summary, 300) }));
+  if (pack.recipe && pack.priorRecipe) delete pack.priorRecipe;
+  return pack;
+}
+function compactGovernorResolver(value: unknown, pack: Record<string, any> | undefined): unknown {
+  if (!value || typeof value !== "object") return value;
+  const resolver = { ...(value as Record<string, any>) };
+  if (resolver.priorRecipe && pack?.recipe) resolver.priorRecipe = "see memoryPack.recipe";
+  return resolver;
+}
+
+// Ritual replies retain execution decisions; verbose:true exposes the original payload.
+export function compactRitualOutput(name: string, source: Record<string, unknown>, input: Record<string, unknown> = {}): Record<string, unknown> | null {
+  const x = source as Record<string, any>;
+  if (name === "workstation_plan") {
+    const e = x.executionPlan ?? {};
+    const route = e.route ?? x.plan ?? {};
+    const risk = e.risk ?? {};
+    const compact = {
+      executionPlan: {
+        schemaVersion: e.schemaVersion, kind: e.kind,
+        executesActions: e.executesActions, grantsAuthorization: e.grantsAuthorization,
+        intent: { domain: e.intent?.domain, operation: e.intent?.operation },
+        route: { route: route.route, reason: clip(route.reason, 125), requiresConfirmation: route.requiresConfirmation, readOnly: route.readOnly,
+          verification: { kind: route.verification?.kind, onAmbiguous: route.verification?.onAmbiguous } },
+        lane: { lane: e.lane?.lane, available: e.lane?.available, escalation: e.lane?.escalation, hostForegroundAllowed: e.lane?.hostForegroundAllowed },
+        risk: { score: risk.score, level: risk.level, confirmationMode: risk.confirmationMode, reasons: risk.reasons, transactionRequired: risk.transactionRequired },
+        qa: { level: e.qa?.level, visualReviewRequired: e.qa?.visualReviewRequired },
+        safety: { neverReplayAmbiguousExecution: e.safety?.neverReplayAmbiguousExecution, authorizationStillEnforcedByActionTool: e.safety?.authorizationStillEnforcedByActionTool },
+        warnings: e.artifact?.warnings ?? e.artifactPlan?.warnings ?? [],
+        governor: { taskClass: e.governor?.taskClass, recommendedTools: e.governor?.recommendedTools,
+          avoidUnlessNeeded: e.governor?.avoidUnlessNeeded },
+        intentPolicy: { mode: e.intentPolicy?.mode, methodLocked: e.intentPolicy?.methodLocked,
+          goalOpen: e.intentPolicy?.goalOpen, verificationRequired: e.intentPolicy?.verificationRequired },
+      },
+      plan: { route: route.route, requiresConfirmation: route.requiresConfirmation, readOnly: route.readOnly,
+        recovery: { neverRepeatAfterAmbiguousExecution: route.recovery?.neverRepeatAfterAmbiguousExecution } },
+      capabilities: { office: { liveWriteApplications: e.capabilities?.office?.liveWriteApplications } },
+      riskLevel: risk.level, confirmationMode: risk.confirmationMode,
+    };
+    return compact as Record<string, unknown>;
+  }
+  if (name === "runtime_identity") {
+    const { authority: _authority, release, consistency, ...top } = x;
+    const shortRelease = release ? {
+      generation: release.generation,
+      active: release.active ? { id: release.active.id, path: release.active.path } : null,
+      current: release.current ? { id: release.current.id, version: release.current.version } : null,
+      previous: release.previous ? { id: release.previous.id, version: release.previous.version, path: release.previous.path } : null,
+      candidate: release.candidate ? { id: release.candidate.id, version: release.candidate.version } : null,
+    } : undefined;
+    return { ...top, release: shortRelease,
+      consistency: consistency ? { sourceMatchesProduction: consistency.sourceMatchesProduction,
+        currentReleaseMatchesActive: consistency.currentReleaseMatchesActive,
+        deploymentHashAvailable: consistency.deploymentHashAvailable } : undefined };
+  }
+  if (name === "harness_mode") return source;
+  if (name === "tool_governor") {
+    const memoryPack = compactGovernorMemory(x.memoryPack, String(input.text ?? ""));
+    return {
+      memoryPack,
+      memoryResolver: compactGovernorResolver(x.memoryResolver, memoryPack),
+      planId: x.planId, root: x.root, taskClass: x.taskClass, projectProfile: x.projectProfile,
+      intentPolicy: { mode: x.intentPolicy?.mode, methodLocked: x.intentPolicy?.methodLocked,
+        goalOpen: x.intentPolicy?.goalOpen, verificationRequired: x.intentPolicy?.verificationRequired },
+      directFastLane: x.directFastLane, recommendedTools: x.recommendedTools,
+      qualityFloor: x.qualityFloor,
+      toolBudget: x.toolBudget ? { kind: x.toolBudget.kind, expectedCalls: x.toolBudget.expectedCalls, softLimit: x.toolBudget.softLimit } : undefined,
+      escalationTriggers: x.escalationTriggers, warnings: x.artifactPlan?.warnings ?? [],
+    };
+  }
+  return null;
+}
+
 export function shapeToolOutput(name: string, input: unknown, output: unknown): unknown {
   const out = output as ToolOutput;
   if (!out || typeof out !== "object" || out.isError || !out.structuredContent || typeof out.structuredContent !== "object") return output;
@@ -37,29 +129,36 @@ export function shapeToolOutput(name: string, input: unknown, output: unknown): 
       const shaped = compactTask(structured);
       return shaped === structured ? output : rebuild(out, shaped);
     }
-    if (name === "runtime_identity") {
-      const { authority: _authority, ...rest } = structured as Record<string, any>;
-      if (rest.release?.previous) rest.release = { ...rest.release, previous: { id: rest.release.previous.id, version: rest.release.previous.version, path: rest.release.previous.path } };
-      return rebuild(out, rest);
-    }
-    if (name === "tool_governor" && String(args.action ?? "") === "plan") {
-      const plan = { ...(structured as Record<string, any>) };
-      const text = String(args.text ?? "");
-      const pack = plan.memoryPack && typeof plan.memoryPack === "object" ? { ...plan.memoryPack } : null;
-      if (pack) {
-        if (Array.isArray(pack.projectFacts)) {
-          const ranked = pack.projectFacts.map((fact: any) => ({ fact, score: relevance(text, `${fact?.key ?? ""} ${fact?.value ?? ""}`) + (fact?.category === "working_state" ? 0.5 : 0) }));
-          ranked.sort((a: any, b: any) => b.score - a.score);
-          pack.projectFactsOmitted = Math.max(0, pack.projectFacts.length - 5);
-          pack.projectFacts = ranked.slice(0, 5).map(({ fact }: any) => ({ ...fact, value: clip(fact?.value, 400) }));
-        }
-        for (const key of ["globalPreferences", "projectPreferences"]) if (Array.isArray(pack[key])) pack[key] = pack[key].map((pref: any) => ({ key: pref?.key, value: clip(pref?.value, 300) }));
-        if (Array.isArray(pack.similarTasks)) pack.similarTasks = pack.similarTasks.slice(0, 3).map((task: any) => ({ id: task?.id, state: task?.state, objective: clip(task?.objective, 300), summary: clip(task?.summary, 300) }));
-        if (pack.recipe && pack.priorRecipe) delete pack.priorRecipe;
-        plan.memoryPack = pack;
+    if (args.verbose === true && ["workstation_plan", "runtime_identity", "harness_mode", "tool_governor"].includes(name)) return output;
+    const ritual = name === "workstation_plan" || name === "runtime_identity" ||
+      (name === "harness_mode" && args.action === "status") ||
+      (name === "tool_governor" && args.action === "plan");
+    if (ritual) {
+      const compact = compactRitualOutput(name, structured, args);
+      const limit = name === "workstation_plan" ? 2500 : 1500;
+      const length = compact ? JSON.stringify(name === "tool_governor"
+        ? { ...compact, memoryPack: undefined } : compact).length : 0;
+      if (compact && length <= limit) return rebuild(out, compact);
+      if (compact) {
+        const core = name === "workstation_plan" ? {
+          executionPlan: { route: (compact as any).executionPlan?.route, lane: (compact as any).executionPlan?.lane,
+            risk: (compact as any).executionPlan?.risk, warnings: (compact as any).executionPlan?.warnings,
+            governor: (compact as any).executionPlan?.governor,
+            intentPolicy: (compact as any).executionPlan?.intentPolicy },
+          plan: (compact as any).plan, capabilities: (compact as any).capabilities,
+          riskLevel: (compact as any).riskLevel, confirmationMode: (compact as any).confirmationMode,
+        } : name === "runtime_identity" ? {
+          productionVersion: structured.productionVersion, sourceVersion: structured.sourceVersion,
+          runtimePath: structured.runtimePath, rollbackVersion: structured.rollbackVersion,
+          rollbackPath: structured.rollbackPath,
+        } : name === "tool_governor" ? {
+          planId: structured.planId, taskClass: structured.taskClass,
+          memoryPack: (compact as any).memoryPack, memoryResolver: (compact as any).memoryResolver,
+          recommendedTools: structured.recommendedTools, escalationTriggers: structured.escalationTriggers,
+          warnings: (structured as any).artifactPlan?.warnings ?? [],
+        } : compact;
+        return rebuild(out, core);
       }
-      if (plan.memoryResolver?.priorRecipe && pack?.recipe) plan.memoryResolver = { ...plan.memoryResolver, priorRecipe: "see memoryPack.recipe" };
-      return rebuild(out, plan);
     }
   } catch { return output; }
   return output;
@@ -118,4 +217,30 @@ export function prependText(output: unknown, text: string): unknown {
   const structured = (out as any).structuredContent;
   if (structured && typeof structured === "object" && !Array.isArray(structured)) next.structuredContent = { _nhdContext: text, ...structured };
   return next;
+}
+
+
+// Only the advertised schema is altered. The SDK's zod input validation is untouched.
+export function omitAdvertisedSchema<T extends { inputSchema: Record<string, unknown> }>(tool: T): T {
+  if (!tool.inputSchema || !Object.prototype.hasOwnProperty.call(tool.inputSchema, "$schema")) return tool;
+  const { $schema: _dialect, ...inputSchema } = tool.inputSchema;
+  return { ...tool, inputSchema };
+}
+
+// Preserve images, isError and the independently delivered NHD context header.
+export function formatForClient(name: string, output: unknown, clientName: string | undefined, structuredOnlyClients: string[]): unknown {
+  const out = output as ToolOutput;
+  if (!out || typeof out !== "object" || out.isError || !out.structuredContent ||
+      typeof out.structuredContent !== "object" || !Array.isArray(out.content)) return output;
+  const i = out.content.findIndex((item) => item?.type === "text" && !String(item.text ?? "").startsWith("NHD context"));
+  if (i < 0) return output;
+  const match = Boolean(clientName) && structuredOnlyClients.some((pattern) =>
+    typeof pattern === "string" && pattern.trim().length > 0 &&
+    clientName!.toLowerCase().includes(pattern.trim().toLowerCase()));
+  const keys = Object.keys(out.structuredContent);
+  const summary = "Tool: " + name + "; ok; keys: " + keys.slice(0, 12).join(", ") + ". Dữ liệu đầy đủ trong structuredContent";
+  const text = match ? summary.slice(0, 400) : JSON.stringify(out.structuredContent);
+  const content = out.content.slice();
+  content[i] = { ...content[i], text };
+  return { ...out, content };
 }

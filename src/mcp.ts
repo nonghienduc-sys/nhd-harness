@@ -1,5 +1,8 @@
 import { SERVER_INSTRUCTIONS } from "./server-instructions.js";
-import { ContextHandshakeService, buildContextHeader, prependText, shapeToolOutput } from "./output-shaping.js";
+import { ContextHandshakeService, buildContextHeader, prependText, shapeToolOutput, formatForClient, omitAdvertisedSchema } from "./output-shaping.js";
+import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { catalogueTool, toolCatalogCore, toolCatalogMode } from "./tool-catalog.js";
+import { rememberMcpClient, getMcpClient } from "./mcp-client-identity.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { resolve } from "node:path";
@@ -39,7 +42,7 @@ import type { WorkstationRuntime } from "./workstation-runtime.js";
 import { getWorkstationToolInventory } from "./capability-registry.js";
 export type { ToolInventoryItem } from "./capability-registry.js";
 export { getWorkstationToolInventory };
-import { registerExecutionPlatformTools, registerExecutionTerminalTools } from "./mcp-registries/execution-tools.js";
+import { registerCatalogDescribeTool, registerExecutionPlatformTools, registerExecutionTerminalTools } from "./mcp-registries/execution-tools.js";
 import { registerFilesTools, registerProjectDocumentTools } from "./mcp-registries/files-tools.js";
 import { ProjectRagService } from "./project-rag.js";
 import { registerProjectRagTools } from "./mcp-registries/project-rag-tools.js";
@@ -65,7 +68,7 @@ const webRead = { readOnlyHint: true, destructiveHint: false, openWorldHint: tru
 const webNavigation = { readOnlyHint: false, destructiveHint: false, openWorldHint: true } as const;
 
 function result(value: unknown) {
-  return { structuredContent: value as Record<string, unknown>, content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
+  return { structuredContent: value as Record<string, unknown>, content: [{ type: "text" as const, text: JSON.stringify(value) }] };
 }
 
 function failure(error: unknown) {
@@ -82,7 +85,7 @@ function resultWithImages(value: any) {
   return {
     structuredContent: structured,
     content: [
-      { type: "text" as const, text: JSON.stringify(structured, null, 2) },
+      { type: "text" as const, text: JSON.stringify(structured) },
       ...images.map((item: any) => ({ type: "image" as const, data: item.data, mimeType: item.mimeType }))
     ]
   };
@@ -95,7 +98,8 @@ function publicTerminalSession(session: TerminalSessionView) {
 
 // v0.24.14: bắt tay ngữ cảnh dùng chung giữa các request (server stateless).
 let sharedContextHandshake: ContextHandshakeService | null = null;
-export type McpRequestContext = { connectionKey?: string | null; agent?: string | null; brainOnly?: boolean };
+
+export type McpRequestContext = { connectionKey?: string | null; clientIdentityKey?: string | null; agent?: string | null; brainOnly?: boolean };
 
 export function createWorkstationMcp(runtimeContext: WorkstationRuntime, requestContext: McpRequestContext = {}) {
   const {
@@ -167,7 +171,12 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
           if (["context_checkpoint", "task_run_checkpoint", "task_run_step"].includes(name)) (workspaceMemory as any).recordAgentEvent?.(agent, "agent_action", `${agent}: ${name}`, { tool: name, taskRunId });
         } catch { /* Context handshake is best-effort and never breaks a tool call. */ }
       }
-      return finalOutput;
+      const localClient = server.server.getClientVersion();
+      const identityKey = requestContext.clientIdentityKey ?? null;
+      if (identityKey && localClient) rememberMcpClient(identityKey, localClient);
+      const clientName = localClient?.name ?? getMcpClient(identityKey)?.name;
+      if (finalOutput == null) return finalOutput;
+      return formatForClient(name, finalOutput, clientName, config.structuredOnlyClients ?? []);
     };
     capturedTools.set(name, { definition, handler: wrapped });
     // v0.24.15: tên do facade chiếm sẽ được đăng ký lại dưới dạng facade (op mặc định = tool cũ).
@@ -203,6 +212,11 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   if (runtimeContext.sbceExecutor) registerDelegationTools(registryContext, runtimeContext.sbceExecutor);
   if (selfEvolution) registerSelfEvolutionTools(registryContext, selfEvolution);
 
+  // The catalogue is fixed for this MCP instance. Descriptions always use the
+  // SDK-generated FULL schemas (including facade schemas) as the source of truth.
+  let getFullTools: (() => Promise<any[]>) | null = null;
+  registerCatalogDescribeTool(server, async () => getFullTools ? getFullTools() : []);
+
   if (facadesOn) {
     const hidden = new Set<string>();
     for (const spec of TOOL_FACADES) {
@@ -220,6 +234,42 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
     (server as any)._nhdHiddenTools = hidden;
   }
 
+  // Preserve the SDK's schema construction and Zod validation. The full
+  // representation is canonical and shared by tools/list and tool_describe.
+  const protocol = server.server as any;
+  const originalList = protocol._requestHandlers?.get("tools/list");
+  const originalCall = protocol._requestHandlers?.get("tools/call");
+  const coreTools = toolCatalogCore(config.toolCatalog);
+  const currentClientName = () => {
+    const localClient = server.server.getClientVersion();
+    return localClient?.name ?? getMcpClient(requestContext.clientIdentityKey ?? null)?.name;
+  };
+  const catalogActive = () => toolCatalogMode(config.toolCatalog, currentClientName()) === "catalog";
+  if (typeof originalList === "function") {
+    getFullTools = async () => {
+      const listed = await originalList({ method: "tools/list", params: {} }, {});
+      return listed.tools.map(omitAdvertisedSchema);
+    };
+    protocol.setRequestHandler(ListToolsRequestSchema, async (request: any, extra: any) => {
+      const listed = await originalList(request, extra);
+      const full = listed.tools.map(omitAdvertisedSchema);
+      return { ...listed, tools: catalogActive() ? full.map((tool: any) => catalogueTool(tool, coreTools)) : full };
+    });
+  }
+  if (typeof originalCall === "function") {
+    protocol.setRequestHandler(CallToolRequestSchema, async (request: any, extra: any) => {
+      const output = await originalCall(request, extra);
+      const name = request.params.name;
+      if (!catalogActive() || coreTools.has(name) || !output?.isError) return output;
+      const validationMessage = (output.content ?? []).find((block: any) => block.type === "text" &&
+        typeof block.text === "string" && block.text.includes("Input validation error:"))?.text;
+      if (!validationMessage || !getFullTools) return output;
+      const tool = (await getFullTools()).find((item: any) => item.name === name);
+      if (!tool) return output;
+      return { ...output, structuredContent: { name, validationError: validationMessage, inputSchema: tool.inputSchema },
+        content: [...output.content, { type: "text", text: JSON.stringify({ inputSchema: tool.inputSchema }) }] };
+    });
+  }
   return server;
 }
 

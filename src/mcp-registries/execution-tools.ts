@@ -1,8 +1,29 @@
 import { z } from "zod";
+import { observedMcpClients } from "../mcp-client-identity.js";
+import { suggestToolNames } from "../tool-catalog.js";
 import { VERSION } from "../version.js";
 import { brainModeFile, readBrainMode, writeBrainMode, isBrainOnlyActive } from "../brain-only.js";
 import type { TaskIntent } from "../router.js";
 import { readOnly, preview, destructive, reversibleMutation, navigation, webRead, webNavigation, result, compactResult, failure, resultWithImages, publicTerminalSession, type ToolRegistryContext } from "./shared.js";
+
+/** Read-only catalogue lookup uses the same registered-tool interceptor as all other tools. */
+export function registerCatalogDescribeTool(server: any, source: () => Promise<any[]>) {
+  server.registerTool("tool_describe", {
+    description: "Read full descriptions and input schemas for 1-10 registered MCP tools.",
+    inputSchema: { names: z.array(z.string().min(1)).min(1).max(10) },
+    annotations: readOnly,
+  }, async ({ names }: { names: string[] }) => {
+    const all = await source();
+    const byName = new Map<string, any>(all.map((tool: any) => [tool.name, tool]));
+    const missing = names.filter((name) => !byName.has(name));
+    if (missing.length) return failure(missing.map((name) =>
+      `Tool "${name}" does not exist. Closest matches: ${suggestToolNames(name, [...byName.keys()]).join(", ")}`).join("\n"));
+    return result({ tools: names.map((name) => {
+      const tool = byName.get(name)!;
+      return { name, description: tool.description, inputSchema: tool.inputSchema };
+    }) });
+  });
+}
 
 export function registerExecutionPlatformTools(ctx: ToolRegistryContext) {
   const { server, runtime, governor, runtimeIdentity, localAi, workstationRouter, executionPlanner, runtimeCapabilities, resultPayloadGateway } = ctx;
@@ -16,6 +37,7 @@ export function registerExecutionPlatformTools(ctx: ToolRegistryContext) {
       mode: z.enum(["harness", "self", "direct"]).optional(),
       task_run_id: z.string().min(1).max(256).optional(),
       confirmed: z.boolean().optional(),
+      verbose: z.boolean().optional(),
     },
     annotations: reversibleMutation,
   }, async (input) => {
@@ -32,6 +54,7 @@ export function registerExecutionPlatformTools(ctx: ToolRegistryContext) {
           brainOnlyActive: isBrainOnlyActive(),
           connectionKey: ctx.connectionKey ?? null,
           saved: true,
+          observedClients: observedMcpClients(),
         };
       };
       if (input.action === "status") return result(status());
@@ -119,6 +142,7 @@ export function registerExecutionPlatformTools(ctx: ToolRegistryContext) {
       parameters: z.record(z.string(), z.unknown()).optional(),
       preconditions: z.record(z.string(), z.boolean()).optional(),
       receipt_id: z.string().max(200).optional(),
+      verbose: z.boolean().optional(),
     },
     annotations: navigation,
   }, async (input) => {
@@ -150,7 +174,7 @@ export function registerExecutionPlatformTools(ctx: ToolRegistryContext) {
     } catch (e) { return failure(e); }
   });
 
-  server.registerTool("runtime_identity", { description: "Return one authoritative runtime/source/deployment identity view: live production version, source version, staged candidate, runtime path, source/deployment hashes, git commit when available, and rollback version/path. Read-only.", inputSchema: {}, annotations: readOnly }, async () => result(runtimeIdentity.identity()));
+  server.registerTool("runtime_identity", { description: "Return one authoritative runtime/source/deployment identity view: live production version, source version, staged candidate, runtime path, source/deployment hashes, git commit when available, and rollback version/path. Read-only.", inputSchema: { verbose: z.boolean().optional() }, annotations: readOnly }, async () => result(runtimeIdentity.identity()));
   server.registerTool("workstation_health_fast", { description: "Return the latest background-collected workstation health snapshot without probing every live component on the request path. Use this for routine health checks; if deepHealthRequired=true, escalate once to workstation_health for fresh component diagnostics.", inputSchema: {}, annotations: readOnly }, async () => { try { return result(healthSnapshot?.snapshot() ?? { available:false, mode:"background-health-snapshot-v1", state:"warming", deepHealthRequired:true, deepHealthReason:"Fast Health snapshot service is unavailable." }); } catch (e) { return failure(e); } });
   server.registerTool("workstation_health", { description: "Report workstation health. Uses the full-shape background Fast Health snapshot when it is healthy/current, and automatically falls back to fresh deep component probes when the snapshot is unavailable, stale, degraded, or inconsistent with current Emergency Stop state.", inputSchema: {}, annotations: readOnly }, async () => {
     const fast=healthSnapshot?.snapshot();
@@ -160,7 +184,7 @@ export function registerExecutionPlatformTools(ctx: ToolRegistryContext) {
     }
     return result({ version: VERSION, runtimeIdentity: runtimeIdentity.identity(), root: config.roots, intakeRoots: config.intakeRoots, writeEnabled: config.writeEnabled, terminalEnabled: config.terminalEnabled, skillsEnabled: config.skillsEnabled, screenEnabled: config.screenEnabled, desktopEnabled: config.desktopEnabled, visualDesktopEnabled: config.visualDesktopEnabled, intakeEnabled: config.intakeEnabled, ocrEnabled: config.ocrEnabled, skills: skills.validate(), emergencyStop: config.emergencyStop, index: { ...store.stats(), incremental: typeof (files as any).watchStatus === "function" ? files.watchStatus() : { watching: false, roots: [], pending: 0 } }, tasks: taskRuns ? taskRuns.stats() : { available: false }, context: workspaceMemory ? workspaceMemory.stats() : { available: false }, resumeContext: workspaceMemory ? workspaceMemory.bootstrap(undefined, { maxChars: 12000, recentLimit: 5, activate: false }) : { available: false }, office: await office.status(), screen: await screen.status(), desktop: await desktop.status(), browser:browser ? await browser.status() : {enabled:false}, intake: intake.status(), pdf: await pdf.status(), cocCoc: cocCocBridge?.status() ?? { connected: false }, video: video?.status() ?? { available: false }, localAi: localAi.status(), governor: governor.status(), resultPayloadGateway: resultPayloadGateway?.status() ?? { available: false }, backgroundTurbo: backgroundTurbo?.status() ?? { available:false }, fastHealth:{...(fast ?? {available:false}),servedFromSnapshot:false,deepFallbackUsed:true} });
   });
-  server.registerTool("workstation_plan", { description: "Return one canonical read-only ExecutionPlan that composes Governor advice, workstation route, Background/Isolated lane, risk/confirmation policy and adaptive QA without executing work or granting authorization. Legacy plan/capabilities fields are retained for compatibility.", inputSchema: { domain: z.enum(["auto","files","office","browser","desktop","terminal","intake","pdf"]).optional(), operation: z.enum(["read","search","inspect","navigate","edit","write","execute","capture"]), target: z.string().max(5000).optional(), application: z.enum(["word","excel","powerpoint","outlook"]).optional(), live: z.boolean().optional(), external_side_effect: z.enum(["send","upload","login","credentials","payment","transfer","purchase","call"]).optional(), allow_visual_fallback: z.boolean().optional(), description: z.string().max(20000).optional(), requires_user_session: z.boolean().optional(), browser_workload: z.enum(["auto","user-session","automation","scraping","testing"]).optional(), prefer_isolated_browser: z.boolean().optional(), text:z.string().max(20000).optional(), root:z.string().max(5000).optional(), project_hint:z.string().max(500).optional(), preferred_lane:z.enum(["auto","background","isolated"]).optional(), requires_gui:z.boolean().optional(), requires_foreground:z.boolean().optional(), requires_visual:z.boolean().optional(), drag_drop:z.boolean().optional(), canvas:z.boolean().optional(), native_dialog:z.boolean().optional(), terminal_command:z.string().max(20000).optional(), tool_name:z.string().max(200).optional(), office_operation_type:z.enum(["replace_selection","word_insert_at_cursor","word_append","word_format","word_format_paragraphs","word_replace_paragraph","word_page_setup","word_save","excel_set_range","excel_set_formula","excel_format_range","excel_save","powerpoint_replace_selected_text","powerpoint_format_selected_text","powerpoint_set_selected_shape_geometry","powerpoint_save"]).optional(), office_has_formatting:z.boolean().optional() }, annotations: readOnly }, async (input) => {
+  server.registerTool("workstation_plan", { description: "Return one canonical read-only ExecutionPlan that composes Governor advice, workstation route, Background/Isolated lane, risk/confirmation policy and adaptive QA without executing work or granting authorization. Legacy plan/capabilities fields are retained for compatibility.", inputSchema: { domain: z.enum(["auto","files","office","browser","desktop","terminal","intake","pdf"]).optional(), operation: z.enum(["read","search","inspect","navigate","edit","write","execute","capture"]), target: z.string().max(5000).optional(), application: z.enum(["word","excel","powerpoint","outlook"]).optional(), live: z.boolean().optional(), external_side_effect: z.enum(["send","upload","login","credentials","payment","transfer","purchase","call"]).optional(), allow_visual_fallback: z.boolean().optional(), description: z.string().max(20000).optional(), requires_user_session: z.boolean().optional(), browser_workload: z.enum(["auto","user-session","automation","scraping","testing"]).optional(), prefer_isolated_browser: z.boolean().optional(), text:z.string().max(20000).optional(), root:z.string().max(5000).optional(), project_hint:z.string().max(500).optional(), preferred_lane:z.enum(["auto","background","isolated"]).optional(), requires_gui:z.boolean().optional(), requires_foreground:z.boolean().optional(), requires_visual:z.boolean().optional(), drag_drop:z.boolean().optional(), canvas:z.boolean().optional(), native_dialog:z.boolean().optional(), terminal_command:z.string().max(20000).optional(), tool_name:z.string().max(200).optional(), office_operation_type:z.enum(["replace_selection","word_insert_at_cursor","word_append","word_format","word_format_paragraphs","word_replace_paragraph","word_page_setup","word_save","excel_set_range","excel_set_formula","excel_format_range","excel_save","powerpoint_replace_selected_text","powerpoint_format_selected_text","powerpoint_set_selected_shape_geometry","powerpoint_save"]).optional(), office_has_formatting:z.boolean().optional(), verbose:z.boolean().optional() }, annotations: readOnly }, async (input) => {
     try {
       const capabilities = await runtimeCapabilities();
       const intent: TaskIntent = { domain: input.domain, operation: input.operation, target: input.target, application: input.application, live: input.live, externalSideEffect: input.external_side_effect, allowVisualFallback: input.allow_visual_fallback, description: input.description, requiresUserSession: input.requires_user_session, browserWorkload: input.browser_workload, preferIsolatedBrowser: input.prefer_isolated_browser };

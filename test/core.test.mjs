@@ -396,7 +396,7 @@ test('MCP registry includes the interactive intake tool surface', async () => {
   const server = createWorkstationMcp(config, store, files, terminal, office, skills, screen, projects, documents, desktop, intake, pdf, workflow, browser);
   const inventory = getWorkstationToolInventory(server, config);
   // v0.24.15: inventory = every callable name (old names + new facade names); hidden aliases are listed:false.
-  assert.equal(inventory.length, 106);
+  assert.equal(inventory.length, 107);
   assert.ok(inventory.some(tool => tool.name === "harness_mode"));
   assert.ok(inventory.some(tool => tool.name === 'local_ai_router' && tool.listed === true));
   assert.ok(inventory.some(tool => tool.name === 'local_ai_status' && tool.listed === false));

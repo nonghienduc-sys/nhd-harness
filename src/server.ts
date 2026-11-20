@@ -15,6 +15,7 @@ import { OpenAISecureTunnelService } from "./openai-secure-tunnel.js";
 import { FirstRunCloudflare, cloudflareSetupPlan } from "./setup-wizard.js";
 import { createOAuthRouter, validateBearer } from "./oauth.js";
 import { createWorkstationMcp, getWorkstationToolInventory } from "./mcp.js";
+import { rememberMcpClient, resolveMcpClientIdentityKey } from "./mcp-client-identity.js";
 import { SkillService } from "./skills.js";
 import { ScreenService } from "./screen.js";
 import { ProjectService } from "./project.js";
@@ -175,14 +176,23 @@ function headerValue(value: string | string[] | undefined): string | null {
   return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
 }
 
-async function handleMcpRequest(request: Request, response: Response, transportKind: HarnessTransport) {
+async function handleMcpRequest(request: Request, response: Response, transportKind: HarnessTransport, authenticatedBearer = false) {
   if (request.method !== "POST") return response.status(405).json({ jsonrpc: "2.0", error: { code: -32000, message: "Method not allowed." }, id: null });
   harnessConnections.observe({ transport: transportKind, harnessId: headerValue(request.headers["x-nhd-harness-id"]), connectionId: headerValue(request.headers["x-nhd-connection-id"]), userAgent: headerValue(request.headers["user-agent"]) });
   const harnessIdHeader = headerValue(request.headers["x-nhd-harness-id"]);
   const connectionIdHeader = headerValue(request.headers["x-nhd-connection-id"]);
   const userAgentHeader = headerValue(request.headers["user-agent"]);
+  const connectionKey = [transportKind, harnessIdHeader ?? "", connectionIdHeader ?? "", userAgentHeader ?? ""].join("|");
+  const clientIdentityKey = resolveMcpClientIdentityKey({
+    sessionId: headerValue(request.headers["mcp-session-id"]),
+    authorization: headerValue(request.headers.authorization),
+    authenticatedBearer,
+    connectionKey: connectionIdHeader || harnessIdHeader ? connectionKey : null,
+  });
+  if (clientIdentityKey && request.body?.method === "initialize") rememberMcpClient(clientIdentityKey, request.body?.params?.clientInfo);
   const server = createWorkstationMcp(workstationRuntime, {
-    connectionKey: [transportKind, harnessIdHeader ?? "", connectionIdHeader ?? "", userAgentHeader ?? ""].join("|"),
+    connectionKey,
+    clientIdentityKey,
     agent: (harnessIdHeader || userAgentHeader || transportKind).slice(0, 80),
     brainOnly: isBrainOnlyTransport(transportKind),
   });
@@ -202,7 +212,7 @@ app.all("/mcp", async (request, response) => {
     response.setHeader("WWW-Authenticate", `Bearer resource_metadata=\"${publicBase()}/.well-known/oauth-protected-resource\"`);
     return response.status(401).json({ error: "unauthorized" });
   }
-  return handleMcpRequest(request, response, "remote-http");
+  return handleMcpRequest(request, response, "remote-http", true);
 });
 
 const localMcpApp = express();

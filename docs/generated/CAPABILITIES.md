@@ -3,7 +3,7 @@
 > GENERATED FILE. Do not maintain tool counts or capability policy by hand. Regenerate with `npm run docs:architecture` and verify with `npm run docs:architecture:check`.
 
 - Version: 0.24.40
-- Registered tools: 166
+- Registered tools: 167
 - Registration source: `src/mcp-registries/*.ts`
 - Capability policy source: `src/capability-registry.ts`
 - Runtime truth: `/api/tools` and `tool_governor action=capabilities`
@@ -30,7 +30,7 @@
 | Task | 7 |
 | Terminal | 6 |
 | Video | 9 |
-| Workstation | 15 |
+| Workstation | 16 |
 
 ## Tools
 
@@ -198,6 +198,7 @@
 | `review_pack` | Delegation | Workstation | read | background | read-only | no | no | none | Review a SBCE job receipt (bounded output). Brain approval changes job metadata only; never applies patches or bypasses file preview/apply. Requires originating task ID to approve/reject. |
 | `runtime_identity` | Execution | Workstation | read | background | read-only | no | no | none | Return one authoritative runtime/source/deployment identity view: live production version, source version, staged candidate, runtime path, source/deployment hashes, git commit when available, and rollback version/path. Read-only. |
 | `sbce_artifact_handoff` | Delegation | Workstation | read | background | read-only | no | no | none | Trusted SBCE accepted draft -> guarded Windows file. Mode1 Brain reviews, then preview/apply. No worker OS privilege; new TXT/MD/CSV under task root only. Requires task authorization and returns verified host SHA-256. |
+| `tool_describe` | Execution | Workstation | read | background | read-only | no | no | none | Read full descriptions and input schemas for 1-10 registered MCP tools. |
 | `tool_governor` | Execution | Workstation | mixed | background | read-only | no | no | none | Lightweight deterministic Tool Governor between ChatGPT Web and MCP. It never hides MCP capabilities, never executes workstation actions, and never grants authorization. Use action=plan once for nontrivial/uncertain tasks to get a bounded project/task memory pack, learned recipe, quality floor, soft tool budget, recommended tools and escalation triggers. action=capabilities returns a grouped summary by default; parameters.detail='full' returns the full map; action=remember_preference stores only an explicit persistent user workflow preference; action=recipe reads a learned project/task recipe; action=status reports governor metrics/cache without executing work. |
 | `workstation_health` | Execution | Workstation | read | background | read-only | no | no | none | Report workstation health. Uses the full-shape background Fast Health snapshot when it is healthy/current, and automatically falls back to fresh deep component probes when the snapshot is unavailable, stale, degraded, or inconsistent with current Emergency Stop state. |
 | `workstation_health_fast` | Execution | Workstation | read | background | read-only | no | no | none | Return the latest background-collected workstation health snapshot without probing every live component on the request path. Use this for routine health checks; if deepHealthRequired=true, escalate once to workstation_health for fresh component diagnostics. |

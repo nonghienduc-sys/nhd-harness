@@ -1,6 +1,7 @@
 ﻿import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { dirname, resolve } from "node:path";
+import { DEFAULT_TOOL_CATALOG_CORE_TOOLS, type ToolCatalogSettings } from "./tool-catalog.js";
 
 export type AppConfig = {
   instanceId: string;
@@ -25,6 +26,8 @@ export type AppConfig = {
   intakeEnabled: boolean;
   ocrEnabled: boolean;
   disabledSkills: string[];
+  structuredOnlyClients?: string[];
+  toolCatalog?: ToolCatalogSettings;
   tunnelEnabled: boolean;
   openAiSecureTunnelEnabled: boolean;
   openAiSecureTunnelProfile: string;
@@ -96,6 +99,8 @@ function defaults(): AppConfig {
     intakeEnabled: true,
     ocrEnabled: true,
     disabledSkills: [],
+    structuredOnlyClients: [],
+    toolCatalog: { mode: "full", clients: [], coreTools: [...DEFAULT_TOOL_CATALOG_CORE_TOOLS] },
     tunnelEnabled: false,
     openAiSecureTunnelEnabled: process.env.WORKSTATION_OPENAI_TUNNEL_ENABLED === "1",
     openAiSecureTunnelProfile: String(process.env.WORKSTATION_OPENAI_TUNNEL_PROFILE ?? "nhd-local"),

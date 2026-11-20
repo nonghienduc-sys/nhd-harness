@@ -36,7 +36,7 @@ export function resultWithImages(value: any) {
   const structured = { ...value } as Record<string, unknown>;
   if (value?.image) { const { data: _data, ...meta } = value.image; structured.image = meta; }
   if (Array.isArray(value?.images)) structured.images = value.images.map(({ data: _data, ...meta }: any) => meta);
-  return { structuredContent: structured, content: [{ type: "text" as const, text: JSON.stringify(structured, null, 2) }, ...images.map((item: any) => ({ type: "image" as const, data: item.data, mimeType: item.mimeType }))] };
+  return { structuredContent: structured, content: [{ type: "text" as const, text: JSON.stringify(structured) }, ...images.map((item: any) => ({ type: "image" as const, data: item.data, mimeType: item.mimeType }))] };
 }
 
 export function publicTerminalSession(session: TerminalSessionView) {
