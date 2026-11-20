@@ -333,6 +333,17 @@ export class FileService {
     return this.watchStatus();
   }
 
+  // Refresh watchers after the owner changes roots; revoked paths cannot be resolved.
+  refreshRootsWatchers(): void {
+    const retained = [...this.watchers.keys()].filter((root) => isPathWithinRoots(root, this.config.roots));
+    if (this.watchers.size === 0) return;
+    this.stopWatch();
+    for (const root of retained) {
+      try { this.startWatch(root); }
+      catch (error) { this.store.audit("index_watch_start", "degraded", { root, error: String(error) }); }
+    }
+  }
+
   stopWatch(rootInput?: string): IncrementalIndexStatus {
     const roots = rootInput ? [this.resolvePath(rootInput)] : [...this.watchers.keys()];
     for (const root of roots) {

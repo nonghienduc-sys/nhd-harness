@@ -471,10 +471,29 @@
   <div class="page-header mb-3"><div class="row align-items-center g-2"><div class="col"><div class="page-pretitle">Cài đặt</div><h2 class="page-title">Máy & môi trường chạy</h2><div class="text-secondary mt-1">Thông tin instance và đường dẫn dữ liệu của máy trạm này.</div></div></div></div>
   <div class="card mb-3">
     <div class="card-header"><h3 class="card-title">Thông tin instance</h3></div>
-    <div class="card-body"><dl class="nhd-dl"><dt>Mã instance</dt><dd id="instanceId"></dd><dt>Thư mục dữ liệu</dt><dd id="dataDir"></dd><dt>Thư mục gốc</dt><dd id="rootPath"></dd><dt>Chế độ</dt><dd><span id="modeBadge" class="badge">Đang kiểm tra</span></dd></dl></div>
+    <div class="card-body"><dl class="nhd-dl"><dt>Mã instance</dt><dd id="instanceId"></dd><dt>Thư mục dữ liệu</dt><dd id="dataDir"></dd><dt>Chế độ</dt><dd><span id="modeBadge" class="badge">Đang kiểm tra</span></dd></dl></div>
+  </div>
+  <div class="card mb-3" id="rootsCard">
+    <div class="card-header"><div><h3 class="card-title">Ổ/thư mục được phép</h3><div class="text-secondary small">Chọn vị trí NHD Harness được đọc hoặc ghi theo quyền đang bật.</div></div></div>
+    <div class="card-body">
+      <div class="mb-2 fw-semibold">Ổ đĩa cố định</div>
+      <div id="rootsDrives" class="d-flex flex-wrap gap-3 mb-3" aria-label="Danh sách ổ đĩa">Đang kiểm tra ổ đĩa…</div>
+      <div class="mb-2 fw-semibold">Thư mục tùy chọn</div>
+      <div id="rootsFolders" class="mb-2"></div>
+      <div class="input-group mb-3">
+        <input id="rootsFolderInput" type="text" class="form-control" aria-label="Đường dẫn thư mục" placeholder="Ví dụ: C:\DuLieu">
+        <button type="button" id="rootsAdd" class="btn btn-outline-primary">Thêm</button>
+      </div>
+      <div id="rootsSystemWarning" class="alert alert-warning d-none" role="alert">ChatGPT sẽ đọc/ghi được mọi tệp trong ổ này theo quyền đang bật.</div>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" id="rootsSave" class="btn btn-primary">Lưu</button>
+        <button type="button" id="rootsDefault" class="btn btn-outline-secondary">Về mặc định</button>
+      </div>
+      <div id="rootsFeedback" class="small mt-2" role="status" aria-live="polite"></div>
+    </div>
   </div>
   <div class="card">
-    <div class="card-header"><div><div class="eyebrow">Bản phát hành GitHub</div><h3 class="card-title">Cập nhật NHD Lite</h3><div class="card-subtitle-sm">Tự kiểm tra bản mới; chỉ tải và cài khi bạn xác nhận. SHA-256, sao lưu cấu hình và phục hồi phiên bản cũ được kiểm tra trước khi cài đặt.</div></div></div>
+    <div class="card-header"><div class="eyebrow">Bản phát hành GitHub</div><h3 class="card-title">Cập nhật NHD Lite</h3><div class="card-subtitle-sm">Tự kiểm tra bản mới; chỉ tải và cài khi bạn xác nhận. SHA-256, sao lưu cấu hình và phục hồi phiên bản cũ được kiểm tra trước khi cài đặt.</div></div></div>
     <div class="card-body">
       <div class="d-flex align-items-center gap-3 flex-wrap"><button type="button" id="checkLiteUpdate" class="btn btn-primary">Kiểm tra &amp; cập nhật NHD</button><span id="liteUpdateState" class="status-line mt-0" role="status">Đang kiểm tra phiên bản...</span></div>
       <p class="status-line mb-0">Lưu ý: bộ cài chưa ký số; Windows SmartScreen có thể cảnh báo. Việc rollback khi lỗi dựa trên bộ cài phiên bản cũ đã xác minh.</p>
@@ -491,6 +510,7 @@
   <script src="/vendor/tabler/tabler.min.js?v=1.4.0"></script>
   <script src="/redesign.js?v=20261113-tabler"></script>
   <script src="/app.js?v=20261113-vi2"></script>
+  <script src="/roots-panel.js?v=20261120"></script>
   <script src="/lite-updates.js?v=20261109"></script>
   <script src="/chat-health-v2.js?v=20261113-vi"></script>
   <script src="/sbce-panel.js?v=20261113-ui"></script>

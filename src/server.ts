@@ -1,5 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import { writeFileSync } from "node:fs";
+import { defaultConfiguredRoots } from "./config.js";
+import { listFixedDrives, validateRoots } from "./roots-config.js";
+import { setConfiguredRoots } from "./resource-guard.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { resolve } from "node:path";
 import { loadConfig, saveConfig } from "./config.js";
@@ -218,6 +221,30 @@ function localOnly(request: Request, response: Response, next: NextFunction) {
   next();
 }
 app.use("/api", localOnly);
+
+// Root changes are owner-only via localhost dashboard; no MCP tool exists for this.
+app.get("/api/roots", (_request, response) => {
+  response.json({ roots: config.roots, drives: listFixedDrives(), defaults: defaultConfiguredRoots() });
+});
+app.put("/api/roots", (request, response) => {
+  const origin = request.headers.origin;
+  if (origin && !["http://127.0.0.1:" + config.port, "http://localhost:" + config.port].includes(origin))
+    return response.status(403).json({ error: "Từ chối: Origin không phải dashboard trên máy này." });
+  if (!request.is("application/json"))
+    return response.status(415).json({ error: "Yêu cầu Content-Type: application/json." });
+  try {
+    const next = validateRoots(request.body?.roots);
+    // Persist before changing live shared state; splice preserves references captured by services.
+    saveConfig({ ...config, roots: next });
+    config.roots.splice(0, config.roots.length, ...next);
+    setConfiguredRoots(config.roots);
+    files.refreshRootsWatchers();
+    store.audit("config", "roots_updated", { count: config.roots.length, roots: config.roots });
+    return response.json({ ok: true, roots: config.roots });
+  } catch (error) {
+    return response.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
 
 // The mode selector is independent from the SBCE worker: Mode 2 must work even when
 // the worker is unavailable or disabled. This endpoint remains localhost-only.

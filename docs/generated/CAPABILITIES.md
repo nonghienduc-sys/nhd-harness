@@ -2,7 +2,7 @@
 
 > GENERATED FILE. Do not maintain tool counts or capability policy by hand. Regenerate with `npm run docs:architecture` and verify with `npm run docs:architecture:check`.
 
-- Version: 0.24.39
+- Version: 0.24.40
 - Registered tools: 166
 - Registration source: `src/mcp-registries/*.ts`
 - Capability policy source: `src/capability-registry.ts`

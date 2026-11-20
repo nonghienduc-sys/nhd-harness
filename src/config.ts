@@ -57,6 +57,9 @@ function writableDataDir(): string {
 export const DATA_DIR = writableDataDir();
 export const CONFIG_PATH = resolve(DATA_DIR, "config.json");
 
+export function defaultConfiguredRoots(): string[] {
+  return [existsSync("D:\\") ? "D:\\" : resolve(process.env.USERPROFILE ?? process.cwd())];
+}
 function defaults(): AppConfig {
   const namedTunnelConfig = resolve(DATA_DIR, "cloudflare", "config.yml");
   const openAiTunnelClientPath = process.env.OPENAI_TUNNEL_CLIENT_PATH ? resolve(process.env.OPENAI_TUNNEL_CLIENT_PATH) : resolve(process.cwd(), "runtime", "tunnel-client.exe");
@@ -78,7 +81,7 @@ function defaults(): AppConfig {
     localHarnessPort: Number(process.env.WORKSTATION_MCP_LOCAL_PORT ?? 39104),
     officePort: Number(process.env.WORKSTATION_OFFICE_PORT ?? 39101),
     screenPort: Number(process.env.WORKSTATION_SCREEN_PORT ?? 39102),
-    roots: [existsSync("D:\\") ? "D:\\" : resolve(process.env.USERPROFILE ?? process.cwd())],
+    roots: defaultConfiguredRoots(),
     intakeRoots: intakeCandidates.filter((path) => existsSync(path)),
     dataDir: DATA_DIR,
     backupDir: resolve(DATA_DIR, "backups"),
