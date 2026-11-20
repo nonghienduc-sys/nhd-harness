@@ -1,4 +1,4 @@
-import { toolCatalogMode, toolCatalogCore } from '../dist/tool-catalog.js';
+import { DEFAULT_TOOL_CATALOG_CORE_TOOLS, toolCatalogMode, toolCatalogCore } from '../dist/tool-catalog.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
@@ -78,12 +78,11 @@ test('catalog preserves SDK full tools, validator, facades and per-client select
     servers.push(baseline);
     const enabled=await start('catalog-selected-client', {
       toolCatalog:{mode:'full',clients:['thin-catalog'],coreTools:[
-        'fs_read','fs_list','fs_stat','fs_search','fs_index',
-        'fs_preview_write','fs_apply_write','fs_preview_move','fs_apply_move',
-        'fs_preview_delete','fs_apply_delete','terminal_preview','terminal_execute',
-        'terminal_cancel','terminal_session','terminal_session_preview',
-        'terminal_session_execute','task_run','task_run_step','receipt_write',
-        'workstation_plan','tool_describe','context_bootstrap','context_recall','tool_governor'
+        'fs_read','fs_list','fs_stat','fs_search','fs_preview_write',
+        'fs_apply_write','fs_preview_delete','fs_apply_delete','terminal_preview','terminal_execute',
+        'terminal_session','terminal_session_preview','terminal_session_execute','task_run','task_run_step',
+        'receipt_write','workstation_plan','office_read','office_preview_edit','office_apply_edit',
+        'pdf_document','tool_describe','context_bootstrap','context_recall','tool_governor',
       ]}
     });
     servers.push(enabled);
@@ -164,6 +163,7 @@ test('global catalog override and core limit retain tool_describe', () => {
   assert.equal(toolCatalogMode({mode:'full', clients:['agent']},'worker-agent-v2'), 'catalog');
   assert.equal(toolCatalogMode({mode:'catalog', clients:[]},'other'), 'catalog');
   assert.equal(toolCatalogMode(undefined,'other'), 'full');
+  assert.deepEqual([...DEFAULT_TOOL_CATALOG_CORE_TOOLS], ["fs_read","fs_list","fs_stat","fs_search","fs_preview_write","fs_apply_write","fs_preview_delete","fs_apply_delete","terminal_preview","terminal_execute","terminal_session","terminal_session_preview","terminal_session_execute","task_run","task_run_step","receipt_write","workstation_plan","office_read","office_preview_edit","office_apply_edit","pdf_document","tool_describe","context_bootstrap","context_recall","tool_governor"]);
   const core=toolCatalogCore({coreTools:Array.from({length:90},(_,i)=>'tool'+i)});
   assert.equal(core.size,25);
   assert.ok(core.has('tool_describe'));

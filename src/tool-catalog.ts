@@ -6,13 +6,13 @@ export type ToolCatalogSettings = {
 };
 
 export const DEFAULT_TOOL_CATALOG_CORE_TOOLS = [
-  "fs_read", "fs_list", "fs_stat", "fs_search", "fs_index",
-  "fs_preview_write", "fs_apply_write", "fs_preview_move", "fs_apply_move",
-  "fs_preview_delete", "fs_apply_delete",
-  "terminal_preview", "terminal_execute", "terminal_cancel",
-  "terminal_session", "terminal_session_preview", "terminal_session_execute",
-  "task_run", "task_run_step", "receipt_write", "workstation_plan",
-  "tool_describe", "context_bootstrap", "context_recall", "tool_governor",
+  "fs_read", "fs_list", "fs_stat", "fs_search",
+  "fs_preview_write", "fs_apply_write", "fs_preview_delete", "fs_apply_delete",
+  "terminal_preview", "terminal_execute", "terminal_session", "terminal_session_preview",
+  "terminal_session_execute", "task_run", "task_run_step", "receipt_write",
+  "workstation_plan", "office_read", "office_preview_edit", "office_apply_edit",
+  "pdf_document", "tool_describe", "context_bootstrap", "context_recall",
+  "tool_governor",
 ] as const;
 
 const DESCRIBE_HINT = "Gọi tool_describe để xem tham số.";
