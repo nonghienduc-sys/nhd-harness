@@ -56,6 +56,9 @@ import { UnifiedExecutionPlanner } from "./execution-planner.js";
 import { SelfEvolutionEngine } from "./self-evolution.js";
 import { registerSelfEvolutionTools } from "./mcp-registries/self-evolution-tools.js";
 import { registerDelegationTools } from "./mcp-registries/delegation-tools.js";
+import { registerBrainKitTools } from "./mcp-registries/brain-kit-tools.js";
+import { registerLessonTools } from "./mcp-registries/lesson-tools.js";
+import { registerPlaybookTools } from "./mcp-registries/playbook-tools.js";
 import { ResultPayloadGatewayService } from "./result-payload-gateway.js";
 import { TOOL_FACADES, buildFacade, facadeOwnedNames, hideToolsFromList, toolFacadesEnabled, type CapturedTool } from "./tool-facades.js";
 import { brainOnlyAllows, brainOnlyDenied, brainSelfDenied, isBrainOnlyActive, isDelegationBlocked,
@@ -206,6 +209,9 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   registerFilesTools(registryContext);
   registerDocumentTemplateTools(registryContext);
   registerProjectRagTools(registryContext);
+  if (config.knowledgeLocalDir) registerBrainKitTools(registryContext);
+  if (config.knowledgeLocalDir) registerLessonTools(registryContext, selfEvolution);
+  if (config.knowledgeLocalDir) registerPlaybookTools(registryContext);
   registerExecutionTerminalTools(registryContext);
   registerContextTools(registryContext);
   registerOfficeTools(registryContext);

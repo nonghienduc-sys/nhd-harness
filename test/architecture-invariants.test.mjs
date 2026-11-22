@@ -39,7 +39,7 @@ test('generated capability catalog covers the full 167-tool surface exactly once
   }
 });
 
-test('production MCP construction uses one WorkstationRuntime and ten domain registries', () => {
+test('production MCP construction uses one WorkstationRuntime and thirteen domain registries', () => {
   const runtime = read('src/workstation-runtime.ts');
   const mcp = read('src/mcp.ts');
   assert.match(runtime, /Object\.freeze\(\{ \.\.\.input \}\)/);
@@ -51,7 +51,10 @@ test('production MCP construction uses one WorkstationRuntime and ten domain reg
   const files = readdirSync(resolve(root, 'src/mcp-registries')).filter(file => file.endsWith('-tools.ts')).sort();
   assert.match(mcp, /registerSelfEvolutionTools\(registryContext, selfEvolution\)/);
   assert.match(mcp, /registerDelegationTools\(registryContext, runtimeContext\.sbceExecutor\)/);
-  assert.deepEqual(files, ['browser-tools.ts', 'context-tools.ts', 'delegation-tools.ts', 'document-template-tools.ts', 'execution-tools.ts', 'files-tools.ts', 'media-tools.ts', 'office-tools.ts', 'project-rag-tools.ts', 'self-evolution-tools.ts']);
+  assert.match(mcp, /registerBrainKitTools\(registryContext\)/);
+  assert.match(mcp, /registerLessonTools\(registryContext, selfEvolution\)/);
+  assert.match(mcp, /registerPlaybookTools\(registryContext\)/);
+  assert.deepEqual(files, ['brain-kit-tools.ts', 'browser-tools.ts', 'context-tools.ts', 'delegation-tools.ts', 'document-template-tools.ts', 'execution-tools.ts', 'files-tools.ts', 'lesson-tools.ts', 'media-tools.ts', 'office-tools.ts', 'playbook-tools.ts', 'project-rag-tools.ts', 'self-evolution-tools.ts']);
 });
 
 test('Capability Registry remains the single deterministic metadata authority', () => {

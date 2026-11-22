@@ -1,0 +1,7 @@
+{
+  "kiem_noi_dung": {
+    "mo_ta": "Kiểm nội dung đúng đầu vào, không thêm thông tin không xác minh",
+    "cmd": "node --test test/brain-kit.test.mjs",
+    "expect_exit": 0
+  }
+}

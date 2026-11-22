@@ -1,4 +1,4 @@
-﻿import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { DEFAULT_TOOL_CATALOG_CORE_TOOLS, type ToolCatalogSettings } from "./tool-catalog.js";
@@ -14,6 +14,7 @@ export type AppConfig = {
   roots: string[];
   intakeRoots: string[];
   dataDir: string;
+  knowledgeLocalDir: string;
   backupDir: string;
   projectWorkspaceRoot: string;
   writeEnabled: boolean;
@@ -88,6 +89,7 @@ function defaults(): AppConfig {
     roots: defaultConfiguredRoots(),
     intakeRoots: intakeCandidates.filter((path) => existsSync(path)),
     dataDir: DATA_DIR,
+    knowledgeLocalDir: resolve(DATA_DIR, "knowledge-local"),
     backupDir: resolve(DATA_DIR, "backups"),
     projectWorkspaceRoot: existsSync("D:\\") ? "D:\\NHD Projects" : resolve(userProfile, "Documents", "NHD Projects"),
     writeEnabled: true,
