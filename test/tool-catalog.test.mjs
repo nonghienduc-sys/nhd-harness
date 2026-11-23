@@ -178,8 +178,8 @@ test('global catalog override and core limit retain tool_describe', () => {
   assert.equal(toolCatalogMode({mode:'full', clients:['agent']},'worker-agent-v2'), 'catalog');
   assert.equal(toolCatalogMode({mode:'catalog', clients:[]},'other'), 'catalog');
   assert.equal(toolCatalogMode(undefined,'other'), 'full');
-  assert.deepEqual([...DEFAULT_TOOL_CATALOG_CORE_TOOLS], ["fs_read","fs_list","fs_stat","fs_search","fs_preview_write","fs_apply_write","doc_from_template","doc_format_check","terminal_preview","terminal_execute","terminal_session","code_run","terminal_session_execute","task_run","task_run_step","receipt_write","workstation_plan","office_read","office_preview_edit","office_apply_edit","pdf_document","tool_describe","context_bootstrap","context_recall","tool_governor"]);
+  assert.deepEqual([...DEFAULT_TOOL_CATALOG_CORE_TOOLS], ["fs_read","fs_list","fs_stat","fs_search","fs_preview_write","fs_apply_write","doc_from_template","doc_format_check","terminal_preview","terminal_execute","terminal_session","code_run","terminal_session_execute","task_run","task_run_step","receipt_write","workstation_plan","office_read","office_preview_edit","office_apply_edit","pdf_document","tool_describe","context_bootstrap","context_recall","tool_governor","brain_start"]);
   const core=toolCatalogCore({coreTools:Array.from({length:90},(_,i)=>'tool'+i)});
-  assert.equal(core.size,25);
+  assert.equal(core.size,26);
   assert.ok(core.has('tool_describe'));
 });

@@ -12,7 +12,7 @@ export const DEFAULT_TOOL_CATALOG_CORE_TOOLS = [
   "terminal_session_execute", "task_run", "task_run_step", "receipt_write",
   "workstation_plan", "office_read", "office_preview_edit", "office_apply_edit",
   "pdf_document", "tool_describe", "context_bootstrap", "context_recall",
-  "tool_governor",
+  "tool_governor", "brain_start",
 ] as const;
 
 const DESCRIBE_HINT = "Gọi tool_describe để xem tham số.";
@@ -26,8 +26,8 @@ export function toolCatalogMode(settings?: ToolCatalogSettings, clientName?: str
 
 export function toolCatalogCore(settings?: ToolCatalogSettings): Set<string> {
   const configured = Array.isArray(settings?.coreTools) ? settings.coreTools : [...DEFAULT_TOOL_CATALOG_CORE_TOOLS];
-  // Always describe its own parameter schema; never advertise more than 25 core tools.
-  return new Set([...configured.filter((x): x is string => typeof x === "string" && !!x && x !== "tool_describe").slice(0, 24), "tool_describe"]);
+  // Always describe its own parameter schema; never advertise more than 26 core tools (v0.24.48: +brain_start).
+  return new Set([...configured.filter((x): x is string => typeof x === "string" && !!x && x !== "tool_describe").slice(0, 25), "tool_describe"]);
 }
 
 export function catalogueTool<T extends { name: string; description?: string; inputSchema?: unknown }>(tool: T, core: ReadonlySet<string>): T {
