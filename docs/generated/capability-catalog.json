@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.24.44",
+  "version": "0.24.45",
   "sourceOfTruth": {
     "registration": "src/mcp-registries/*.ts",
     "capabilityPolicy": "src/capability-registry.ts",

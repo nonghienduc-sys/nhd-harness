@@ -8,7 +8,7 @@ export type ToolCatalogSettings = {
 export const DEFAULT_TOOL_CATALOG_CORE_TOOLS = [
   "fs_read", "fs_list", "fs_stat", "fs_search",
   "fs_preview_write", "fs_apply_write", "doc_from_template", "doc_format_check",
-  "terminal_preview", "terminal_execute", "terminal_session", "terminal_session_preview",
+  "terminal_preview", "terminal_execute", "terminal_session", "code_run",
   "terminal_session_execute", "task_run", "task_run_step", "receipt_write",
   "workstation_plan", "office_read", "office_preview_edit", "office_apply_edit",
   "pdf_document", "tool_describe", "context_bootstrap", "context_recall",
