@@ -54,7 +54,7 @@ test('production MCP construction uses one WorkstationRuntime and thirteen domai
   assert.match(mcp, /registerBrainKitTools\(registryContext\)/);
   assert.match(mcp, /registerLessonTools\(registryContext, selfEvolution\)/);
   assert.match(mcp, /registerPlaybookTools\(registryContext\)/);
-  assert.deepEqual(files, ['brain-kit-tools.ts', 'browser-tools.ts', 'context-tools.ts', 'delegation-tools.ts', 'document-template-tools.ts', 'execution-tools.ts', 'files-tools.ts', 'lesson-tools.ts', 'media-tools.ts', 'office-tools.ts', 'playbook-tools.ts', 'project-rag-tools.ts', 'self-evolution-tools.ts']);
+  assert.deepEqual(files, ['brain-kit-tools.ts', 'browser-tools.ts', 'code-run-tools.ts', 'context-tools.ts', 'delegation-tools.ts', 'document-template-tools.ts', 'execution-tools.ts', 'files-tools.ts', 'lesson-tools.ts', 'media-tools.ts', 'office-tools.ts', 'playbook-tools.ts', 'project-rag-tools.ts', 'self-evolution-tools.ts']);
 });
 
 test('Capability Registry remains the single deterministic metadata authority', () => {

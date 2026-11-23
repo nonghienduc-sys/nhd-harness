@@ -84,7 +84,7 @@ test('measure real temporary MCP server at ephemeral port and compare schema/res
   assert.ok(observed.structuredContent.observedClients.every(x=>Object.keys(x).sort().join(',')==='name,version'));
   console.log('STATELESS CLIENT: session key correctly isolates initialize and subsequent tools/call');
   const tools=(await rpc('unknown','tools/list')).tools;
-  record('tools/list',{tools});assert.ok(bytes({tools})<123489);
+  record('tools/list',{tools});assert.ok(bytes({tools})<124300); // v0.24.44: +~813 byte cho code_run
   assert.ok(tools.length>=20);assert.ok(tools.every(t=>!Object.hasOwn(t.inputSchema,'$schema')));
   const ajv=new Ajv({strict:false,validateFormats:false});
   const top=tools.toSorted((a,b)=>bytes(b.inputSchema)-bytes(a.inputSchema)).slice(0,20);

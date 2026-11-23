@@ -57,6 +57,7 @@ import { SelfEvolutionEngine } from "./self-evolution.js";
 import { registerSelfEvolutionTools } from "./mcp-registries/self-evolution-tools.js";
 import { registerDelegationTools } from "./mcp-registries/delegation-tools.js";
 import { registerBrainKitTools } from "./mcp-registries/brain-kit-tools.js";
+import { registerCodeRunTool } from "./mcp-registries/code-run-tools.js";
 import { registerLessonTools } from "./mcp-registries/lesson-tools.js";
 import { registerPlaybookTools } from "./mcp-registries/playbook-tools.js";
 import { ResultPayloadGatewayService } from "./result-payload-gateway.js";
@@ -220,6 +221,13 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   registerProjectDocumentTools(registryContext);
   if (runtimeContext.sbceExecutor) registerDelegationTools(registryContext, runtimeContext.sbceExecutor);
   if (selfEvolution) registerSelfEvolutionTools(registryContext, selfEvolution);
+  // v0.24.44: code_run gọi tool khác qua đường gọi bình thường (gắn muộn, sau khi có originalCall).
+  let codeRunInnerCall: ((name: string, args: Record<string, unknown>, extra: any) => Promise<any>) | null = null;
+  if (process.env.NHD_CODE_RUN !== "0") registerCodeRunTool(registryContext, {
+    listTools: async () => getFullTools ? getFullTools() : [],
+    innerCall: (name, args, extra) => { if (!codeRunInnerCall) throw new Error("code_run chưa sẵn sàng"); return codeRunInnerCall(name, args, extra); },
+    audit: (detail) => store.audit?.("code_run", detail.ok ? "ok" : "error", detail),
+  });
 
   // The catalogue is fixed for this MCP instance. Descriptions always use the
   // SDK-generated FULL schemas (including facade schemas) as the source of truth.
@@ -267,6 +275,7 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
     });
   }
   if (typeof originalCall === "function") {
+    codeRunInnerCall = (name, args, extra) => originalCall({ method: "tools/call", params: { name, arguments: args } }, extra ?? {});
     protocol.setRequestHandler(CallToolRequestSchema, async (request: any, extra: any) => {
       const name = String(request?.params?.name ?? "");
       let output: any;
