@@ -57,6 +57,7 @@ import { SelfEvolutionEngine } from "./self-evolution.js";
 import { registerSelfEvolutionTools } from "./mcp-registries/self-evolution-tools.js";
 import { registerDelegationTools } from "./mcp-registries/delegation-tools.js";
 import { registerBrainKitTools } from "./mcp-registries/brain-kit-tools.js";
+import { isCodeRunInnerExtra, markCodeRunInnerExtra } from "./code-run.js";
 import { registerCodeRunTool } from "./mcp-registries/code-run-tools.js";
 import { registerLessonTools } from "./mcp-registries/lesson-tools.js";
 import { registerPlaybookTools } from "./mcp-registries/playbook-tools.js";
@@ -161,6 +162,9 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
       const output = shapeToolOutput(name, args[0], await governor.intercept(name, args[0], definition?.annotations, invokeHandler));
       try { selfEvolution?.observeToolFailure(name, output, taskRunId); } catch { /* Metadata telemetry never breaks a work action. */ }
       const telemetryEntry = resultTelemetry?.observe(name, output, performance.now() - started, args[0]);
+      // v0.24.46: lượt gọi từ bên trong code_run nhận output gốc (không nén payload, không chèn context header);
+      // code_run tự giới hạn kết quả trả về model.
+      if (isCodeRunInnerExtra(args[1])) return output;
       const gatewayDecision = resultPayloadGateway.process(name, output, args[0], definition?.annotations);
       resultTelemetry?.recordGatewayDecision(telemetryEntry?.spanId, gatewayDecision);
       let finalOutput: unknown = gatewayDecision.output;
@@ -275,7 +279,7 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
     });
   }
   if (typeof originalCall === "function") {
-    codeRunInnerCall = (name, args, extra) => originalCall({ method: "tools/call", params: { name, arguments: args } }, extra ?? {});
+    codeRunInnerCall = (name, args, extra) => originalCall({ method: "tools/call", params: { name, arguments: args } }, markCodeRunInnerExtra(extra));
     protocol.setRequestHandler(CallToolRequestSchema, async (request: any, extra: any) => {
       const name = String(request?.params?.name ?? "");
       let output: any;

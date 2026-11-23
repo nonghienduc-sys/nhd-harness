@@ -123,6 +123,11 @@ process.on("disconnect", () => process.exit(0));
 })();
 `;
 
+const CODE_RUN_INNER = Symbol.for("nhd.codeRunInner");
+/** Đánh dấu `extra` của lượt gọi tool phát ra từ bên trong code_run (symbol sống qua spread của SDK). */
+export function markCodeRunInnerExtra(extra: any): any { return { ...(extra && typeof extra === "object" ? extra : {}), [CODE_RUN_INNER]: true }; }
+export function isCodeRunInnerExtra(extra: any): boolean { return Boolean(extra && typeof extra === "object" && extra[CODE_RUN_INNER] === true); }
+
 /** Rút giá trị dùng được từ output MCP của một tool. */
 export function toolOutputValue(output: any): { ok: boolean; value?: unknown; error?: string } {
   const texts = Array.isArray(output?.content) ? output.content.filter((b: any) => b?.type === "text" && typeof b.text === "string").map((b: any) => b.text) : [];

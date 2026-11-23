@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
-import { runCodeScript, codeRunToolAllowed, toolOutputValue } from "../dist/code-run.js";
+import { runCodeScript, codeRunToolAllowed, toolOutputValue, markCodeRunInnerExtra, isCodeRunInnerExtra } from "../dist/code-run.js";
 
 const ok = (value) => ({ structuredContent: value, content: [{ type: "text", text: JSON.stringify(value) }] });
 const fakeDeps = (impl = {}) => {
@@ -122,7 +122,7 @@ let rid = 0;
 async function freePort() {
   return await new Promise((done, bad) => { const s = createServer(); s.once("error", bad); s.listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => done(p)); }); });
 }
-async function startServer() {
+async function startServer(envOverrides = {}) {
   const data = mkdtempSync(join(tmpdir(), "nhd-code-run-"));
   const work = mkdtempSync(join(tmpdir(), "nhd-code-run-work-"));
   writeFileSync(join(work, "a.txt"), "dong mot\nTODO hai\n");
@@ -135,7 +135,7 @@ async function startServer() {
   const child = spawn(process.execPath, [join(root, "dist/server.js")], {
     cwd: root, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
     env: { ...process.env, WORKSTATION_MCP_DATA_DIR: data, WORKSTATION_MCP_PORT: String(corePort), WORKSTATION_MCP_LOCAL_PORT: String(localPort),
-      WORKSTATION_MCP_LOCAL_ENABLED: "1", NHD_RESULT_PAYLOAD_GATEWAY: "0", NHD_BRAIN_ONLY: "0" },
+      WORKSTATION_MCP_LOCAL_ENABLED: "1", NHD_RESULT_PAYLOAD_GATEWAY: "0", NHD_BRAIN_ONLY: "0", ...envOverrides },
   });
   let log = ""; child.stdout.on("data", (b) => { log = (log + b).slice(-3000); }); child.stderr.on("data", (b) => { log = (log + b).slice(-3000); });
   for (let i = 0; i < 200; i++) {
@@ -179,6 +179,40 @@ test("code_run tích hợp: gọi tool chỉ đọc thật qua governor, từ ch
     assert.deepEqual(sc.value.refused, ["terminal_execute:TU_CHOI", "fs_apply_write:TU_CHOI", "fs_preview_write:TU_CHOI"]);
     assert.equal(existsSync(join(s.work, "pwned.txt")), false);
     assert.ok(sc.calls.some((c) => c.name === "fs_read" && c.ok));
+  } finally {
+    s.child.kill();
+    await Promise.race([new Promise((r) => s.child.once("exit", r)), sleep(3000)]);
+    rmSync(s.data, { recursive: true, force: true }); rmSync(s.work, { recursive: true, force: true });
+  }
+});
+
+test("code_run: dấu lượt gọi bên trong sống qua spread, không lẫn với extra thường", () => {
+  const marked = markCodeRunInnerExtra({ sessionId: "s" });
+  assert.equal(isCodeRunInnerExtra(marked), true);
+  assert.equal(isCodeRunInnerExtra({ ...marked }), true);
+  assert.equal(marked.sessionId, "s");
+  assert.equal(isCodeRunInnerExtra(markCodeRunInnerExtra(undefined)), true);
+  assert.equal(isCodeRunInnerExtra({ sessionId: "s" }), false);
+  assert.equal(isCodeRunInnerExtra(undefined), false);
+  assert.equal(isCodeRunInnerExtra(JSON.parse(JSON.stringify(marked))), false);
+});
+
+test("code_run tích hợp: lượt gọi bên trong nhận structuredContent gốc, không bị payload gateway nén", { timeout: 90000 }, async () => {
+  const s = await startServer({ NHD_RESULT_PAYLOAD_GATEWAY: "1" });
+  try {
+    const many = join(s.work, "many"); mkdirSync(many);
+    for (let i = 0; i < 300; i++) writeFileSync(join(many, "tep-so-" + String(i).padStart(4, "0") + "-ten-dai-cho-du-nguong.txt"), "x");
+    await rpc(s, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "code-run-test", version: "1.0" } });
+    const direct = await rpc(s, "tools/call", { name: "fs_list", arguments: { path: many, limit: 2000 } });
+    assert.ok(JSON.stringify(direct).includes("_nhdPayloadGateway"), "gọi trực tiếp phải bị gateway nén (để test có nghĩa)");
+    const out = await rpc(s, "tools/call", { name: "code_run", arguments: { code: `
+      const l = await tools.fs_list({ path: ${JSON.stringify(many)}, limit: 2000 });
+      return { keys: Object.keys(l).sort(), count: l.entries.length, entry: Object.keys(l.entries[0]).sort() };` } });
+    const sc = out.structuredContent;
+    assert.equal(sc.ok, true, JSON.stringify(sc).slice(0, 800));
+    assert.deepEqual(sc.value.keys, ["entries"]);
+    assert.equal(sc.value.count, 300);
+    assert.deepEqual(sc.value.entry, ["modifiedAt", "name", "path", "size", "type"]);
   } finally {
     s.child.kill();
     await Promise.race([new Promise((r) => s.child.once("exit", r)), sleep(3000)]);
