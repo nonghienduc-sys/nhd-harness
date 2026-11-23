@@ -2,7 +2,7 @@
 
 > GENERATED FILE. Do not maintain tool counts or capability policy by hand. Regenerate with `npm run docs:architecture` and verify with `npm run docs:architecture:check`.
 
-- Version: 0.24.46
+- Version: 0.24.47
 - Registered tools: 167
 - Registration source: `src/mcp-registries/*.ts`
 - Capability policy source: `src/capability-registry.ts`
@@ -174,7 +174,7 @@
 | `task_run_step` | Context | Task | mixed | background | read-only | no | no | none | Record lifecycle metadata for one durable task step. It never executes or approves the routed workstation action; call the existing routed tool separately, use its own confirmation flow, then record verified outcome/receipt linkage here. The confirm action only records task-state confirmation and never substitutes for a workstation tool confirmation. Interrupted or ambiguous actions must not be replayed automatically. |
 | `terminal_cancel` | Execution | Terminal | terminal | background | destructive | yes | no | terminal | Cancel an active terminal run and its process tree. |
 | `terminal_execute` | Execution | Terminal | terminal | background | destructive | yes | no | terminal | Execute an exact previewed PowerShell command using its command hash and unexpired one-time transaction token. Follow preview confirmationMode: minimal/low need no extra user turn, moderate can rely on the user's explicit task request, high requires a normal explicit confirmation, and critical requires the exact confirmation phrase. |
-| `terminal_preview` | Execution | Terminal | terminal | background | dynamic | no | no | terminal | Preview and score one PowerShell command on a 0-100 danger scale. Optional task_run_id enables a previously user-authorized high-risk scope for this task; critical commands still require the exact critical phrase. The command is not run. |
+| `terminal_preview` | Execution | Terminal | terminal | background | dynamic | no | no | terminal | Preview and score one PowerShell command on a 0-100 danger scale. Optional task_run_id enables a previously user-authorized high-risk scope for this task; critical commands still require the exact critical phrase. The command is not run. Read-only file inspection: use code_run instead. |
 | `terminal_session` | Execution | Terminal | terminal | background | dynamic | no | no | terminal | Manage a bounded persistent terminal context. Sessions retain only approved cwd/environment metadata and bounded verified step history; they never bypass Terminal preview/confirmation. |
 | `terminal_session_execute` | Execution | Terminal | terminal | background | destructive | yes | no | terminal | Execute an exact command previously previewed for a persistent terminal session using the original one-time transaction token/hash. Follow the preview confirmationMode; only critical commands require the exact critical phrase. No automatic retry occurs after failure or ambiguity. |
 | `terminal_session_preview` | Execution | Terminal | terminal | background | dynamic | no | no | terminal | Preview and score one command inside a persistent terminal context on the same 0-100 danger scale. Uses the session cwd and approved environment delta, but does not execute the command. |

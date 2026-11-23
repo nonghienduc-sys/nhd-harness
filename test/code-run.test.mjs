@@ -219,3 +219,23 @@ test("code_run tích hợp: lượt gọi bên trong nhận structuredContent g�
     rmSync(s.data, { recursive: true, force: true }); rmSync(s.work, { recursive: true, force: true });
   }
 });
+
+test("isReadOnlyFileInspection: lệnh chỉ đọc tệp → gợi ý code_run; lệnh ghi/chạy → không", async () => {
+  const { isReadOnlyFileInspection } = await import("../dist/terminal.js");
+  const yes = [
+    "Get-ChildItem 'D:/x/src' -Filter *.ts | ForEach-Object { [pscustomobject]@{ Name=$_.Name; Lines=(Get-Content $_.FullName | Measure-Object -Line).Lines } } | Sort-Object Lines -Descending | Select-Object -First 3",
+    "Select-String -Path D:/x/*.ts -Pattern registerTool | Group-Object Path | Sort-Object Count",
+    "$f = Get-ChildItem D:/x -Recurse; $f | Measure-Object",
+  ];
+  const no = [
+    "Get-ChildItem D:/x | Remove-Item",
+    "Get-Content a.txt > b.txt",
+    "Get-ChildItem D:/x | ForEach-Object { Set-Content $_.FullName 'x' }",
+    "npm test",
+    "& 'script.ps1'",
+    "Get-ChildItem D:/x | Out-File list.txt",
+    "Measure-Object",
+  ];
+  for (const c of yes) assert.equal(isReadOnlyFileInspection(c), true, c);
+  for (const c of no) assert.equal(isReadOnlyFileInspection(c), false, c);
+});

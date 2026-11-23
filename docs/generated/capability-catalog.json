@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.24.46",
+  "version": "0.24.47",
   "sourceOfTruth": {
     "registration": "src/mcp-registries/*.ts",
     "capabilityPolicy": "src/capability-registry.ts",
@@ -2276,7 +2276,7 @@
         "terminal"
       ],
       "annotation": "preview",
-      "description": "Preview and score one PowerShell command on a 0-100 danger scale. Optional task_run_id enables a previously user-authorized high-risk scope for this task; critical commands still require the exact critical phrase. The command is not run."
+      "description": "Preview and score one PowerShell command on a 0-100 danger scale. Optional task_run_id enables a previously user-authorized high-risk scope for this task; critical commands still require the exact critical phrase. The command is not run. Read-only file inspection: use code_run instead."
     },
     {
       "name": "terminal_session",

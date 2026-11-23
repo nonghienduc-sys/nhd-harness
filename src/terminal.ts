@@ -21,6 +21,25 @@ export type TerminalServiceOptions = {
   wordProcessProvider?: WordProcessProvider;
 };
 
+// v0.24.47: lệnh chỉ đọc/đếm tệp → gợi ý code_run (không cần preview/token, 1 lượt).
+const CODE_RUN_ADVICE = "Read-only file inspection: prefer one code_run (tools.fs_list/fs_read/fs_search), no preview/token needed.";
+const READ_ONLY_CMDLETS = new Set(["get-childitem","gci","ls","dir","get-content","gc","cat","type","select-string","sls","measure-object","measure","sort-object","sort","select-object","select","where-object","where","?","foreach-object","foreach","%","format-table","ft","format-list","fl","group-object","group","test-path","get-item","gi","resolve-path","split-path","join-path","out-string","get-filehash","convertto-json","write-output","echo"]);
+export function isReadOnlyFileInspection(command: string): boolean {
+  let text = command;
+  for (let i = 0; i < 4; i += 1) text = text.replace(/\{[^{}]*\}/g, (m) => m.replace(/[{}|;\r\n]/g, " "));
+  if (/[{}]|(^|[^-])>|(^|\s)[&.]\s|\b(set|add|new|remove|move|copy|rename|clear|out)-(?!string\b)[a-z]+|\binvoke-|\bstart-|\b(rm|del|mv|cp|ni|iex)\b|\[(io\.)?file\]::(write|append|delete|move|copy)/i.test(text)) return false;
+  const segments = text.split(/[|;\r\n]+/).map((x) => x.trim()).filter(Boolean);
+  if (!segments.length) return false;
+  let sawRead = false;
+  for (const segment of segments) {
+    const head = segment.replace(/^\$[\w:]+\s*=\s*/, "").replace(/^[(@]+/, "").split(/\s+/)[0]?.toLowerCase() ?? "";
+    if (/^\$[\w:]+$/.test(head)) continue;
+    if (!READ_ONLY_CMDLETS.has(head)) return false;
+    if (/^(get-childitem|gci|ls|dir|get-content|gc|cat|type|select-string|sls)$/.test(head)) sawRead = true;
+  }
+  return sawRead;
+}
+
 export class TerminalService {
   private readonly running = new Map<string, { pid: number; startedAt: string }>();
   private readonly maxConcurrentRuns: number;
@@ -84,7 +103,8 @@ export class TerminalService {
     const pending = this.store.createPending("terminal", { command, cwd: workdir, timeoutSeconds: effectiveTimeoutSeconds, requestedTimeoutSeconds, launchMode, standaloneScriptPath: inspection.standaloneScriptPath, risk, riskScore: assessment.score, riskLevel: assessment.level, confirmationMode: effectiveConfirmationMode, riskReasons: assessment.reasons, commandHash, criticalConfirmation, environment: executionEnvironment, taskRunId: taskRunId ?? null, wordCleanup, taskAuthorizationId: taskAuthorization?.id ?? null }, commandHash);
     this.store.audit("terminal_preview", "pending", { actionId: pending.id, cwd: workdir, risk, riskScore: assessment.score, riskLevel: assessment.level, confirmationMode: assessment.confirmationMode, riskReasons: assessment.reasons, command: redact(command) });
     const advice = /\.docx\b/i.test(inspection.text) && /Document\s*\(|python-docx|from\s+docx\b|\.save\s*\(/i.test(inspection.text)
-      ? "Với văn bản theo mẫu hãy dùng doc_from_template + doc_format_check." : undefined;
+      ? "Với văn bản theo mẫu hãy dùng doc_from_template + doc_format_check."
+      : isReadOnlyFileInspection(command) ? CODE_RUN_ADVICE : undefined;
     return {
       ...(advice ? { advice } : {}),
       actionId: pending.id,
