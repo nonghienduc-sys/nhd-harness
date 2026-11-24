@@ -1,3 +1,4 @@
+import { assertPaymentAction } from "./payment-policy.js";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, renameSync, unlinkSync, openSync, closeSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
@@ -131,6 +132,7 @@ export class PlaybookRunner {
       if (missing.length) throw Error("PLAYBOOK_MISSING_VARIABLES: " + missing.join(", "));
       const evidences: any[] = [];
       for (const gate of gates) {
+        assertPaymentAction(gate.cmd, "command");
         const out = await this.opts.executeGate(gate.cmd,gate.cwd,gate.timeout_s,input.task_run_id);
         const at = out.completedAt ?? new Date().toISOString();
         const verified = verifyReceiptChecks([{

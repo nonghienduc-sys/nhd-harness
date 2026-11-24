@@ -1,3 +1,4 @@
+import { assertPaymentTool } from "./payment-policy.js";
 // v0.24.44 — code_run: chạy một đoạn JavaScript gọi nhiều tool CHỈ ĐỌC của harness trong một lượt,
 // chỉ trả giá trị cuối về client (nguyên lý "Code Mode").
 //
@@ -181,6 +182,7 @@ export async function runCodeScript(options: CodeRunOptions, deps: CodeRunDeps):
         if (calls.length < CODE_RUN_LIMITS.maxCallRecords) calls.push({ name, ok, ms: Date.now() - t0, ...(error ? { error: error.slice(0, 300) } : {}) });
       };
       try {
+        assertPaymentTool(name, args);
         const denied = await deps.checkTool(name);
         if (denied) { record(false, denied); return reply(id, { ok: false, error: denied }); }
         const out = toolOutputValue(await deps.callTool(name, args));

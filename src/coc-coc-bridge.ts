@@ -1,3 +1,4 @@
+import { assertPaymentAction, isPaymentAction } from "./payment-policy.js";
 import { randomBytes } from "node:crypto";
 import { Store } from "./db.js";
 import { canonicalizeBrowserResource, createEphemeralOwnerId, resolveEphemeralOwnerId, resolveTaskRunId } from "./resource-guard.js";
@@ -327,6 +328,7 @@ export class CocCocBridgeService {
     if (text.length > 500) throw new Error("Cốc Cốc fill text is limited to 500 characters.");
     const cached = this.resolveSelector(selectorId);
     const description = `${cached.meta.type} ${cached.meta.name} ${cached.meta.text}`;
+    assertPaymentAction(description);
     if (cached.meta.type === "password" || cached.meta.type === "file" || BLOCKED_FIELD_PATTERN.test(description)) throw new Error("Sensitive Cốc Cốc field is blocked.");
     const tabUrl = this.tabs.get(cached.tabId)?.url ?? "";
     const canvaSemanticText = /^https:\/\/(?:[^/]+\.)?canva\.com\//i.test(tabUrl) && cached.meta.role === "group" && Boolean(cached.meta.text || cached.meta.name);
@@ -418,6 +420,7 @@ export class CocCocBridgeService {
   }) {
     const selector = input.selectorId ? this.resolveSelector(input.selectorId) : null;
     const tab = selector ? this.chooseSpecificTab(selector.tabId) : this.chooseSpecificTab(input.tabId);
+    if (selector) assertPaymentAction(`${selector.meta.type} ${selector.meta.name} ${selector.meta.text} ${selector.meta.href}`);
     if (selector && selector.tabId !== tab.tabId) throw new Error("Cốc Cốc selector belongs to a different tab.");
     if (input.action === "focus" || input.action === "hover") {
       if (!selector) throw new Error(`selector_id is required for ${input.action}.`);
@@ -522,6 +525,7 @@ export class CocCocBridgeService {
 
   async tabAction(input: { action: "list" | "open" | "activate" | "navigate" | "reload" | "back" | "forward" | "close"; tabId?: number; url?: string; active?: boolean; taskRunId?: string }) {
     if (input.action === "list") return this.browserTabs();
+    if (["open", "navigate"].includes(input.action)) assertPaymentAction(input.url);
     if (["open", "navigate"].includes(input.action)) {
       if (!input.url || !/^https?:\/\//i.test(input.url)) throw new Error("Cốc Cốc tab URL must be explicit HTTP/HTTPS.");
     }
@@ -567,6 +571,7 @@ export class CocCocBridgeService {
 
   private assessClickMeta(meta: Omit<CocCocControl, "selectorId">): CocCocClickRisk {
     const description = `${meta.role} ${meta.name} ${meta.text} ${meta.href}`;
+    if (isPaymentAction(description)) return { level: "high", category: "payment", reason: "PAYMENT_BLOCKED: payment action is platform-hard-denied.", taskAuthorizationRequired: true, hardDenied: true };
     if (/^javascript:/i.test(meta.href)) return { level: "critical", category: "script_protocol", reason: "Script-protocol navigation is never allowed.", taskAuthorizationRequired: true, hardDenied: true };
     if (/^tel:/i.test(meta.href)) return { level: "high", category: "call", reason: "Phone/voice call protocol is platform-hard-denied.", taskAuthorizationRequired: true, hardDenied: true };
     if (/^(?:mailto|sms):/i.test(meta.href)) return { level: "high", category: "external_protocol", capabilityAction: "external_protocol", reason: "External communication protocol requires explicit high-risk task scope.", taskAuthorizationRequired: true };
@@ -613,6 +618,7 @@ export class CocCocBridgeService {
     if (risk.level === "low") return null;
     if (risk.level === "critical") throw new Error(`Cốc Cốc action is blocked by workstation safety policy: ${risk.reason}`);
     if (risk.hardDenied || isHardDeniedCapability(risk.category)) {
+      if (risk.reason.startsWith("PAYMENT_BLOCKED")) throw new Error("PAYMENT_BLOCKED: payment action is platform-hard-denied and outside the durable task objective; it remains blocked.");
       throw new Error(`Cốc Cốc high-risk '${risk.category}' action is platform-hard-denied and outside the durable task objective; it remains blocked.`);
     }
     if (!taskRunId || !this.taskAuthorizations) {

@@ -1,3 +1,4 @@
+import { isPaymentAction } from "./payment-policy.js";
 import { createHmac, randomUUID } from "node:crypto";
 import { NativeWinAppExecutor } from "./winapp-uia.js";
 import { AppConfig } from "./config.js";
@@ -251,6 +252,7 @@ export class DesktopService {
 
   private assessControl(control: DesktopControl, action: "invoke" | "set_text"): DesktopRisk {
     const label = `${control.name ?? ""} ${control.automationId ?? ""} ${control.className ?? ""} ${control.controlType ?? ""}`.normalize("NFKC");
+    if (isPaymentAction(label)) return { level: "blocked", category: "credentials", reason: "PAYMENT_BLOCKED: payment action is platform-hard-denied.", capabilityRequired: false };
     if (control.password || HARD_DENY.test(label)) return { level: "blocked", category: "credentials", reason: "Credential/payment/transfer/purchase/call controls remain hard-denied.", capabilityRequired: false };
     if (action === "set_text") {
       if (MESSAGE_COMPOSE.test(label)) return { level: "moderate", category: "send", reason: "Message/prompt composition is allowed only inside a scoped send capability lease.", capabilityRequired: true };

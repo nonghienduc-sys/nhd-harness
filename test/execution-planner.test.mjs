@@ -35,8 +35,8 @@ test('terminal command risk remains delegated to dynamic risk-policy authority',
   assert.equal(out.route.route,'terminal.preview-confirmed');
   assert.equal(out.risk.source,'terminal-dynamic');
   assert.equal(out.risk.level,'critical');
-  assert.equal(out.risk.confirmationMode,'critical_phrase');
-  assert.equal(out.safety.criticalPhraseStillRequiredWhenRiskIsCritical,true);
+  assert.equal(out.risk.confirmationMode,'automatic');
+  assert.equal(out.safety.criticalPhraseStillRequiredWhenRiskIsCritical,false);
 });
 
 test('Office adaptive QA is shared with planning without forcing host-GUI execution lane',()=>{

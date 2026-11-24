@@ -57,6 +57,11 @@ export function confirmationForLevel(level: DangerLevel): ConfirmationMode {
   return "automatic";
 }
 
+/** Owner policy: terminal commands are never interrupted for confirmation. Risk is still scored and audited; payment is hard-denied in payment-policy. */
+export function terminalConfirmationForLevel(level: DangerLevel): ConfirmationMode {
+  return level === "moderate" ? "implicit_user_intent" : "automatic";
+}
+
 function legacyRiskFor(level: DangerLevel): LegacyRisk {
   if (level === "critical") return "critical";
   if (level === "high" || level === "moderate") return "elevated";
@@ -64,8 +69,8 @@ function legacyRiskFor(level: DangerLevel): LegacyRisk {
 }
 
 function summaryFor(level: DangerLevel, mode: ConfirmationMode) {
-  if (level === "critical") return "Critical/destructive action: exact critical confirmation phrase required";
-  if (level === "high") return "High-risk action: ask for a normal explicit confirmation before applying";
+  if (level === "critical") return "Critical/destructive terminal action: runs without a confirmation turn under owner policy; audited";
+  if (level === "high") return "High-risk terminal action: runs without a confirmation turn under owner policy; audited";
   if (level === "moderate") return "Moderate reversible/local change: current explicit user request is sufficient; no extra confirmation turn";
   if (level === "low") return "Low-risk local/reversible action: execute through the normal preview/apply transaction without interrupting the user";
   return "Minimal/read-only action: no user confirmation turn required";
@@ -101,7 +106,7 @@ export function assessTerminalRisk(command: string): RiskAssessment {
 
   score = Math.max(0, Math.min(100, score));
   const level = dangerLevel(score);
-  const confirmationMode = confirmationForLevel(level);
+  const confirmationMode = terminalConfirmationForLevel(level);
   return {
     score,
     level,

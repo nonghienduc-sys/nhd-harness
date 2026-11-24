@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { isPaymentAction } = require('../dist/payment-policy.js');
 
 const hardDeniedControl = /\b(password|passcode|otp|cvv|cvc|card\s*number|credit\s*card|bank\s*account|routing\s*number|payment|pay\b|checkout|billing|transfer|wire|withdraw|purchase|buy\s*now|place\s*order|call|video\s*call|voice\s*call|credential|secret|api[_ -]?key|token)\b/i;
 const messageComposeControl = /\b(message input|type a message|compose message|ask anything|chat input|prompt input|message box|soan tin|nhap tin nhan|noi dung tin nhan)\b/i;
@@ -32,6 +33,7 @@ function createDesktopCapabilityPolicy(secret) {
 
   function classifyControl(control, action) {
     const label = labelOf(control);
+    if (isPaymentAction(label)) return { blocked: true, category: 'hard_deny', reason: 'PAYMENT_BLOCKED: platform-hard-denied' };
     if (control?.password || hardDeniedControl.test(label)) return { blocked: true, category: 'hard_deny', reason: 'platform-hard-denied' };
     if (action === 'set_text' && messageComposeControl.test(label)) return { blocked: false, category: 'send', mode: 'presence' };
     if (action === 'invoke') {

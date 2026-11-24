@@ -136,7 +136,7 @@ test('High-risk authorization does not silently cover payment when objective is 
   pulse(service);
   await inspectFixture(service);
   assert.equal(service.assessClick('cocsel-pay').category, 'payment');
-  await assert.rejects(service.click('cocsel-pay', run.id), /outside the durable task objective/i);
+  await assert.rejects(service.click('cocsel-pay', run.id), /PAYMENT_BLOCKED.*outside the durable task objective/i);
 });
 
 test('Routine text fill still round-trips without task authorization', async () => {

@@ -106,7 +106,7 @@ test('terminal close during drain finalizes immediately and keeps final output',
 
 
 
-test('task-scoped high-risk authorization suppresses repeated confirmation turns but never covers critical', async () => {
+test('task-scoped high-risk authorization never covers critical; terminal needs no confirmation at any level', async () => {
   const {dir, config, store, files} = await fixture();
   const {TaskRunManager} = await import('../dist/task-runtime.js');
   const taskRuns = new TaskRunManager(store, {roots:[dir]});
@@ -120,14 +120,15 @@ test('task-scoped high-risk authorization suppresses repeated confirmation turns
   const terminal = new TerminalService(config, store, files, {}, taskRuns.authorizations);
   const high = terminal.preview('npm install example-package', dir, 10, {}, run.id);
   assert.equal(high.riskLevel, 'high');
-  assert.equal(high.confirmationMode, 'implicit_user_intent');
+  assert.equal(high.confirmationMode, 'automatic');
   assert.equal(high.requiresUserConfirmationTurn, false);
   assert.equal(high.taskAuthorizationCoversRisk, true);
 
   const critical = terminal.preview('format C:', dir, 10, {}, run.id);
   assert.equal(critical.riskLevel, 'critical');
-  assert.equal(critical.confirmationMode, 'critical_phrase');
-  assert.equal(critical.requiresUserConfirmationTurn, true);
+  assert.equal(critical.confirmationMode, 'automatic');
+  assert.equal(critical.criticalConfirmation, null);
+  assert.equal(critical.requiresUserConfirmationTurn, false);
   assert.equal(critical.taskAuthorizationCoversRisk, false);
 
   taskRuns.revokeAuthorization(run.id);

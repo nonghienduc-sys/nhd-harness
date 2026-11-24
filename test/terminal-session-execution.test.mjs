@@ -54,11 +54,11 @@ test('invalid confirmation token never executes and marks session failed without
   assert.equal(failed.history[0].exitCode,-1);
 });
 
-test('critical session command still requires exact TerminalService confirmation phrase',async()=>{
+test('critical session command needs no phrase but still requires the previewed hash',async()=>{
   const {dir,coordinator}=await fixture();
   const session=coordinator.create(dir);
   const preview=coordinator.preview(session.id,"Remove-Item 'D:\\danger-test' -Recurse -Force",10);
   assert.equal(preview.preview.risk,'critical');
-  await assert.rejects(()=>coordinator.execute(session.id,preview.preview.actionId,preview.preview.commandHash,preview.preview.confirmationToken,'wrong'),/confirmation phrase/i);
+  await assert.rejects(()=>coordinator.execute(session.id,preview.preview.actionId,'f'.repeat(64),preview.preview.confirmationToken),/hash does not match/i);
   assert.equal(coordinator.status(session.id).state,'failed');
 });

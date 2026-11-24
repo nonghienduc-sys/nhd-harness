@@ -1,3 +1,4 @@
+import { assertPaymentAction } from "./payment-policy.js";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomBytes, createHash } from "node:crypto";
 import { existsSync, statSync } from "node:fs";
@@ -166,6 +167,7 @@ export class BackgroundTurboService {
   stop() { for (const w of this.psWorkers) w.stop(); this.pyWorker.stop(); }
   status() { return { available: true, version: "1.0.0", mode: "background-turbo", maxConcurrency: this.maxConcurrency, microFastLane: true, dagScheduler: true, zeroCopyArtifacts: true, projectHotCache: { entries: this.projectCache.size, ttlMs: 2500 }, workers: { powershell: this.psWorkers.map((w) => w.status()), python: this.pyWorker.status() }, metrics: { ...this.metricsState }, fileCache: typeof (this.files as any).cacheStatus === "function" ? (this.files as any).cacheStatus() : { available: false } }; }
   async execPowerShellQuery(command: string, cwd = "D:\\") {
+    assertPaymentAction(command, "command");
     if (!isTurboSafePowerShell(command)) throw new Error("Background Turbo PowerShell fast path accepts only bounded read-only query commands; use normal Terminal preview/apply for anything else.");
     const safeCwd = this.files.resolvePath(cwd); const worker = this.psWorkers[this.rr++ % this.psWorkers.length]; this.metricsState.psFastCalls += 1;
     const response = await worker.request({ cwd: safeCwd, commandBase64: Buffer.from(command,"utf8").toString("base64") }, 10000);

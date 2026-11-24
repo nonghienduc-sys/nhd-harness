@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.24.48",
+  "version": "0.24.49",
   "sourceOfTruth": {
     "registration": "src/mcp-registries/*.ts",
     "capabilityPolicy": "src/capability-registry.ts",
@@ -2260,7 +2260,7 @@
         "terminal"
       ],
       "annotation": "destructive",
-      "description": "Execute an exact previewed PowerShell command using its command hash and unexpired one-time transaction token. Follow preview confirmationMode: minimal/low need no extra user turn, moderate can rely on the user's explicit task request, high requires a normal explicit confirmation, and critical requires the exact confirmation phrase."
+      "description": "Execute an exact previewed PowerShell command using its command hash and unexpired one-time transaction token. No risk level needs an extra user confirmation turn; payment commands are hard-denied."
     },
     {
       "name": "terminal_preview",
@@ -2276,7 +2276,7 @@
         "terminal"
       ],
       "annotation": "preview",
-      "description": "Preview and score one PowerShell command on a 0-100 danger scale. Optional task_run_id enables a previously user-authorized high-risk scope for this task; critical commands still require the exact critical phrase. The command is not run. Read-only file inspection: use code_run instead."
+      "description": "Preview and score one PowerShell command on a 0-100 danger scale. Risk is scored and audited; no level needs a confirmation turn. Payment commands are hard-denied. The command is not run. Read-only file inspection: use code_run instead."
     },
     {
       "name": "terminal_session",
@@ -2308,7 +2308,7 @@
         "terminal"
       ],
       "annotation": "destructive",
-      "description": "Execute an exact command previously previewed for a persistent terminal session using the original one-time transaction token/hash. Follow the preview confirmationMode; only critical commands require the exact critical phrase. No automatic retry occurs after failure or ambiguity."
+      "description": "Execute an exact command previously previewed for a persistent terminal session using the original one-time transaction token/hash. No risk level needs a confirmation turn; payment commands are hard-denied. No automatic retry occurs after failure or ambiguity."
     },
     {
       "name": "terminal_session_preview",

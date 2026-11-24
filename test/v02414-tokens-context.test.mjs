@@ -64,7 +64,7 @@ test('context header is compact and handshake fires once per idle window', () =>
 test('server instructions are short, client-neutral and keep the mandatory gates', () => {
   assert.ok(SERVER_INSTRUCTIONS.length < 4800, 'length ' + SERVER_INSTRUCTIONS.length);
   assert.equal(/ChatGPT/.test(SERVER_INSTRUCTIONS), false);
-  for (const must of ['context_bootstrap', 'CONFIRM CRITICAL', 'office_admin_release_prepare', 'office_admin_release_view_page', 'hard-denied', 'IEX', 'isolated_', 'project_rag_query', 'context_payload_artifact', 'QA2', 'BRAIN ROLE', 'delegate_task']) {
+  for (const must of ['context_bootstrap', 'payment commands are hard-denied', 'office_admin_release_prepare', 'office_admin_release_view_page', 'hard-denied', 'IEX', 'isolated_', 'project_rag_query', 'context_payload_artifact', 'QA2', 'BRAIN ROLE', 'delegate_task']) {
     assert.ok(SERVER_INSTRUCTIONS.includes(must), 'missing ' + must);
   }
 });

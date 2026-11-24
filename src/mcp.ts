@@ -1,4 +1,5 @@
 import { SERVER_INSTRUCTIONS } from "./server-instructions.js";
+import { assertPaymentTool } from "./payment-policy.js";
 import { ContextHandshakeService, buildContextHeader, prependText, shapeToolOutput, formatForClient, omitAdvertisedSchema } from "./output-shaping.js";
 import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { catalogueTool, toolCatalogCore, toolCatalogMode } from "./tool-catalog.js";
@@ -142,6 +143,7 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
   const capturedTools = new Map<string, CapturedTool>();
   (server as any).registerTool = (name: string, definition: any, handler: any) => {
     const wrapped = async (...args: any[]) => {
+      try { assertPaymentTool(name, args[0]); } catch (error) { return failure(error); }
       if (isBrainOnlyActive() && !brainOnlyAllows(name)) return brainOnlyDenied(name);
       if (isBrainDetached() && !brainDetachedAllows(name)) return brainDetachedDenied(name);
       if (name === "delegate_task" && isDelegationBlocked()) {
@@ -282,6 +284,7 @@ export function createWorkstationMcp(runtimeContext: WorkstationRuntime, request
     codeRunInnerCall = (name, args, extra) => originalCall({ method: "tools/call", params: { name, arguments: args } }, markCodeRunInnerExtra(extra));
     protocol.setRequestHandler(CallToolRequestSchema, async (request: any, extra: any) => {
       const name = String(request?.params?.name ?? "");
+      try { assertPaymentTool(name, request?.params?.arguments); } catch (error) { return failure(error); }
       let output: any;
       try { output = await originalCall(request, extra); }
       catch (error) {

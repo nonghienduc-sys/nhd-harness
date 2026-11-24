@@ -265,7 +265,7 @@ export class UnifiedExecutionPlanner {
         hostForegroundAllowed: false,
         authorizationStillEnforcedByActionTool: true,
         userMethodConstraintsPreserved: intentPolicy.methodLocked,
-        criticalPhraseStillRequiredWhenRiskIsCritical: risk.level === "critical",
+        criticalPhraseStillRequiredWhenRiskIsCritical: risk.confirmationMode === "critical_phrase",
       },
     };
   }

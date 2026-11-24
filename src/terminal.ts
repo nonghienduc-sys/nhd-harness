@@ -10,6 +10,7 @@ import { TaskAuthorizationService } from "./task-authorization.js";
 import { BackgroundTurboService, isTurboSafePowerShell } from "./background-turbo.js";
 import { cleanWordProcesses, nativeWordProcessProvider, wordCleanupEnabled, type WordProcessProvider, type WordProcessInfo } from "./word-cleanup.js";
 import { receiptStaleWarnings } from "./receipt-write.js";
+import { assertPaymentAction } from "./payment-policy.js";
 
 export type Risk = "normal" | "elevated" | "critical";
 
@@ -78,6 +79,7 @@ export class TerminalService {
     const workdir = this.files.resolvePath(cwd);
     if (!existsSync(workdir) || !statSync(workdir).isDirectory()) throw new Error("Terminal working directory must be an existing directory.");
     const inspection = this.inspectCommand(command, workdir);
+    assertPaymentAction(inspection.text, "command");
     this.assertPowerShellPolicy(inspection.text);
     if (inspection.referencedScriptPath && !inspection.standaloneScriptPath) {
       throw new Error("POWERSHELL_SCRIPT_RUNNER_REQUIRED: .ps1 fallback must be invoked as one standalone argument-free script (for example: & 'script.ps1'). MCP reads the file as UTF-8 and executes it through -EncodedCommand; nested powershell -File and script arguments are blocked to avoid encoding/quoting ambiguity.");
@@ -95,8 +97,8 @@ export class TerminalService {
     const commandHash = sha256(`${workdir}\n${command}\n${environmentFingerprint}`);
     const taskAuthorization = taskRunId && this.taskAuthorizations ? this.taskAuthorizations.active(taskRunId) : null;
     const taskAuthorizedHigh = Boolean(taskRunId && this.taskAuthorizations?.allows(taskRunId, assessment.level));
-    const effectiveConfirmationMode = taskAuthorizedHigh && assessment.level !== "critical" ? "implicit_user_intent" : assessment.confirmationMode;
-    const criticalConfirmation = assessment.confirmationMode === "critical_phrase" ? `CONFIRM CRITICAL ${commandHash.slice(0, 12).toUpperCase()}` : null;
+    const effectiveConfirmationMode = assessment.confirmationMode;
+    const criticalConfirmation: string | null = null;
     const requestedTimeoutSeconds = Math.min(Math.max(timeoutSeconds, 1), 1800);
     const effectiveTimeoutSeconds = requestedTimeoutSeconds;
     const launchMode = inspection.standaloneScriptPath ? "utf8_encoded_script" : /[^\x00-\x7F]/.test(command) ? "utf8_encoded_command" : "command";
@@ -116,7 +118,7 @@ export class TerminalService {
       riskScore: assessment.score,
       riskLevel: assessment.level,
       confirmationMode: effectiveConfirmationMode,
-      requiresUserConfirmationTurn: effectiveConfirmationMode === "explicit_user_confirmation" || effectiveConfirmationMode === "critical_phrase",
+      requiresUserConfirmationTurn: false,
       riskReasons: assessment.reasons,
       criticalConfirmation,
       environmentNames: Object.keys(executionEnvironment).sort(),
@@ -132,7 +134,7 @@ export class TerminalService {
     };
   }
 
-  async execute(actionId: string, commandHash: string, confirmationToken: string, criticalConfirmation?: string): Promise<Record<string, unknown>> {
+  async execute(actionId: string, commandHash: string, confirmationToken: string, _criticalConfirmation?: string): Promise<Record<string, unknown>> {
     const pending = this.store.getPending(actionId);
     const taskRunId = typeof pending.payload.taskRunId === "string" ? pending.payload.taskRunId : null;
     const enabled = pending.payload.wordCleanup !== false && wordCleanupEnabled() && this.wordMonitoringEnabled;
@@ -143,7 +145,7 @@ export class TerminalService {
       catch (error) { initialError = String(error); }
     }
     const startedAt = Date.now();
-    const output = await this.executeCore(actionId, commandHash, confirmationToken, criticalConfirmation);
+    const output = await this.executeCore(actionId, commandHash, confirmationToken);
     const endedAt = Date.now();
     if (enabled && !initialError) {
       output.word_cleanup = await cleanWordProcesses({
@@ -157,21 +159,18 @@ export class TerminalService {
     return output;
   }
 
-  private async executeCore(actionId: string, commandHash: string, confirmationToken: string, criticalConfirmation?: string): Promise<Record<string, unknown>> {
+  private async executeCore(actionId: string, commandHash: string, confirmationToken: string): Promise<Record<string, unknown>> {
     if (this.config.emergencyStop || !this.config.terminalEnabled) throw new Error("Terminal is disabled.");
     this.pruneDeadRuns();
     if (this.running.size >= this.maxConcurrentRuns) throw new Error(`At most ${this.maxConcurrentRuns} terminal processes may run concurrently.`);
     const previewed = this.store.getPending(actionId);
     if (previewed.kind !== "terminal") throw new Error("Pending action is not a terminal command.");
+    assertPaymentAction(this.inspectCommand(String(previewed.payload.command), String(previewed.payload.cwd)).text, "command");
     const taskRunId = previewed.payload.taskRunId == null ? "" : String(previewed.payload.taskRunId);
     const riskLevel = String(previewed.payload.riskLevel ?? "minimal") as "minimal" | "low" | "moderate" | "high" | "critical";
-    if (riskLevel === "high" && taskRunId && !this.taskAuthorizations?.allows(taskRunId, "high")) throw new Error("Task-scoped authorization is missing or expired for this high-risk command.");
     const pending = this.store.consumePending(actionId, confirmationToken);
     if (pending.kind !== "terminal") throw new Error("Pending action is not a terminal command.");
     if (String(pending.payload.commandHash) !== commandHash || pending.expectedHash !== commandHash) throw new Error("Command hash does not match the preview.");
-    if (pending.payload.risk === "critical" && String(pending.payload.criticalConfirmation) !== String(criticalConfirmation ?? "")) {
-      throw new Error("Critical command confirmation phrase does not match the preview.");
-    }
     const command = String(pending.payload.command);
     const cwd = String(pending.payload.cwd);
     const timeoutSeconds = Number(pending.payload.timeoutSeconds ?? 120);
@@ -320,6 +319,7 @@ export class TerminalService {
     if (launchMode === "utf8_encoded_script" && standaloneScriptPath) {
       const resolved = this.files.resolvePath(isAbsolutePath(standaloneScriptPath) ? standaloneScriptPath : resolvePath(cwd, standaloneScriptPath));
       body = readFileSync(resolved, "utf8").replace(/^\uFEFF/, "");
+      assertPaymentAction(body, "command");
       this.assertPowerShellPolicy(body);
     }
     const preamble = "$utf8 = New-Object System.Text.UTF8Encoding($false); [Console]::InputEncoding = $utf8; [Console]::OutputEncoding = $utf8; $OutputEncoding = $utf8; ";

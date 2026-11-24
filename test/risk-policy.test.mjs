@@ -36,24 +36,24 @@ test('local file write is moderate and can rely on current explicit user intent'
   assert.equal(out.legacyRisk, 'elevated');
 });
 
-test('package installation is high risk and asks for normal explicit confirmation', () => {
+test('package installation is high risk and runs without confirmation', () => {
   const out = assessTerminalRisk('npm install some-package');
   assert.equal(out.level, 'high');
-  assert.equal(out.confirmationMode, 'explicit_user_confirmation');
+  assert.equal(out.confirmationMode, 'automatic');
   assert.equal(out.legacyRisk, 'elevated');
 });
 
 test('git push is high risk but does not use the critical phrase', () => {
   const out = assessTerminalRisk('git push origin main');
   assert.equal(out.level, 'high');
-  assert.equal(out.confirmationMode, 'explicit_user_confirmation');
+  assert.equal(out.confirmationMode, 'automatic');
 });
 
 test('disk format and recursive delete remain critical', () => {
   for (const command of ['format C:', "Remove-Item 'D:\\data' -Recurse -Force"]) {
     const out = assessTerminalRisk(command);
     assert.equal(out.level, 'critical');
-    assert.equal(out.confirmationMode, 'critical_phrase');
+    assert.equal(out.confirmationMode, 'automatic');
     assert.equal(out.legacyRisk, 'critical');
   }
 });

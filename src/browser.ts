@@ -1,3 +1,4 @@
+import { assertPaymentAction } from "./payment-policy.js";
 import { ChildProcess, spawn } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
@@ -303,6 +304,7 @@ export class BrowserService {
     if (text.length > 500) throw new Error("Browser fill text is limited to 500 characters.");
     const cached = await this.resolveSelector(selectorId);
     const description = `${cached.meta.type} ${cached.meta.name} ${cached.meta.text}`;
+    assertPaymentAction(description);
     if (cached.meta.type === "password" || cached.meta.type === "file" || blockedFieldPattern.test(description)) throw new Error("Sensitive browser field is blocked.");
     if (!(["input", "textarea", "select"].includes(cached.meta.tag) || cached.meta.role === "textbox")) throw new Error("Browser fill is limited to editable text controls.");
     const targetGuard = this.guardTargetMutation(cached.targetId, taskRunId, "browser_fill", explicitEphemeralOwnerId);
@@ -499,6 +501,7 @@ export class BrowserService {
   }
 
   private safeUrl(urlInput: string) {
+    assertPaymentAction(urlInput);
     const url = new URL(urlInput);
     if (!(["http:", "https:"].includes(url.protocol))) throw new Error("Browser navigation allows HTTP/HTTPS URLs only.");
     return url.toString();
@@ -506,6 +509,7 @@ export class BrowserService {
 
   private assertSafeAction(meta: Omit<BrowserControl, "selectorId">) {
     const description = `${meta.role} ${meta.name} ${meta.text} ${meta.href}`;
+    assertPaymentAction(description);
     if (blockedActionPattern.test(description)) throw new Error("Browser control is blocked by workstation safety policy.");
     if (meta.type === "file") throw new Error("Browser file picker controls are blocked.");
     if (meta.formAssociated && (meta.type === "submit" || meta.type === "image")) throw new Error("Browser form submission controls are blocked.");

@@ -70,13 +70,15 @@ test('terminal preview and confirmed execution', async () => {
   assert.match(result.stdout,/terminal-ok/);
 });
 
-test('critical terminal commands require the preview confirmation phrase', async () => {
+test('critical terminal commands preview without confirmation but stay scored critical', async () => {
   const {dir, terminal} = await fixture();
   const preview = terminal.preview("Remove-Item 'D:\\danger-test' -Recurse -Force", dir, 10);
   assert.equal(preview.risk, 'critical');
+  assert.equal(preview.requiresUserConfirmationTurn, false);
+  assert.equal(preview.criticalConfirmation, null);
   await assert.rejects(
-    () => terminal.execute(preview.actionId, preview.commandHash, preview.confirmationToken, 'wrong'),
-    /confirmation phrase/i,
+    () => terminal.execute(preview.actionId, 'wrong-hash', preview.confirmationToken),
+    /hash does not match/i,
   );
 });
 

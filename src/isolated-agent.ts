@@ -1,3 +1,4 @@
+import { assertPaymentAction, isPaymentAction } from "./payment-policy.js";
 import { randomBytes } from "node:crypto";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
@@ -180,6 +181,7 @@ export class IsolatedAgentService {
 
   async browserStatus() { return this.send("browser.status", {}, null, 8_000); }
   async browserNavigate(urlInput: string, taskRunId?: string) {
+    assertPaymentAction(urlInput);
     const url = new URL(urlInput);
     if (!(["http:", "https:"].includes(url.protocol))) throw new Error("Isolated browser navigation accepts HTTP/HTTPS only.");
     this.selectorCache.clear();
@@ -209,6 +211,7 @@ export class IsolatedAgentService {
     const text = String(textInput ?? "").slice(0, 2_000);
     const cached = this.selector(selectorId);
     const description = `${cached.meta.type} ${cached.meta.name} ${cached.meta.text}`;
+    assertPaymentAction(description);
     if (cached.meta.type === "password" || cached.meta.type === "file" || SENSITIVE_FIELD.test(description)) throw new Error("Sensitive/password/file/payment fields are blocked in Isolated Agent.");
     const result = await this.send("browser.fill", { selectorId, text }, null, 12_000);
     return { result, characters: text.length };
@@ -305,13 +308,15 @@ export class IsolatedAgentService {
     let result: unknown;
     if (input.action === "invoke") {
       const selectorId = bounded(input.selectorId, 256, "selectorId");
-      this.desktopSelector(windowId, selectorId);
+      const meta = this.desktopSelector(windowId, selectorId);
+      assertPaymentAction(`${meta.controlType} ${meta.name} ${meta.automationId} ${meta.className}`);
       result = await this.runWinAppUi(["invoke", selectorId, "-w", windowId], 15_000);
       this.desktopSelectorCache.clear();
     } else if (input.action === "set_text") {
       const selectorId = bounded(input.selectorId, 256, "selectorId");
       const meta = this.desktopSelector(windowId, selectorId);
       const descriptor = `${meta.controlType} ${meta.name} ${meta.automationId} ${meta.className}`;
+      assertPaymentAction(descriptor);
       if (meta.password || SENSITIVE_FIELD.test(descriptor)) throw new Error("Sensitive/password/payment fields are blocked in Isolated Agent.");
       const text = String(input.text ?? "").slice(0, 2_000);
       result = await this.runWinAppUi(["set-value", selectorId, text, "-w", windowId], 15_000);
@@ -522,6 +527,7 @@ export class IsolatedAgentService {
 
   private assessBrowserClick(meta: IsolatedBrowserControl): IsolatedRisk {
     const description = `${meta.role} ${meta.name} ${meta.text} ${meta.href}`;
+    if (isPaymentAction(description)) return { level: "blocked", category: "payment", reason: "PAYMENT_BLOCKED: payment action is platform-hard-denied." };
     if (meta.type === "file") return { level: "blocked", category: "file_upload", reason: "File picker controls are blocked until a dedicated upload protocol is implemented." };
     if (/^(?:javascript|mailto|tel|sms):/i.test(meta.href || "")) return { level: "blocked", category: "external_protocol", reason: "Script/external-protocol links are blocked." };
     if (meta.download) return { level: "moderate", category: "download", reason: "Download changes isolated task artifacts and therefore requires task scope." };
