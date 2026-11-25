@@ -1,5 +1,10 @@
 ## Unreleased
 
+### 0.24.50 - 2026-11-25
+
+- Require fresh, real Harness page and visual checks for each Word artifact in completed receipts when the owner-configured page gate is active.
+- Reject missing or stale checks before writing receipts or the time ledger; leave Lite and blocked receipts unchanged.
+
 ### 0.24.38 Word Live parallel acceptance hardening - 2026-11-17
 
 - Moved Documents.Open outside the COM activation mutex; bounded mutex acquisition and handling of abandoned owners.

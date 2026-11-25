@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.24.49",
+  "version": "0.24.50",
   "sourceOfTruth": {
     "registration": "src/mcp-registries/*.ts",
     "capabilityPolicy": "src/capability-registry.ts",
@@ -2580,7 +2580,7 @@
       "openWorld": false,
       "runtimeRequirements": [],
       "annotation": "destructive",
-      "description": "Seal file hashes and verify checks against real Harness terminal audit evidence; completed receipts with missing/failed checks are rejected. Run checks via terminal first; prefer preset and expect_exit over hand-written regex."
+      "description": "Seal file hashes and verify checks against real Harness terminal audit evidence; completed receipts with missing/failed checks are rejected. Run checks via terminal first; prefer preset and expect_exit over hand-written regex. When the configured Word page gate is active, every DOCX/DOCM in a completed receipt needs fresh real harness kiem and so DAT checks for the file or its parent directory."
     },
     {
       "name": "review_pack",

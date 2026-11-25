@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { existsSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
-import { verifyReceiptChecks, type ReceiptAuditRow } from "./receipt-checks.js";
+import { enforceReceiptPageGate, verifyReceiptChecks, type ReceiptAuditRow } from "./receipt-checks.js";
 
 export const LEDGER_COLUMNS = [
   "ngay", "phieu", "khung_chat", "loai_viec", "so_van_ban", "gui_luc", "tra_luc",
@@ -118,6 +118,7 @@ export type ReceiptWriteOptions = {
   taskRunId?: string | null;
   taskStartedAt?: string | null;
   ledgerPath?: string | null;
+  pageGateScript?: string | null;
   now?: () => Date;
   auditRows?: readonly ReceiptAuditRow[];
 };
@@ -143,12 +144,18 @@ export function receiptWrite(options: ReceiptWriteOptions) {
   const now = options.now?.() ?? new Date();
   const sealedAt = now.toISOString();
   const taskRunId = options.taskRunId?.trim() || null;
-  const { checks, summary } = verifyReceiptChecks(options.receipt.checks, options.auditRows ?? [], taskRunId, now);
+  const pageAudit = new Map();
+  const { checks, summary } = verifyReceiptChecks(options.receipt.checks, options.auditRows ?? [], taskRunId, now, pageAudit);
   const failed = checks.flatMap((check, index) => check.evidence.passed ? [] :
     ["#" + (index + 1) + " " + check.cmd + ": " + (check.evidence.source === "missing" ? "missing harness evidence" :
       "exit=" + check.evidence.exit_code + ", timeout=" + check.evidence.timed_out + ", output_tail=" + (check.evidence.output_tail ?? ""))]);
   const blocked = ["ket", "failed", "blocked"].includes(String(options.receipt.status ?? "").toLowerCase())
     || String(options.receipt.trang_thai ?? "").toUpperCase() === "KET";
+  if (!blocked && options.pageGateScript && isAbsolute(options.pageGateScript)) {
+    enforceReceiptPageGate(options.pageGateScript, artifacts.map(item => ({
+      path: item.path, mtimeMs: statSync(item.path).mtimeMs
+    })), checks, pageAudit);
+  }
   if (failed.length && !blocked) throw new Error("RECEIPT_CHECKS_FAILED: " + failed.join("; "));
   const sealed: Record<string, unknown> = { ...options.receipt, files: artifacts, checks,
     checks_verified_by: "harness", checks_summary: summary, sealed_at: sealedAt };

@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { z } from "zod";
 import type { SkillCategory } from "../skills.js";
 import { DECISION_STATUSES } from "../project.js";
@@ -19,7 +20,7 @@ export function registerFilesTools(ctx: ToolRegistryContext) {
   server.registerTool("fs_stat", { description: "Read metadata and SHA-256 for a local path.", inputSchema: { path: z.string() }, annotations: readOnly }, async ({ path }) => { try { return result(files.stat(path)); } catch (e) { return failure(e); } });
   server.registerTool("fs_read", { description: "Read a bounded UTF-8 line range from a local text or code file. Secrets are redacted.", inputSchema: { path: z.string(), start_line: z.number().int().min(1).optional(), end_line: z.number().int().min(1).optional(), max_chars: z.number().int().min(100).max(100000).optional() }, annotations: readOnly }, async ({ path, start_line, end_line, max_chars }) => { try { const read = files.readWithMeta(path, start_line, end_line, max_chars); return result(read.redacted ? { path, redacted: true, redactedCount: read.redactedCount, note: "Some values were replaced with [REDACTED]. This text is not the real source; never write it back. Writes that add [REDACTED] are rejected.", text: read.text } : { path, redacted: false, text: read.text }); } catch (e) { return failure(e); } });
   server.registerTool("receipt_write", {
-    description: "Seal file hashes and verify checks against real Harness terminal audit evidence; completed receipts with missing/failed checks are rejected. Run checks via terminal first; prefer preset and expect_exit over hand-written regex.",
+    description: "Seal file hashes and verify checks against real Harness terminal audit evidence; completed receipts with missing/failed checks are rejected. Run checks via terminal first; prefer preset and expect_exit over hand-written regex. When the configured Word page gate is active, every DOCX/DOCM in a completed receipt needs fresh real harness kiem and so DAT checks for the file or its parent directory.",
     inputSchema: { path: z.string().min(1), receipt: z.record(z.string(), z.unknown()), task_run_id: z.string().max(256).optional() },
     annotations: destructive
   }, async ({ path, receipt, task_run_id }) => {
@@ -34,6 +35,8 @@ export function registerFilesTools(ctx: ToolRegistryContext) {
       }
       const taskRunId = resolveTaskRunId(task_run_id);
       const task = taskRunId ? taskRuns?.get(taskRunId) : null;
+      const defaultPageGate = "D:\\NHD Nghiem Thu\\bo_kiem\\kiem_trang.py";
+      const pageGateScript = process.env.NHD_KIEM_TRANG ?? (existsSync(defaultPageGate) ? defaultPageGate : null);
       const ledgerPath = process.env.NHD_SO_THOI_GIAN?.trim();
       if (ledgerPath) files.resolvePath(ledgerPath);
       const since = taskRunId && task ? (task.startedAt ?? task.createdAt) :
@@ -44,7 +47,7 @@ export function registerFilesTools(ctx: ToolRegistryContext) {
       return result(receiptWrite({
         path: output, receipt, taskRunId, auditRows,
         taskStartedAt: task?.startedAt ?? task?.createdAt ?? null,
-        ledgerPath: ledgerPath ?? null
+        ledgerPath: ledgerPath ?? null, pageGateScript
       }));
     } catch (error) { return failure(error); }
   });

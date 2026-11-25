@@ -1,6 +1,6 @@
 {
   "name": "chatgpt-workstation-mcp-bridge",
-  "version": "0.24.49",
+  "version": "0.24.50",
   "private": true,
   "type": "module",
   "description": "Windows workstation MCP bridge for ChatGPT Web with controlled file, terminal, and Office access.",

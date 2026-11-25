@@ -1,3 +1,4 @@
+import { win32 } from "node:path";
 import { redact } from "./security.js";
 
 export type ReceiptPreset = { expect_exit: number; expect_regex: string };
@@ -47,11 +48,14 @@ export function sanitizeReceiptOutput(output: string): string {
     .replace(/https?:\/\/[^/\s:@]+:[^@\s]+@/gi, "[url credentials removed]@");
 }
 
+// Internal audit facts are kept separate from the public, bounded receipt evidence.
+type PageAudit = { command: string; output: string; startedAt: unknown; completedAt: unknown };
 export function verifyReceiptChecks(
   rawChecks: unknown,
   auditRows: readonly ReceiptAuditRow[],
   taskRunId?: string | null,
   now: Date = new Date(),
+  pageAudit?: Map<number, PageAudit>,
 ): { checks: Array<ReceiptCheck & { evidence: ReceiptEvidence }>; summary: { total: number; passed: number } } {
   if (rawChecks !== undefined && !Array.isArray(rawChecks)) throw new Error("Receipt checks must be an array.");
   const checks = (rawChecks ?? []) as unknown[];
@@ -97,6 +101,7 @@ export function verifyReceiptChecks(
       const output = stdout + (stdout && stderr ? "\n" : "") + stderr;
       const safe = sanitizeReceiptOutput(output);
       const passed = exit === expect_exit && !timedOut && (regex === undefined || regex.test(output));
+      pageAudit?.set(index, { command: detail.command, output, startedAt: detail.startedAt, completedAt: detail.completedAt ?? row.at });
       evidence = { source: "harness", ran_at: String(detail.completedAt ?? row.at), exit_code: exit,
         timed_out: timedOut, output_tail: safe.slice(-2000), passed };
       break;
@@ -104,4 +109,57 @@ export function verifyReceiptChecks(
     return { ...check, expect_exit, ...(expect_regex === undefined ? {} : { expect_regex }), evidence };
   });
   return { checks: verified, summary: { total: verified.length, passed: verified.filter(c => c.evidence.passed).length } };
+}
+
+type PageMode = "kiem" | "so";
+type PageCommand = { mode: PageMode; target: string };
+function absoluteWindowsPath(value: string): boolean {
+  return /^(?:[a-z]:[\\/]|[\\/]{2}[^\\/]+[\\/]+[^\\/]+)/i.test(value) && win32.isAbsolute(value);
+}
+function canonicalPagePath(value: string): string {
+  return win32.normalize(value).replace(/[\\]+$/, "").toLowerCase();
+}
+function parsePageCommand(command: string, script: string): PageCommand | null {
+  // A whole-command grammar: no unquoted metacharacters, extra flags or trailing commands.
+  const match = /^[ \t]*(?:python(?:\.exe)?|py)(?:[ \t]+-I)?(?:[ \t]+-X[ \t]+utf8)?[ \t]+"([^"\r\n]+)"[ \t]+(kiem|so)[ \t]+"([^"\r\n]+)"[ \t]+--ra[ \t]+"([^"\r\n]+)"[ \t]*$/i.exec(command);
+  if (!match || match[0].length !== command.length) return null;
+  // Double-quoted PowerShell paths must be literal, not interpolated or escaped.
+  if ([match[1], match[3], match[4]].some(value => /[$`]/.test(value))) return null;
+  if (!absoluteWindowsPath(match[1]) || !absoluteWindowsPath(match[3]) || canonicalPagePath(match[1]) !== canonicalPagePath(script)) return null;
+  return { mode: match[2].toLowerCase() as PageMode, target: canonicalPagePath(match[3]) };
+}
+export function enforceReceiptPageGate(
+  script: string | null | undefined,
+  files: readonly { path: string; mtimeMs: number }[],
+  checks: readonly (ReceiptCheck & { evidence: ReceiptEvidence })[],
+  audit: ReadonlyMap<number, PageAudit>,
+): void {
+  if (!script || !absoluteWindowsPath(script)) return;
+  const missing: string[] = [];
+  for (const file of files) {
+    if (!/\.doc[xm]$/i.test(file.path)) continue;
+    const target = canonicalPagePath(file.path);
+    for (const mode of ["kiem", "so"] as const) {
+      const marker = mode === "kiem" ? "KIEM_TRANG" : "KIEM_TRANG_SO";
+      let covered = false, stale = false;
+      for (let i = 0; i < checks.length; i++) {
+        const check = checks[i], actual = audit.get(i);
+        if (!actual || check.evidence.source !== "harness" || check.evidence.exit_code !== 0 ||
+            check.expect_exit !== 0 || check.evidence.timed_out || !check.evidence.passed) continue;
+        const declared = parsePageCommand(check.cmd, script);
+        const parsed = parsePageCommand(actual.command, script);
+        if (!declared || !parsed || declared.mode !== parsed.mode || declared.target !== parsed.target || parsed.mode !== mode) continue;
+        if (target !== parsed.target && !target.startsWith(parsed.target + "\\")) continue;
+        if (!new RegExp("^" + marker + ": DAT\\s*$", "m").test(actual.output)) continue;
+        const checkedAt = Date.parse(String(actual.startedAt ?? actual.completedAt));
+        if (!Number.isFinite(checkedAt)) continue;
+        if (file.mtimeMs > checkedAt) { stale = true; continue; }
+        covered = true;
+        break;
+      }
+      if (!covered) missing.push(file.path + ": thieu " + marker + (stale ? " (sua sau khi kiem)" : "") +
+        '; chay: python "' + script + '" ' + mode + ' "' + file.path + '" --ra "' + win32.join(win32.dirname(file.path), "_nghiemthu") + '"');
+    }
+  }
+  if (missing.length) throw new Error("RECEIPT_PAGE_CHECK_REQUIRED: " + missing.join("\n"));
 }
