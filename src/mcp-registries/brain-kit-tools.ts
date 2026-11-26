@@ -5,10 +5,25 @@ import { failure, readOnly, result, reversibleMutation, type ToolRegistryContext
 
 const kindSchema = z.enum(["quy_trinh", "bai_hoc", "memory"]);
 const idSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/);
+// Shared by MCP server instances in this process.
+const pendingWrites = new Map<string, { path: string; taskRunId: string; expiresAt: number }>();
+
+function prunePendingWrites(now: number) {
+  for (const [id, pending] of pendingWrites) {
+    if (pending.expiresAt <= now) pendingWrites.delete(id);
+  }
+}
+
+function assertMemoryLocation(allowed: string, path: string) {
+  const rel = relative(allowed, resolve(path));
+  if (!rel || rel.startsWith("..") || isAbsolute(rel)) {
+    throw new Error("Unexpected write location");
+  }
+}
+
 export function registerBrainKitTools(ctx: ToolRegistryContext) {
   const { server, runtime } = ctx;
   const { config, files, workspaceMemory } = runtime;
-  const pendingWrites = new Map<string, { path: string; taskRunId: string }>();
   const roots = () => ({
     publicDir: defaultPublicKnowledgeDir(),
     localDir: config.knowledgeLocalDir ?? join(config.dataDir, "knowledge-local"),
@@ -43,6 +58,7 @@ export function registerBrainKitTools(ctx: ToolRegistryContext) {
     }, annotations: reversibleMutation,
   }, async (input) => {
     try {
+      prunePendingWrites(Date.now());
       const opts = roots();
       if (input.op !== "write_memory") {
         const store = loadKnowledge(opts);
@@ -62,13 +78,12 @@ export function registerBrainKitTools(ctx: ToolRegistryContext) {
         if (!input.action_id || !input.confirmation_token) throw new Error("preview token required");
         const pending = pendingWrites.get(input.action_id);
         if (!pending || pending.taskRunId !== input.task_run_id) throw new Error("Only private memory previews from this tool may be applied");
+        const allowed = resolve(opts.localDir, "memory");
+        assertMemoryLocation(allowed, pending.path);
         const applied = files.apply(input.action_id, input.confirmation_token, "write", input.task_run_id);
         pendingWrites.delete(input.action_id);
         const path = String(applied.path ?? "");
-        const allowed = resolve(opts.localDir, "memory");
-        if (relative(allowed, resolve(path)).startsWith("..") || isAbsolute(relative(allowed, resolve(path)))) {
-          throw new Error("Unexpected write location");
-        }
+        assertMemoryLocation(allowed, path);
         return result(applied);
       }
       if (!input.id || !input.loai || input.mo_ta === undefined || input.noi_dung === undefined)
@@ -77,7 +92,12 @@ export function registerBrainKitTools(ctx: ToolRegistryContext) {
       if (containsSensitive(doc)) throw new Error("Sensitive information forbidden");
       const destination = join(opts.localDir, "memory", input.id + ".md");
       const preview = files.preview("write", { path: destination, content: doc }, input.task_run_id);
-      pendingWrites.set(preview.actionId, { path: destination, taskRunId: input.task_run_id });
+      const parsedExpiry = Date.parse(preview.expiresAt ?? "");
+      pendingWrites.set(preview.actionId, {
+        path: destination,
+        taskRunId: input.task_run_id,
+        expiresAt: Number.isFinite(parsedExpiry) ? parsedExpiry : Date.now() + 10 * 60 * 1000,
+      });
       return result(preview);
     } catch (e) { return failure(e); }
   });

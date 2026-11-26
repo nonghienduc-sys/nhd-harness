@@ -1,5 +1,9 @@
 ## Unreleased
 
+### 0.24.51 - 2026-11-26
+
+- Share private memory write previews across MCP server instances while retaining task, expiry, one-time apply, and destination checks.
+
 ### 0.24.50 - 2026-11-25
 
 - Require fresh, real Harness page and visual checks for each Word artifact in completed receipts when the owner-configured page gate is active.
