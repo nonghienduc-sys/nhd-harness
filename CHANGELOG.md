@@ -1,5 +1,11 @@
 ## Unreleased
 
+### 0.24.52 - 2026-11-26
+
+- Deliver Cốc Cốc DOM commands through service-worker long polling and direct messaging, with the legacy pulse as fallback and duplicate-command protection.
+- Synchronize background tab inventory, re-inject a missing bridge on demand, and temporarily protect working tabs from automatic discard.
+- Keep screenshots restricted to the already active tab and default tab opens and navigations to inactive without changing window focus.
+
 ### 0.24.51 - 2026-11-26
 
 - Share private memory write previews across MCP server instances while retaining task, expiry, one-time apply, and destination checks.

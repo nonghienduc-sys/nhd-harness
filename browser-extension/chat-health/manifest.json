@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "NHD MCP Cốc Cốc Agent Sensor",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "NHD MCP browser bridge and opt-in, local-only TradingView Fibonacci replay recorder.",
   "permissions": [
     "storage",
     "scripting",
     "tabs",
-    "activeTab"
+    "activeTab",
+    "alarms"
   ],
   "host_permissions": [
     "http://*/*",

@@ -14,6 +14,7 @@ export type CocCocTabReport = {
   visible: boolean;
   bridgeVersion: string;
   lastSeenAt: string;
+  discarded?: boolean;
 };
 
 type CocCocControl = {
@@ -97,6 +98,8 @@ function boundedString(value: unknown, max: number) {
 
 export class CocCocBridgeService {
   private readonly tabs = new Map<number, CocCocTabReport>();
+  private readonly syncedTabs = new Set<number>();
+  private readonly nextWaiters = new Set<() => void>();
   private readonly commands = new Map<string, BridgeCommand>();
   private readonly waiters = new Map<string, { resolve: (value: BridgeResult) => void; reject: (error: Error) => void; timer: NodeJS.Timeout }>();
   private readonly selectors = new Map<string, SelectorCache>();
@@ -182,6 +185,77 @@ export class CocCocBridgeService {
     });
   }
 
+  // The extension inventory is authoritative for tabs it has reported.
+  // Legacy pulse-only tabs are left alone until their normal expiry.
+  syncTabs(input: Record<string, unknown>) {
+    if (!Array.isArray(input.tabs)) throw new Error("Cốc Cốc sync-tabs requires a tabs array.");
+    const current = new Set<number>();
+    const now = new Date().toISOString();
+    for (const value of input.tabs) {
+      if (!value || typeof value !== "object") continue;
+      const item = value as Record<string, unknown>;
+      const tabId = Number(item.tabId);
+      const url = boundedString(item.url, 5000);
+      if (!Number.isInteger(tabId) || tabId < 0 || !/^https?:\/\//i.test(url)) continue;
+      const previous = this.tabs.get(tabId);
+      if (previous && previous.url !== url) this.clearTabSelectors(tabId);
+      current.add(tabId);
+      this.tabs.set(tabId, {
+        tabId, windowId: Number.isInteger(Number(item.windowId)) ? Number(item.windowId) : null,
+        url, title: boundedString(item.title, 1000), active: Boolean(item.active),
+        focused: previous?.focused === true && item.active === true,
+        visible: Boolean(item.active), bridgeVersion: previous?.bridgeVersion ?? "",
+        lastSeenAt: now, discarded: Boolean(item.discarded),
+      });
+    }
+    for (const tabId of this.syncedTabs) if (!current.has(tabId)) this.closeTab(tabId);
+    this.syncedTabs.clear();
+    for (const tabId of current) this.syncedTabs.add(tabId);
+    this.prune();
+    return { ok: true, connectedTabs: this.tabs.size };
+  }
+
+  private takeNextCommands() {
+    this.prune();
+    const now = Date.now();
+    return [...this.commands.values()]
+      .filter(item => item.expiresAt > now && item.deliveredAt == null)
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .slice(0, 4)
+      .map(item => {
+        item.deliveredAt = now;
+        return { id: item.id, tabId: item.tabId, type: item.type, payload: item.payload, expiresAt: item.expiresAt };
+      });
+  }
+
+  nextCommands(input: Record<string, unknown> = {}) {
+    const requested = Number(input.timeoutMs ?? 25_000);
+    const timeout = Number.isFinite(requested) ? Math.max(0, Math.min(25_000, requested)) : 25_000;
+    const commands = this.takeNextCommands();
+    if (commands.length || timeout === 0) return Promise.resolve({ commands });
+    return new Promise<{ commands: ReturnType<CocCocBridgeService["takeNextCommands"]> }>(resolve => {
+      const wake = () => {
+        const available = this.takeNextCommands();
+        if (available.length) {
+          clearTimeout(timer);
+          this.nextWaiters.delete(wake);
+          resolve({ commands: available });
+        }
+      };
+      const timer = setTimeout(() => {
+        this.nextWaiters.delete(wake);
+        resolve({ commands: [] });
+      }, timeout);
+      this.nextWaiters.add(wake);
+    });
+  }
+
+  private timeoutError(command: BridgeCommand | undefined, message: string) {
+    const code = command && this.tabs.get(command.tabId)?.discarded ? "tab_sleeping"
+      : command?.deliveredAt != null ? "page_slow" : "bridge_missing";
+    return new Error(`${code}: ${message}`);
+  }
+
   pulse(input: Record<string, unknown>) {
     const tabId = Number(input.tabId);
     if (!Number.isInteger(tabId) || tabId < 0) throw new Error("Cốc Cốc bridge pulse requires a valid tabId.");
@@ -195,6 +269,7 @@ export class CocCocBridgeService {
       visible: input.visible !== false,
       bridgeVersion: boundedString(input.bridgeVersion, 100),
       lastSeenAt: new Date().toISOString(),
+      discarded: false,
     };
     if (!/^https?:\/\//i.test(report.url)) throw new Error("Cốc Cốc DOM bridge accepts HTTP/HTTPS pages only.");
     this.tabs.set(tabId, report);
@@ -206,7 +281,7 @@ export class CocCocBridgeService {
       .slice(0, 4)
       .map((item) => {
         item.deliveredAt = now;
-        return { id: item.id, type: item.type, payload: item.payload };
+        return { id: item.id, type: item.type, payload: item.payload, expiresAt: item.expiresAt };
       });
     return { ok: true, commands };
   }
@@ -215,6 +290,7 @@ export class CocCocBridgeService {
     const tabId = Number(tabIdInput);
     if (!Number.isInteger(tabId)) return { ok: false };
     this.tabs.delete(tabId);
+    this.syncedTabs.delete(tabId);
     this.sensorSmokeTabs.delete(tabId);
     for (const [key, selector] of this.selectors) if (selector.tabId === tabId) this.selectors.delete(key);
     for (const command of this.commands.values()) {
@@ -222,7 +298,7 @@ export class CocCocBridgeService {
       const waiter = this.waiters.get(command.id);
       if (waiter) {
         clearTimeout(waiter.timer);
-        waiter.reject(new Error("Cốc Cốc tab closed before the DOM command completed."));
+        waiter.reject(new Error("bridge_missing: Cốc Cốc tab closed before the DOM command completed."));
         this.waiters.delete(command.id);
       }
       this.commands.delete(command.id);
@@ -239,7 +315,10 @@ export class CocCocBridgeService {
       id,
       ok: input.ok === true,
       result: input.result,
-      error: input.error ? boundedString(input.error, 2000) : undefined,
+      error: input.ok === true ? undefined : (() => {
+        const message = boundedString(input.error || "Cốc Cốc DOM command failed.", 2000);
+        return /^(tab_sleeping|bridge_missing|page_slow):/.test(message) ? message : `page_slow: ${message}`;
+      })(),
     };
     this.commands.delete(id);
     if (waiter) {
@@ -544,7 +623,7 @@ export class CocCocBridgeService {
     }
     try {
       const actionMap: Record<string, string> = { open: "create_tab", activate: "activate_tab", navigate: "navigate_tab", reload: "reload_tab", back: "back_tab", forward: "forward_tab", close: "close_tab" };
-      const response = await this.issueTransport("browser_command", { action: actionMap[input.action], tabId: input.tabId, url: input.url, active: input.active !== false }, 10_000);
+      const response = await this.issueTransport("browser_command", { action: actionMap[input.action], tabId: input.tabId, url: input.url, active: input.active === true }, 10_000);
       if (!response.ok) throw new Error(response.error || `Cốc Cốc tab ${input.action} failed.`);
       this.store.audit("coc_coc_tab", "success", { action: input.action, tabId: input.tabId ?? null, risk, taskRunId: effectiveTaskRunId ?? null, taskAuthorizationId: authorization?.id ?? null });
       return { ...(response.result && typeof response.result === "object" ? response.result as Record<string, unknown> : { ok: true }), risk };
@@ -565,7 +644,7 @@ export class CocCocBridgeService {
 
   private issueTransport(type: BridgeCommand["type"], payload: Record<string, unknown>, timeoutMs: number) {
     const transport = this.chooseTab(true);
-    if (!transport) throw new Error("No fresh Cốc Cốc extension transport tab is connected.");
+    if (!transport) throw new Error("bridge_missing: No fresh Cốc Cốc extension transport tab is connected.");
     return this.issue(transport.tabId, type, payload, timeoutMs);
   }
 
@@ -715,17 +794,19 @@ export class CocCocBridgeService {
 
   private issue(tabId: number, type: BridgeCommand["type"], payload: Record<string, unknown>, timeoutMs: number): Promise<BridgeResult> {
     this.prune();
-    if (!this.tabs.has(tabId)) throw new Error("Cốc Cốc tab is not connected to the DOM bridge.");
+    if (!this.tabs.has(tabId)) throw new Error("bridge_missing: Cốc Cốc tab is not connected to the DOM bridge.");
     const id = `coc-${randomBytes(12).toString("hex")}`;
     const now = Date.now();
-    this.commands.set(id, { id, tabId, type, payload, createdAt: now, deliveredAt: null, expiresAt: now + Math.max(1000, timeoutMs) });
+    const command: BridgeCommand = { id, tabId, type, payload, createdAt: now, deliveredAt: null, expiresAt: now + Math.max(1000, timeoutMs) };
+    this.commands.set(id, command);
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.commands.delete(id);
         this.waiters.delete(id);
-        reject(new Error("Cốc Cốc extension did not return the DOM command before timeout. Make sure the tab is open and the extension is enabled."));
+        reject(this.timeoutError(command, "Cốc Cốc extension did not return the DOM command before timeout. Make sure the tab is open and the extension is enabled."));
       }, timeoutMs);
       this.waiters.set(id, { resolve, reject, timer });
+      for (const wake of this.nextWaiters) wake();
     });
   }
 
@@ -733,19 +814,19 @@ export class CocCocBridgeService {
     this.prune();
     if (Number.isInteger(tabId)) {
       const tab = this.tabs.get(Number(tabId));
-      if (!tab) throw new Error(`Cốc Cốc tab ${tabId} is not connected.`);
+      if (!tab) throw new Error(`bridge_missing: Cốc Cốc tab ${tabId} is not connected.`);
       return tab;
     }
     const tab = this.chooseTab(true);
-    if (!tab) throw new Error("No Cốc Cốc tab is currently connected to the NHD DOM bridge.");
+    if (!tab) throw new Error("bridge_missing: No Cốc Cốc tab is currently connected to the NHD DOM bridge.");
     return tab;
   }
 
   private chooseTab(requireFresh: boolean): CocCocTabReport | null {
     const tabs = this.listTabs();
     const now = Date.now();
-    return tabs.find((item) => item.active && (!requireFresh || now - Date.parse(item.lastSeenAt) < 15_000))
-      ?? tabs.find((item) => !requireFresh || now - Date.parse(item.lastSeenAt) < 15_000)
+    return tabs.find((item) => item.active && (!requireFresh || now - Date.parse(item.lastSeenAt) < 30_000))
+      ?? tabs.find((item) => !requireFresh || now - Date.parse(item.lastSeenAt) < 30_000)
       ?? null;
   }
 
@@ -770,7 +851,7 @@ export class CocCocBridgeService {
       const waiter = this.waiters.get(id);
       if (waiter) {
         clearTimeout(waiter.timer);
-        waiter.reject(new Error("Cốc Cốc DOM command expired."));
+        waiter.reject(this.timeoutError(command, "Cốc Cốc DOM command expired."));
         this.waiters.delete(id);
       }
     }

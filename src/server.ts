@@ -466,6 +466,26 @@ app.post("/api/coc-coc-bridge/pulse", (request, response) => {
   try { response.json(cocCocBridge.pulse((request.body ?? {}) as Record<string, unknown>)); }
   catch (error) { response.status(400).json({ error: error instanceof Error ? error.message : String(error) }); }
 });
+// Inventory and long-poll use the same localhost bridge as pulse/result.
+// Reject simple cross-origin form requests, which must never consume queued work.
+function cocCocPushRequest(request: Request, response: Response) {
+  const origin = request.headers.origin;
+  if (!request.is("application/json") || (origin && !/^chrome-extension:\/\/[a-p]{32}$/.test(origin))) {
+    response.status(403).json({ error: "Cốc Cốc push bridge requires extension JSON requests." });
+    return false;
+  }
+  return true;
+}
+app.post("/api/coc-coc-bridge/sync-tabs", (request, response) => {
+  if (!cocCocPushRequest(request, response)) return;
+  try { response.json(cocCocBridge.syncTabs((request.body ?? {}) as Record<string, unknown>)); }
+  catch (error) { response.status(400).json({ error: error instanceof Error ? error.message : String(error) }); }
+});
+app.post("/api/coc-coc-bridge/next", async (request, response) => {
+  if (!cocCocPushRequest(request, response)) return;
+  try { response.json(await cocCocBridge.nextCommands((request.body ?? {}) as Record<string, unknown>)); }
+  catch (error) { response.status(400).json({ error: error instanceof Error ? error.message : String(error) }); }
+});
 app.post("/api/coc-coc-bridge/result", (request, response) => {
   try { response.json(cocCocBridge.resolveResult((request.body ?? {}) as Record<string, unknown>)); }
   catch (error) { response.status(400).json({ error: error instanceof Error ? error.message : String(error) }); }

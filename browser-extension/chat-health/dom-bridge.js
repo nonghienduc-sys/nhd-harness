@@ -1,9 +1,12 @@
 (() => {
+  // Retain the legacy pulse protocol version; the script revision is separate.
   const BRIDGE_VERSION = '0.4.1';
+  const SCRIPT_VERSION = '0.4.3';
   if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && location.port === '39100') return;
   const root = document.documentElement;
-  if (!root || root.dataset.nhdCocCocDomBridgeVersion === BRIDGE_VERSION) return;
-  root.dataset.nhdCocCocDomBridgeVersion = BRIDGE_VERSION;
+  if (!root || globalThis.__nhdCocCocDomBridgeVersion === SCRIPT_VERSION) return;
+  globalThis.__nhdCocCocDomBridgeVersion = SCRIPT_VERSION;
+  root.dataset.nhdCocCocDomBridgeVersion = SCRIPT_VERSION;
   const PULSE_MS = 600, SELECTOR_TTL_MS = 5 * 60 * 1000;
   const selectors = new Map(); let pulseInFlight = false;
   const safeText = (value, max) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -100,7 +103,31 @@
   function pressAction(payload={}) { const key=String(payload.key||'').toUpperCase(),selectorId=String(payload.selectorId||''),el=selectorId?resolveSelector(selectorId):document.activeElement; const map={ESCAPE:'Escape',ENTER:'Enter',TAB:'Tab',SHIFT_TAB:'Tab',ARROW_UP:'ArrowUp',ARROW_DOWN:'ArrowDown',ARROW_LEFT:'ArrowLeft',ARROW_RIGHT:'ArrowRight',PAGE_UP:'PageUp',PAGE_DOWN:'PageDown',HOME:'Home',END:'End',SPACE:' '}; const domKey=map[key];if(!domKey)throw new Error(`Unsupported key ${key}`); if(key==='TAB'||key==='SHIFT_TAB'){focusTraversal(key==='SHIFT_TAB');return{ok:true,key,focusedTag:String(document.activeElement?.tagName||'').toLowerCase()};} if(key==='PAGE_DOWN'){window.scrollBy(0,Math.max(200,innerHeight*.8));return{ok:true,key,page:pageInfo()};} if(key==='PAGE_UP'){window.scrollBy(0,-Math.max(200,innerHeight*.8));return{ok:true,key,page:pageInfo()};} if(key==='HOME'&&!selectorId){window.scrollTo(0,0);return{ok:true,key,page:pageInfo()};} if(key==='END'&&!selectorId){window.scrollTo(0,document.documentElement.scrollHeight);return{ok:true,key,page:pageInfo()};} if(!el)throw new Error('No focused/selected element for key action.'); el.focus?.(); const tag=String(el.tagName||'').toLowerCase(),type=String(el.type||'').toLowerCase(); if(key==='ENTER'&&(tag==='button'||tag==='a'))el.click(); else if(key==='ENTER'&&tag==='input'&&el.form)el.form.requestSubmit?.(); else if(key==='SPACE'&&(tag==='button'||type==='checkbox'||type==='radio'))el.click(); else {el.dispatchEvent(new KeyboardEvent('keydown',{key:domKey,bubbles:true,shiftKey:key==='SHIFT_TAB'}));el.dispatchEvent(new KeyboardEvent('keyup',{key:domKey,bubbles:true,shiftKey:key==='SHIFT_TAB'}));} return{ok:true,key,selectorId:selectorId||null,page:pageInfo()}; }
   function conditionMatches(condition={}) { const kind=String(condition.kind||''); if(kind==='url'){return(!condition.equals||location.href===condition.equals)&&(!condition.contains||location.href.includes(condition.contains));} if(kind==='title'){return(!condition.equals||document.title===condition.equals)&&(!condition.contains||document.title.includes(condition.contains));} if(kind==='text'){const needle=String(condition.contains||'');return openRoots().docs.some(doc=>String(doc.body?.innerText||'').includes(needle));} if(kind==='value'){const el=resolveSelector(String(condition.selectorId||''));return String(el.value??el.innerText??el.textContent??'')===String(condition.equals??'');} if(kind==='ready')return condition.state==='interactive'?(document.readyState==='interactive'||document.readyState==='complete'):document.readyState==='complete'; if(kind==='no-navigation')return location.href===String(condition.url||''); throw new Error(`Unsupported wait condition: ${kind}`); }
   async function waitFor(payload={}) { const condition=payload.condition||{},timeoutMs=Math.max(100,Math.min(Number(payload.timeoutMs||5000),15000)),started=Date.now();let lastError='';while(Date.now()-started<=timeoutMs){try{if(conditionMatches(condition))return{ok:true,condition,page:pageInfo(),waitedMs:Date.now()-started};}catch(error){lastError=String(error?.message||error);}await sleep(100);}throw new Error(`Condition not met within ${timeoutMs} ms${lastError?`: ${lastError}`:''}`); }
-  async function execute(command){try{let result;if(command.type==='inspect')result=inspect(command.payload);else if(command.type==='click')result=click(command.payload);else if(command.type==='fill')result=await fill(command.payload);else if(command.type==='edit_text')result=await editText(command.payload);else if(command.type==='page_info')result=pageInfo();else if(command.type==='snapshot')result=snapshot(command.payload);else if(command.type==='scroll')result=scrollAction(command.payload);else if(command.type==='focus')result=focusAction(command.payload);else if(command.type==='hover')result=hoverAction(command.payload);else if(command.type==='select')result=selectAction(command.payload);else if(command.type==='press')result=pressAction(command.payload);else if(command.type==='wait_for')result=await waitFor(command.payload);else throw new Error(`Unsupported Cốc Cốc bridge command: ${command.type}`);await chrome.runtime.sendMessage({type:'NHD_COC_COC_DOM_RESULT',payload:{id:command.id,ok:true,result}});}catch(error){try{await chrome.runtime.sendMessage({type:'NHD_COC_COC_DOM_RESULT',payload:{id:command.id,ok:false,error:String(error?.message||error)}});}catch{}}}
-  async function pulse(){if(pulseInFlight)return;pulseInFlight=true;try{const response=await chrome.runtime.sendMessage({type:'NHD_COC_COC_DOM_PULSE',payload:{bridgeVersion:BRIDGE_VERSION,pageUrl:location.href,pageTitle:document.title,visible:document.visibilityState==='visible',focused:document.hasFocus()}});for(const command of response?.commands||[])await execute(command);}catch{}finally{pulseInFlight=false;}}
+  async function execute(command){try{let result;if(command.type==='inspect')result=inspect(command.payload);else if(command.type==='click')result=click(command.payload);else if(command.type==='fill')result=await fill(command.payload);else if(command.type==='edit_text')result=await editText(command.payload);else if(command.type==='page_info')result=pageInfo();else if(command.type==='snapshot')result=snapshot(command.payload);else if(command.type==='scroll')result=scrollAction(command.payload);else if(command.type==='focus')result=focusAction(command.payload);else if(command.type==='hover')result=hoverAction(command.payload);else if(command.type==='select')result=selectAction(command.payload);else if(command.type==='press')result=pressAction(command.payload);else if(command.type==='wait_for')result=await waitFor(command.payload);else throw new Error(`Unsupported Cốc Cốc bridge command: ${command.type}`);return {id:command.id,ok:true,result};}catch(error){return {id:command.id,ok:false,error:String(error?.message||error)};}}
+  const executed = new Map();
+  function executeOnce(command) {
+    if (!command || typeof command.id !== 'string') return Promise.resolve({id:command?.id,ok:false,error:'bridge_missing: invalid command'});
+    const existing = executed.get(command.id);
+    if (existing) return existing.promise;
+    const now = Date.now();
+    for (const [id, entry] of executed) {
+      if (entry.done && entry.expiresAt <= now) executed.delete(id);
+    }
+    // Never evict a live id merely to make room for another command.
+    if (executed.size >= 2048) return Promise.resolve({id:command.id,ok:false,error:'page_slow: DOM command cache is full'});
+    const entry = { done: false, expiresAt: now + 5 * 60 * 1000, promise: null };
+    entry.promise = Promise.resolve().then(() => {
+      if (command.expiresAt && command.expiresAt <= Date.now()) return {id:command.id,ok:false,error:'page_slow: Cốc Cốc DOM command expired.'};
+      return execute(command);
+    }).finally(() => { entry.done = true; });
+    executed.set(command.id, entry);
+    return entry.promise;
+  }
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.type !== 'NHD_COC_COC_DOM_EXEC' || sender.id !== chrome.runtime.id) return false;
+    executeOnce(message.command).then(sendResponse, error => sendResponse({id:message.command?.id,ok:false,error:String(error?.message||error)}));
+    return true;
+  });
+  async function pulse(){if(pulseInFlight)return;pulseInFlight=true;try{const response=await chrome.runtime.sendMessage({type:'NHD_COC_COC_DOM_PULSE',payload:{bridgeVersion:BRIDGE_VERSION,pageUrl:location.href,pageTitle:document.title,visible:document.visibilityState==='visible',focused:document.hasFocus()}});for(const command of response?.commands||[]){const result=await executeOnce(command);await chrome.runtime.sendMessage({type:'NHD_COC_COC_DOM_RESULT',payload:result});}}catch{}finally{pulseInFlight=false;}}
   document.addEventListener('visibilitychange',()=>{void pulse();});window.addEventListener('focus',()=>{void pulse();});setTimeout(()=>{void pulse();},150);setInterval(()=>{void pulse();},PULSE_MS);
 })();
