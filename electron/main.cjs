@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const { createDesktopCapabilityPolicy } = require("./desktop-capability-policy.cjs");
 const { createLiteUpdater } = require("./lite-updater.cjs");
+const { HEALTH_TIMEOUT_MS, decideBackendAction } = require("./watchdog-policy.cjs");
 
 let win;
 let tray;
@@ -20,7 +21,8 @@ let watchdogTimer;
 let recoveryTimer;
 let backendRecoveryTimer;
 let shuttingDown = false;
-let backendFailures = 0;
+let firstHealthyAt = 0;
+let failingSince = 0;
 let companionFailures = 0;
 let backendRestartAttempt = 0;
 let backendHealthySince = 0;
@@ -198,6 +200,9 @@ async function ensureProcesses(reason = "health-ensure") {
         }, { WORKSTATION_RESTART_REASON: startReason });
         server = child;
         backendStartedAt = Date.now();
+        firstHealthyAt = 0;
+        failingSince = 0;
+        backendHealthySince = 0;
       }
     }
     if (!await available(companionStatusUrl, { "x-workstation-companion-secret": companionSecret })) {
@@ -270,38 +275,46 @@ async function watchdogTick() {
   if (shuttingDown || watchdogRunning) return;
   watchdogRunning = true;
   try {
-    const backendOk = await available(backendHealthUrl, {}, 5000);
-    if (backendOk) {
-      backendFailures = 0;
-      if (!backendHealthySince) backendHealthySince = Date.now();
-      if (backendRestartAttempt > 0 && Date.now() - backendHealthySince >= 60000) {
-        bridgeLog("info", "Backend remained healthy; restart backoff reset", `previousAttempt=${backendRestartAttempt}`);
-        backendRestartAttempt = 0;
-      }
-    } else if (server && server.exitCode === null && !server.signalCode && Date.now() - backendStartedAt < 60_000) {
-      // Dependency initialization may be slow on a cold start. Do not kill a starting backend.
-      backendFailures = 0;
-    } else {
-      backendHealthySince = 0;
-      backendFailures += 1;
-      bridgeLog("warn", "Backend health check failed", `count=${backendFailures}`);
-      if (backendFailures >= 3) {
-        const child = server;
-        if (child && child.exitCode === null) {
-          bridgeLog("warn", "Backend unhealthy; requesting controlled restart", `pid=${child.pid || "unknown"}`);
-          try { child.kill(); } catch (error) { bridgeLog("warn", "Backend terminate request failed", error?.message || String(error)); }
-          let exited = await waitForChildExit(child, 8000);
-          if (!exited && child.exitCode === null) {
-            bridgeLog("warn", "Backend did not exit after graceful wait; forcing termination", `pid=${child.pid || "unknown"}`);
-            try { child.kill("SIGKILL"); } catch (error) { bridgeLog("warn", "Backend force terminate failed", error?.message || String(error)); }
-            exited = await waitForChildExit(child, 3000);
-          }
-          if (!exited) bridgeLog("error", "Backend process still has not exited; refusing overlapping spawn", `pid=${child.pid || "unknown"}`);
-        } else {
-          scheduleBackendRecovery("watchdog-recovery");
+    // A probe is associated with the exact child that was current when it began.
+    const probedChild = server;
+    const backendOk = await available(backendHealthUrl, {}, HEALTH_TIMEOUT_MS);
+    if (server === probedChild) {
+      const now = Date.now();
+      const processAlive = Boolean(server && server.exitCode === null && !server.signalCode);
+      const action = decideBackendAction({
+        now, startedAt: backendStartedAt, firstHealthyAt, failingSince, healthOk: backendOk, processAlive,
+      });
+      if (action === "ok") {
+        if (!firstHealthyAt) firstHealthyAt = now;
+        failingSince = 0;
+        if (!backendHealthySince) backendHealthySince = now;
+        if (backendRestartAttempt > 0 && now - backendHealthySince >= 60000) {
+          bridgeLog("info", "Backend remained healthy; restart backoff reset", `previousAttempt=${backendRestartAttempt}`);
+          backendRestartAttempt = 0;
         }
-        scheduleDashboardRecovery(1200);
-        backendFailures = 0;
+      } else {
+        backendHealthySince = 0;
+        if (!failingSince) failingSince = now;
+        const failingForMs = Math.max(0, now - failingSince);
+        bridgeLog("warn", "Backend health check failed", `failingForMs=${failingForMs} action=${action} processAlive=${processAlive}`);
+        if (action === "restart") {
+          const child = server;
+          const reason = processAlive ? "continuous-health-failure" : "process-exited";
+          bridgeLog("warn", "Backend unhealthy; requesting controlled restart", `reason=${reason} failingForMs=${failingForMs} pid=${child?.pid || "unknown"}`);
+          if (processAlive && child) {
+            try { child.kill(); } catch (error) { bridgeLog("warn", "Backend terminate request failed", error?.message || String(error)); }
+            let exited = await waitForChildExit(child, 8000);
+            if (!exited && child.exitCode === null && !child.signalCode) {
+              bridgeLog("warn", "Backend did not exit after graceful wait; forcing termination", `pid=${child.pid || "unknown"}`);
+              try { child.kill("SIGKILL"); } catch (error) { bridgeLog("warn", "Backend force terminate failed", error?.message || String(error)); }
+              exited = await waitForChildExit(child, 3000);
+            }
+            if (!exited) bridgeLog("error", "Backend process still has not exited; refusing overlapping spawn", `pid=${child.pid || "unknown"}`);
+          } else {
+            scheduleBackendRecovery("watchdog-recovery");
+          }
+          scheduleDashboardRecovery(1200);
+        }
       }
     }
 

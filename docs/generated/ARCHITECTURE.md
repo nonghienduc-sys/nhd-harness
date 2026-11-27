@@ -2,7 +2,7 @@
 
 > GENERATED FILE. This document is derived from current source contracts and is protected by architecture drift checks.
 
-Version: 0.24.52
+Version: 0.24.53
 
 ## Runtime composition
 
