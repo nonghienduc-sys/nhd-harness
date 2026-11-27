@@ -1,5 +1,10 @@
 ## Unreleased
 
+### 0.24.54 - 2026-11-27
+
+- Release the Cốc Cốc new-tab creation lock immediately after the transport returns, and retain task ownership of the actual tab until normal task-resource cleanup.
+- Cover parallel task opens, cross-task mutation denial, and lock release using the real SQLite store.
+
 ### 0.24.52 - 2026-11-26
 
 - Deliver Cốc Cốc DOM commands through service-worker long polling and direct messaging, with the legacy pulse as fallback and duplicate-command protection.

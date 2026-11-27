@@ -58,6 +58,13 @@ export function runWithTaskContext<T>(context: TaskExecutionContext, fn: () => T
   return taskContextStorage.run(merged, fn);
 }
 
+// A short-lived, operation-owned lock must not inherit either a task owner
+// or the caller's ephemeral owner. Preserve the execution lane; use this
+// only around acquisition of an independent resource, not the action itself.
+export function runWithIndependentResourceContext<T>(fn: () => T): T {
+  return taskContextStorage.run({ lane: taskContextStorage.getStore()?.lane }, fn);
+}
+
 export function getCurrentTaskContext(): TaskExecutionContext | undefined {
   return taskContextStorage.getStore();
 }

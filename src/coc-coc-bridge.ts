@@ -1,7 +1,7 @@
 import { assertPaymentAction, isPaymentAction } from "./payment-policy.js";
 import { randomBytes } from "node:crypto";
 import { Store } from "./db.js";
-import { canonicalizeBrowserResource, createEphemeralOwnerId, resolveEphemeralOwnerId, resolveTaskRunId } from "./resource-guard.js";
+import { canonicalizeBrowserResource, createEphemeralOwnerId, resolveEphemeralOwnerId, resolveTaskRunId, runWithIndependentResourceContext } from "./resource-guard.js";
 import { HARD_DENY_CAPABILITIES, isHardDeniedCapability, TaskAuthorizationService, TaskCapabilityAction, TaskCapabilityLeaseView, TaskCapabilityUse } from "./task-authorization.js";
 
 export type CocCocTabReport = {
@@ -619,12 +619,37 @@ export class CocCocBridgeService {
     if (input.action !== "open" && Number.isInteger(input.tabId)) {
       tabGuard = this.guardTabMutation(Number(input.tabId), effectiveTaskRunId, `coc_coc_tab_${input.action}`);
     } else if (input.action === "open") {
-      tabGuard = this.guardTabMutation("new", effectiveTaskRunId, "coc_coc_tab_open");
+      // Validate the task as before, but reserve the creation slot only for
+      // this operation, even if the enclosing tool call has a task context.
+      if (effectiveTaskRunId) {
+        if (typeof this.store.requireActiveTaskRun === "function") {
+          this.store.requireActiveTaskRun(effectiveTaskRunId);
+        } else {
+          const row = this.taskRow(effectiveTaskRunId);
+          if (!row || !["running", "waiting_confirmation"].includes(String(row.state ?? ""))) {
+            throw new Error("Task run '" + effectiveTaskRunId + "' is not an active running task.");
+          }
+        }
+      }
+      tabGuard = runWithIndependentResourceContext(() =>
+        this.guardTabMutation("new", undefined, "coc_coc_tab_open"));
     }
     try {
       const actionMap: Record<string, string> = { open: "create_tab", activate: "activate_tab", navigate: "navigate_tab", reload: "reload_tab", back: "back_tab", forward: "forward_tab", close: "close_tab" };
       const response = await this.issueTransport("browser_command", { action: actionMap[input.action], tabId: input.tabId, url: input.url, active: input.active === true }, 10_000);
       if (!response.ok) throw new Error(response.error || `Cốc Cốc tab ${input.action} failed.`);
+      // Claim the actual created tab before releasing the creation slot.
+      // All subsequent mutations use the existing durable per-tab guard.
+      if (input.action === "open") {
+        const raw = response.result as { tab?: { tabId?: unknown } } | undefined;
+        const createdTabId = raw?.tab?.tabId;
+        if (typeof createdTabId !== "number" || !Number.isInteger(createdTabId) || createdTabId < 0) {
+          throw new Error("Cốc Cốc tab creation returned no valid tab id.");
+        }
+        if (effectiveTaskRunId) {
+          this.guardTabMutation(createdTabId, effectiveTaskRunId, "coc_coc_tab_open_owned");
+        }
+      }
       this.store.audit("coc_coc_tab", "success", { action: input.action, tabId: input.tabId ?? null, risk, taskRunId: effectiveTaskRunId ?? null, taskAuthorizationId: authorization?.id ?? null });
       return { ...(response.result && typeof response.result === "object" ? response.result as Record<string, unknown> : { ok: true }), risk };
     } finally {
