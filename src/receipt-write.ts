@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
-import { existsSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, resolve } from "node:path";
+import { existsSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, resolve, win32 } from "node:path";
 import { enforceReceiptPageGate, verifyReceiptChecks, type ReceiptAuditRow } from "./receipt-checks.js";
 
 export const LEDGER_COLUMNS = [
@@ -36,6 +36,43 @@ export function assertReceiptSafe(value: unknown, location = "receipt"): void {
 
 export function hashReceiptFile(path: string): string {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+// Only trusted configuration may select allowed source roots (not receipt metadata).
+const DEFAULT_SOURCE_COPY_ROOT = "D:\\NHD Nghiem Thu\\kho_xa\\tep";
+
+function normalizeSourceCopyPath(value: unknown): string | undefined {
+  if (typeof value !== "string" || !win32.isAbsolute(value) || value.includes("\0")) return undefined;
+  // Require a drive-qualified or ordinary UNC path. Reject drive-relative,
+  // current-drive-rooted, device-namespace paths and alternate data streams.
+  if (!/^(?:[a-z]:[\\/]|[\\/]{2}[^\\/? .][^\\/?]*[\\/][^\\/?]+)/i.test(value)) return undefined;
+  if (/[\\/]{2}[?.][\\/]/.test(value) || value.slice(/^[a-z]:/i.test(value) ? 2 : 0).includes(":")) return undefined;
+  return win32.normalize(value);
+}
+
+function isInsideSourceRoot(path: string, root: string): boolean {
+  const canonicalRoot = win32.normalize(root).replace(/\\+$/, "").toLowerCase();
+  const canonicalPath = win32.normalize(path).toLowerCase();
+  return canonicalPath.startsWith(canonicalRoot + "\\") && canonicalPath !== canonicalRoot + "\\";
+}
+
+function verifySourceCopy(source: unknown, artifactHash: string, roots: readonly string[]):
+  { path: string; matches: boolean } | undefined {
+  const path = normalizeSourceCopyPath(source);
+  if (!path) return undefined;
+  // First check lexical containment; then check real paths to prevent a
+  // symlink/junction within an allowed root from resolving outside it.
+  for (const rawRoot of roots) {
+    const root = normalizeSourceCopyPath(rawRoot);
+    if (!root || !isInsideSourceRoot(path, root)) continue;
+    try {
+      if (!statSync(root).isDirectory()) continue;
+      const realRoot = realpathSync.native(root), realSource = realpathSync.native(path);
+      if (!isInsideSourceRoot(realSource, realRoot) || !statSync(realSource).isFile()) continue;
+      return { path, matches: hashReceiptFile(realSource) === artifactHash };
+    } catch { /* Missing/inaccessible source cannot establish an exemption. */ }
+  }
+  return undefined;
 }
 
 function atomicWrite(path: string, data: string) {
@@ -119,6 +156,7 @@ export type ReceiptWriteOptions = {
   taskStartedAt?: string | null;
   ledgerPath?: string | null;
   pageGateScript?: string | null;
+  sourceCopyRoots?: readonly string[];
   now?: () => Date;
   auditRows?: readonly ReceiptAuditRow[];
 };
@@ -130,6 +168,12 @@ export function receiptWrite(options: ReceiptWriteOptions) {
   assertReceiptSafe(options.receipt);
   const files = options.receipt.files;
   if (!Array.isArray(files)) throw new Error("Receipt files must be an array.");
+  const blocked = ["ket", "failed", "blocked"].includes(String(options.receipt.status ?? "").toLowerCase())
+    || String(options.receipt.trang_thai ?? "").toUpperCase() === "KET";
+  const configuredRoots = process.env.NHD_NGUON_GOC_ROOTS;
+  const sourceCopyRoots = options.sourceCopyRoots ??
+    (configuredRoots === undefined ? [DEFAULT_SOURCE_COPY_ROOT] : configuredRoots.split(";").map(root => root.trim()).filter(Boolean));
+  const verifiedSourceCopies = new Set<string>();
   const seen = new Set<string>();
   const artifacts = files.map((entry: unknown) => {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("Invalid receipt files item.");
@@ -139,7 +183,19 @@ export function receiptWrite(options: ReceiptWriteOptions) {
     if (seen.has(canonical)) throw new Error("Duplicate receipt file: " + fullPath);
     seen.add(canonical);
     if (!existsSync(fullPath) || !statSync(fullPath).isFile()) throw new Error("RECEIPT_FILE_MISSING: " + fullPath);
-    return { ...item, path: fullPath, sha256: hashReceiptFile(fullPath) };
+    const sha256 = hashReceiptFile(fullPath);
+    if (Object.prototype.hasOwnProperty.call(item, "nguon_goc")) {
+      const source = verifySourceCopy(item.nguon_goc, sha256, sourceCopyRoots);
+      if (!source && !blocked) {
+        const code = /\.doc[xm]$/i.test(fullPath) ? "RECEIPT_PAGE_CHECK_REQUIRED" : "RECEIPT_SOURCE_COPY_INVALID";
+        throw new Error(code + ": " + fullPath + ": invalid nguon_goc (not a regular source file inside an allowed root)");
+      }
+      if (source) {
+        if (source.matches) verifiedSourceCopies.add(fullPath);
+        return { ...item, path: fullPath, nguon_goc: source.path, sha256 };
+      }
+    }
+    return { ...item, path: fullPath, sha256 };
   });
   const now = options.now?.() ?? new Date();
   const sealedAt = now.toISOString();
@@ -149,10 +205,8 @@ export function receiptWrite(options: ReceiptWriteOptions) {
   const failed = checks.flatMap((check, index) => check.evidence.passed ? [] :
     ["#" + (index + 1) + " " + check.cmd + ": " + (check.evidence.source === "missing" ? "missing harness evidence" :
       "exit=" + check.evidence.exit_code + ", timeout=" + check.evidence.timed_out + ", output_tail=" + (check.evidence.output_tail ?? ""))]);
-  const blocked = ["ket", "failed", "blocked"].includes(String(options.receipt.status ?? "").toLowerCase())
-    || String(options.receipt.trang_thai ?? "").toUpperCase() === "KET";
   if (!blocked && options.pageGateScript && isAbsolute(options.pageGateScript)) {
-    enforceReceiptPageGate(options.pageGateScript, artifacts.map(item => ({
+    enforceReceiptPageGate(options.pageGateScript, artifacts.filter(item => !verifiedSourceCopies.has(item.path)).map(item => ({
       path: item.path, mtimeMs: statSync(item.path).mtimeMs
     })), checks, pageAudit);
   }
